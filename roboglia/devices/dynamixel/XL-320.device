@@ -1,0 +1,9 @@
+[registers]
+Address | Size | Name              | Description                   | Access | Memory | Min    | Max   | Ext_type | Ext_off | Ext_fact
+0       | 2    | model_number      | Model Number                  | R      | EEPROM | 0      | 254   | I        | 0.0     | 1.0
+2       | 1    | firmware          | Firmware Version              | R      | EEPROM | 0      | 254   | I        | 0.0     | 1.0
+3       | 1    | id                | Dynamixel ID                  | RW     | EEPROM | 0      | 252   | I        | 0.0     | 1.0
+4       | 1    | baud_rate         | Communication Speed           | RW     | EEPROM | 0      | 3     | I        | 0.0     | 1.0
+5       | 1    | return_delay_time | Response Delay Time           | RW     | EEPROM | 0      | 254   | I        | 0.0     | 1.0
+6       | 2    | cw_angle_limit    | Clockwise Angle Limit         | RW     | EEPROM | 0      | 1023  | F        | 512.0     | 0.00255913
+8       | 2    | ccw_angle_limit   | Counter-Clockwise Angle Limit | RW     | EEPROM | 0      | 1023  | F        | 512.0     | 0.00255913
