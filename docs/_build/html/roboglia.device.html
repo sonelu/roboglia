@@ -1,0 +1,387 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>roboglia.device module &#8212; roboglia 0.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">roboglia 0.0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-roboglia.device.basedevice">
+<span id="roboglia-device-module"></span><h1>roboglia.device module<a class="headerlink" href="#module-roboglia.device.basedevice" title="Permalink to this headline">¶</a></h1>
+<p>Module defining classes used to manipulate devices.</p>
+<p>A device is a physical robot component that has a state and can send or
+receive information. Example of devices are: actuators, sensors, cameras,
+displays, etc.</p>
+<dl class="class">
+<dt id="roboglia.device.basedevice.BaseDevice">
+<em class="property">class </em><code class="sig-prename descclassname">roboglia.device.basedevice.</code><code class="sig-name descname">BaseDevice</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">model</em>, <em class="sig-param">bus</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboglia/device/basedevice.html#BaseDevice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboglia.device.basedevice.BaseDevice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A base virtual class for all devices.</p>
+<p>A BaseDevice is a surrogate representation of an actual device,
+characterised by a number of internal registers that can be read or
+written to by the means of a coomunication bus.
+Any device is based on a <cite>model</cite> that identifies the <cite>.device</cite> file
+describing the structure of the device (the registers).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – The name that the created device will be associated with. Ex.
+it could be ‘l_arm_p’ for a Dynamixel servo representing the
+left arm pitch joint, or it could be ‘imu_accel’ for the device
+describing the accelerometer.</p></li>
+<li><p><strong>model</strong> (<em>str</em>) – The name of the device type that is used to initialize its
+structure. A file <cite>.device</cite> needs to be located and parsed
+successfully in order to the construction of the device to
+be completed. The locatization of the <cite>.device</cite> file is performed
+by the method <cite>getModelPath()</cite> that can return different paths for
+different devices and can be oveloaded by a custom subclass that
+uses custom <cite>.device</cite> files located outside of the main package.</p></li>
+<li><p><strong>bus</strong> (<a class="reference internal" href="roboglia.comm.html#roboglia.comm.BaseBus" title="roboglia.comm.BaseBus"><em>BaseBus</em></a><em> or </em><em>subclass</em>) – It is the bus that the device uses to read or write values when
+syncronising with the actual device.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="roboglia.device.basedevice.BaseDevice.__getattr__">
+<code class="sig-name descname">__getattr__</code><span class="sig-paren">(</span><em class="sig-param">attr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboglia/device/basedevice.html#BaseDevice.__getattr__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboglia.device.basedevice.BaseDevice.__getattr__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to create assesors for register values.</p>
+<p>If the provided member is a name that exists in the <cite>registers</cite>
+dictionary it will return the value of that register.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The content of the register in external format.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>AttributeError</strong> – If the member name is not in in the list of registers.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.basedevice.BaseDevice.getModelPath">
+<code class="sig-name descname">getModelPath</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboglia/device/basedevice.html#BaseDevice.getModelPath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboglia.device.basedevice.BaseDevice.getModelPath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the path to the <cite>.device</cite> documents.</p>
+<p>For BaseDevice it will return a file path located in the directory
+<cite>devices</cite> imediately under the current directory of the Python
+modeule code.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A full document path including the name of the model and the
+externasion <cite>.device</cite>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.basedevice.BaseDevice.processRegister">
+<code class="sig-name descname">processRegister</code><span class="sig-paren">(</span><em class="sig-param">reginfo</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboglia/device/basedevice.html#BaseDevice.processRegister"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboglia.device.basedevice.BaseDevice.processRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defualt processing method for setting up a register.</p>
+<p>Does nothhing in the case of a BaseDevice and subclasses need to
+define their own internal format for the registers and this method
+should return a fully initialized register class based on the
+information included in <cite>reginfo</cite>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-roboglia.device.dynamixeldevice"></span><dl class="class">
+<dt id="roboglia.device.dynamixeldevice.DynamixelRegister">
+<em class="property">class </em><code class="sig-prename descclassname">roboglia.device.dynamixeldevice.</code><code class="sig-name descname">DynamixelRegister</code><span class="sig-paren">(</span><em class="sig-param">address</em>, <em class="sig-param">size</em>, <em class="sig-param">name</em>, <em class="sig-param">description</em>, <em class="sig-param">access</em>, <em class="sig-param">memory</em>, <em class="sig-param">min</em>, <em class="sig-param">max</em>, <em class="sig-param">dir</em>, <em class="sig-param">ext_type</em>, <em class="sig-param">ext_off</em>, <em class="sig-param">ext_fact</em><span class="sig-paren">)</span><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
+<p>A convenience representation of a Dynamixel register.</p>
+<p>Implemented as a <cite>namedtuple</cite> so that the properties can be easily accessed
+via dot notation (ex. <cite>register.name</cite>).</p>
+<dl class="method">
+<dt id="roboglia.device.dynamixeldevice.DynamixelRegister.access">
+<em class="property">property </em><code class="sig-name descname">access</code><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelRegister.access" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 4</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.dynamixeldevice.DynamixelRegister.address">
+<em class="property">property </em><code class="sig-name descname">address</code><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelRegister.address" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.dynamixeldevice.DynamixelRegister.description">
+<em class="property">property </em><code class="sig-name descname">description</code><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelRegister.description" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 3</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.dynamixeldevice.DynamixelRegister.dir">
+<em class="property">property </em><code class="sig-name descname">dir</code><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelRegister.dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 8</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.dynamixeldevice.DynamixelRegister.ext_fact">
+<em class="property">property </em><code class="sig-name descname">ext_fact</code><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelRegister.ext_fact" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 11</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.dynamixeldevice.DynamixelRegister.ext_off">
+<em class="property">property </em><code class="sig-name descname">ext_off</code><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelRegister.ext_off" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 10</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.dynamixeldevice.DynamixelRegister.ext_type">
+<em class="property">property </em><code class="sig-name descname">ext_type</code><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelRegister.ext_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 9</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.dynamixeldevice.DynamixelRegister.max">
+<em class="property">property </em><code class="sig-name descname">max</code><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelRegister.max" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 7</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.dynamixeldevice.DynamixelRegister.memory">
+<em class="property">property </em><code class="sig-name descname">memory</code><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelRegister.memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 5</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.dynamixeldevice.DynamixelRegister.min">
+<em class="property">property </em><code class="sig-name descname">min</code><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelRegister.min" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 6</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.dynamixeldevice.DynamixelRegister.name">
+<em class="property">property </em><code class="sig-name descname">name</code><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelRegister.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.dynamixeldevice.DynamixelRegister.size">
+<em class="property">property </em><code class="sig-name descname">size</code><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelRegister.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="roboglia.device.dynamixeldevice.DynamixelServo">
+<em class="property">class </em><code class="sig-prename descclassname">roboglia.device.dynamixeldevice.</code><code class="sig-name descname">DynamixelServo</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">model</em>, <em class="sig-param">bus</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboglia/device/dynamixeldevice.html#DynamixelServo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelServo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#roboglia.device.basedevice.BaseDevice" title="roboglia.device.basedevice.BaseDevice"><code class="xref py py-class docutils literal notranslate"><span class="pre">roboglia.device.basedevice.BaseDevice</span></code></a></p>
+<p>Convenience class for interacting with a Dynamixel servo.</p>
+<p>DynamixelServo represents the structure of the registers defined for
+a given Dyamixel type. The structure is read from a <cite>.device</cite> file that
+has a predefined column layout. See the provided descriptions included
+in the <cite>device/dynamixel/</cite> directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>str</em>) – String, the type of the Dynamixel servo that needs to be created;
+a file with the same name and extension .device needs to be
+available in the directory <cite>devices/dynamixel</cite> otherwise there will
+be an exception thrown.</p>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="roboglia.device.dynamixeldevice.DynamixelServo.registers">
+<code class="sig-name descname">registers</code><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelServo.registers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is a dictionary of DynamixelRegister() with key the register name
+containing the imutable characteristicts of the register: address,
+size, name, description, access, min value, max value, memory
+location (‘EEPROM’ or ‘RAM’), external type representation (‘I’ for
+integer or ‘F’ for float, ‘B’ for bool), the offset and the factor
+for converting the internal values to external values. These last
+parameters are used to convert from technical internal formats to
+formats that have a functional meaning, for example the position
+of the servo in radians. These conversions are performed as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">external</span> <span class="o">=</span> <span class="p">(</span><span class="n">internal</span> <span class="o">-</span> <span class="n">offset</span><span class="p">)</span> <span class="o">*</span> <span class="n">factor</span>
+<span class="n">internal</span> <span class="o">=</span> <span class="n">external</span> <span class="o">/</span> <span class="n">factor</span> <span class="o">+</span> <span class="n">offset</span>
+</pre></div>
+</div>
+<p>For example if internally the position is refected as a 2 Byte
+number in the range 0 - 1023 with 512 indicating the center and the
+range of the servo is -150° to 150° (300° range) we could use the
+following values:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">offset</span> <span class="o">=</span> <span class="mi">512</span>
+<span class="n">factor</span> <span class="o">=</span> <span class="mf">0.293255132</span>
+</pre></div>
+</div>
+<p>A value of 256 in the internal registry will represent:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>external = (256 - 512 ) * 0.293255132 ≈ -75.07°
+</pre></div>
+</div>
+<p>Similarly setting a 30° value would be:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">internal</span> <span class="o">=</span> <span class="mi">30</span> <span class="o">/</span> <span class="mf">0.293255132</span> <span class="o">+</span> <span class="mi">512</span> <span class="o">=</span> <span class="mi">614</span>
+</pre></div>
+</div>
+<p>(this is rounded to the nearest integer as only ints can be storred
+in the registry)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict of DynamixelRegister</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="roboglia.device.dynamixeldevice.DynamixelServo.values">
+<code class="sig-name descname">values</code><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelServo.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a dictionary with the actual register values with key
+the register value; it is not recommended to
+access the information in this dictionary directly. Instead you
+should use the the accessors implemented by the class automatically
+for each register name. For instance if you have a register that
+contains the present postion, named <cite>present_postion</cite> you can access
+the value by: <cite>pos = servo.present_position</cite>.
+In addition to the convenience (you can access all registers) the
+getter methods perform the conversion from internal to external
+formats as explaied above.
+Similar, setter methods allow you to set the value of the register
+by performing the conversion exeternal &gt; internal format. In
+addition the setter methods will raise ValueError if the register is
+read-only (‘R’ in <cite>access</cite> attribute) or outside the ranges defined
+by the min and max attributes.
+Also, please note that the values read or written in the <cite>values</cite>
+dictionary are only reflecting this surrogate representation of the
+servo. A sync loop is necessary to synchronize the values from the
+DynamixelServo to the actual physical servo. Keep in mind that
+values changed in registers that are not included in a sync loop
+will not reflect the real values existing in the physical servo.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Dict of int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.dynamixeldevice.DynamixelServo.__getattr__">
+<code class="sig-name descname">__getattr__</code><span class="sig-paren">(</span><em class="sig-param">attr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboglia/device/dynamixeldevice.html#DynamixelServo.__getattr__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelServo.__getattr__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to create assesors for register values.</p>
+<p>If the provided member is a name that exists in the <cite>registers</cite>
+dictionary it will return the value of that register.</p>
+<p>It performs a conversion from internal format (as storred in
+<cite>values</cite> dict) to output format (as indicated by the <cite>ext_type</cite>)
+using the offset (<cite>ext_off</cite>) and the factor (<cite>ext_fact</cite>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The content of the register in external format.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int, float or bool</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>AttributeError</strong> – If the member name is not in in the list of registers.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.dynamixeldevice.DynamixelServo.__setattr__">
+<code class="sig-name descname">__setattr__</code><span class="sig-paren">(</span><em class="sig-param">attr</em>, <em class="sig-param">value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboglia/device/dynamixeldevice.html#DynamixelServo.__setattr__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelServo.__setattr__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used for setting values of registers.</p>
+<p>If the provided name is a register the method will try to update
+the value into the <cite>values</cite> dictionary by inviking the conversion
+external &gt; internal:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">internal</span> <span class="o">=</span> <span class="n">external</span> <span class="o">/</span> <span class="n">factor</span> <span class="o">+</span> <span class="n">offset</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>attr</strong> (<em>str</em>) – THe name of the register. Normally passed when invoking
+<cite>servo.register</cite>.</p></li>
+<li><p><strong>value</strong> (<em>(</em><em>int</em><em>, </em><em>float</em><em>, </em><em>bool</em><em>)</em>) – The external-formatted value to the stored in the register
+according to the format of that particular register.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>KeyError</strong> – If the attribute requested is not in the list of registers.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/roboglia.device.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">roboglia 0.0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Alex Sonea.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.1.
+    </div>
+  </body>
+</html>

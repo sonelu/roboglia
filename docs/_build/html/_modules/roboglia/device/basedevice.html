@@ -1,0 +1,201 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>roboglia.device.basedevice &#8212; roboglia 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">roboglia 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../device.html" accesskey="U">roboglia.device</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for roboglia.device.basedevice</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2019 Alexandru Sonea. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="c1"># =============================================================================</span>
+<span class="sd">&quot;&quot;&quot;Module defining classes used to manipulate devices.</span>
+
+<span class="sd">A device is a physical robot component that has a state and can send or</span>
+<span class="sd">receive information. Example of devices are: actuators, sensors, cameras,</span>
+<span class="sd">displays, etc.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">roboglia.utils</span> <span class="k">import</span> <span class="n">readIniFile</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
+
+<div class="viewcode-block" id="BaseDevice"><a class="viewcode-back" href="../../../roboglia.device.html#roboglia.device.basedevice.BaseDevice">[docs]</a><span class="k">class</span> <span class="nc">BaseDevice</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;A base virtual class for all devices.</span>
+
+<span class="sd">    A BaseDevice is a surrogate representation of an actual device,</span>
+<span class="sd">    characterised by a number of internal registers that can be read or</span>
+<span class="sd">    written to by the means of a coomunication bus.</span>
+<span class="sd">    Any device is based on a `model` that identifies the `.device` file</span>
+<span class="sd">    describing the structure of the device (the registers).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        The name that the created device will be associated with. Ex.</span>
+<span class="sd">        it could be &#39;l_arm_p&#39; for a Dynamixel servo representing the </span>
+<span class="sd">        left arm pitch joint, or it could be &#39;imu_accel&#39; for the device</span>
+<span class="sd">        describing the accelerometer.</span>
+
+<span class="sd">    model : str</span>
+<span class="sd">        The name of the device type that is used to initialize its</span>
+<span class="sd">        structure. A file `.device` needs to be located and parsed </span>
+<span class="sd">        successfully in order to the construction of the device to</span>
+<span class="sd">        be completed. The locatization of the `.device` file is performed</span>
+<span class="sd">        by the method `getModelPath()` that can return different paths for</span>
+<span class="sd">        different devices and can be oveloaded by a custom subclass that</span>
+<span class="sd">        uses custom `.device` files located outside of the main package.</span>
+
+<span class="sd">    bus : BaseBus or subclass</span>
+<span class="sd">        It is the bus that the device uses to read or write values when</span>
+<span class="sd">        syncronising with the actual device. </span>
+
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">bus</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bus</span> <span class="o">=</span> <span class="n">bus</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">registers</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">model_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getModelPath</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">model_ini</span> <span class="o">=</span> <span class="n">readIniFile</span><span class="p">(</span><span class="n">model_file</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">reginfo</span> <span class="ow">in</span> <span class="n">model_ini</span><span class="p">[</span><span class="s1">&#39;registers&#39;</span><span class="p">]:</span>
+            <span class="n">new_register</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processRegister</span><span class="p">(</span><span class="n">reginfo</span><span class="p">)</span>
+            <span class="n">reg_name</span> <span class="o">=</span> <span class="n">reginfo</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">registers</span><span class="p">[</span><span class="n">reg_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_register</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">reginfo</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        
+
+<div class="viewcode-block" id="BaseDevice.getModelPath"><a class="viewcode-back" href="../../../roboglia.device.html#roboglia.device.basedevice.BaseDevice.getModelPath">[docs]</a>    <span class="k">def</span> <span class="nf">getModelPath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Builds the path to the `.device` documents.</span>
+
+<span class="sd">        For BaseDevice it will return a file path located in the directory</span>
+<span class="sd">        `devices` imediately under the current directory of the Python </span>
+<span class="sd">        modeule code.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            A full document path including the name of the model and the</span>
+<span class="sd">            externasion `.device`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;devices&#39;</span><span class="p">,</span> <span class="n">model</span><span class="o">+</span><span class="s1">&#39;.device&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseDevice.processRegister"><a class="viewcode-back" href="../../../roboglia.device.html#roboglia.device.basedevice.BaseDevice.processRegister">[docs]</a>    <span class="k">def</span> <span class="nf">processRegister</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reginfo</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Defualt processing method for setting up a register.</span>
+
+<span class="sd">        Does nothhing in the case of a BaseDevice and subclasses need to</span>
+<span class="sd">        define their own internal format for the registers and this method</span>
+<span class="sd">        should return a fully initialized register class based on the </span>
+<span class="sd">        information included in `reginfo`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="BaseDevice.__getattr__"><a class="viewcode-back" href="../../../roboglia.device.html#roboglia.device.basedevice.BaseDevice.__getattr__">[docs]</a>    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Used to create assesors for register values.</span>
+
+<span class="sd">        If the provided member is a name that exists in the `registers`</span>
+<span class="sd">        dictionary it will return the value of that register.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int</span>
+<span class="sd">            The content of the register in external format.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        AttributeError </span>
+<span class="sd">            If the member name is not in in the list of registers.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>   
+        <span class="k">if</span> <span class="n">attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">registers</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.__class__.__name__}</span><span class="s1">.</span><span class="si">{attr}</span><span class="s1"> is invalid.&#39;</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">roboglia 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../device.html" >roboglia.device</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Alex Sonea.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.1.
+    </div>
+  </body>
+</html>

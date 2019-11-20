@@ -1,0 +1,269 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>roboglia.device.dynamixeldevice &#8212; roboglia 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">roboglia 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../device.html" accesskey="U">roboglia.device</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for roboglia.device.dynamixeldevice</h1><div class="highlight"><pre>
+<span></span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">roboglia.utils</span> <span class="k">import</span> <span class="n">readIniFile</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">.basedevice</span> <span class="k">import</span> <span class="n">BaseDevice</span>
+
+<span class="c1"># defintion of the parameters for a register in a Dynamnixel Servo</span>
+<span class="n">regparams</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;address&#39;</span><span class="p">,</span>     <span class="c1"># address of the register</span>
+             <span class="s1">&#39;size&#39;</span><span class="p">,</span>        <span class="c1"># size of register in bytes (typical 1,2 or 4)</span>
+             <span class="s1">&#39;name&#39;</span><span class="p">,</span>        <span class="c1"># name of the register; must not use whitespaces</span>
+             <span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="c1"># a long description for the register; free text</span>
+             <span class="s1">&#39;access&#39;</span><span class="p">,</span>      <span class="c1"># &#39;R&#39; or &#39;RW&#39; indicating read-only or read-write</span>
+             <span class="s1">&#39;memory&#39;</span><span class="p">,</span>      <span class="c1"># &#39;EEPROM&#39; or &#39;RAM&#39;; where is located</span>
+             <span class="s1">&#39;min&#39;</span><span class="p">,</span>         <span class="c1"># minimum value in internal format</span>
+             <span class="s1">&#39;max&#39;</span><span class="p">,</span>         <span class="c1"># maximum value in internal format</span>
+             <span class="s1">&#39;dir&#39;</span><span class="p">,</span>         <span class="c1"># register has an extra bit for direction</span>
+             <span class="s1">&#39;ext_type&#39;</span><span class="p">,</span>    <span class="c1"># external format of the register value ; </span>
+                            <span class="c1"># &#39;I&#39; for integer, &#39;F&#39; for float, &#39;B&#39; for bool</span>
+             <span class="s1">&#39;ext_off&#39;</span><span class="p">,</span>     <span class="c1"># offset for converting from internal to external format</span>
+             <span class="s1">&#39;ext_fact&#39;</span><span class="p">]</span>    <span class="c1"># factor for converting from internal to external format</span>
+                            <span class="c1"># converting the data is done as:</span>
+                            <span class="c1">#     external = (internal - offset) * factor</span>
+                            <span class="c1">#     internal = (external / factor + offset)</span>
+                            <span class="c1"># allways the internal value is typecasted to int() while external</span>
+                            <span class="c1"># value is typecasted depending on the ext_type</span>
+
+<span class="n">DynamixelRegister</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;DynamixelRegister&#39;</span><span class="p">,</span> <span class="n">regparams</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;A convenience representation of a Dynamixel register.</span>
+
+<span class="sd">Implemented as a `namedtuple` so that the properties can be easily accessed</span>
+<span class="sd">via dot notation (ex. `register.name`).</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DynamixelServo"><a class="viewcode-back" href="../../../roboglia.device.html#roboglia.device.dynamixeldevice.DynamixelServo">[docs]</a><span class="k">class</span> <span class="nc">DynamixelServo</span><span class="p">(</span><span class="n">BaseDevice</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convenience class for interacting with a Dynamixel servo.</span>
+
+<span class="sd">    DynamixelServo represents the structure of the registers defined for </span>
+<span class="sd">    a given Dyamixel type. The structure is read from a `.device` file that </span>
+<span class="sd">    has a predefined column layout. See the provided descriptions included </span>
+<span class="sd">    in the `device/dynamixel/` directory.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model : str</span>
+<span class="sd">        String, the type of the Dynamixel servo that needs to be created; </span>
+<span class="sd">        a file with the same name and extension .device needs to be </span>
+<span class="sd">        available in the directory `devices/dynamixel` otherwise there will </span>
+<span class="sd">        be an exception thrown.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    registers : dict of DynamixelRegister</span>
+<span class="sd">        Is a dictionary of DynamixelRegister() with key the register name </span>
+<span class="sd">        containing the imutable characteristicts of the register: address, </span>
+<span class="sd">        size, name, description, access, min value, max value, memory </span>
+<span class="sd">        location (&#39;EEPROM&#39; or &#39;RAM&#39;), external type representation (&#39;I&#39; for </span>
+<span class="sd">        integer or &#39;F&#39; for float, &#39;B&#39; for bool), the offset and the factor </span>
+<span class="sd">        for converting the internal values to external values. These last </span>
+<span class="sd">        parameters are used to convert from technical internal formats to </span>
+<span class="sd">        formats that have a functional meaning, for example the position </span>
+<span class="sd">        of the servo in radians. These conversions are performed as::</span>
+
+<span class="sd">            external = (internal - offset) * factor</span>
+<span class="sd">            internal = external / factor + offset</span>
+<span class="sd">        </span>
+<span class="sd">        For example if internally the position is refected as a 2 Byte </span>
+<span class="sd">        number in the range 0 - 1023 with 512 indicating the center and the</span>
+<span class="sd">        range of the servo is -150° to 150° (300° range) we could use the </span>
+<span class="sd">        following values::</span>
+
+<span class="sd">            offset = 512</span>
+<span class="sd">            factor = 0.293255132</span>
+<span class="sd">        </span>
+<span class="sd">        A value of 256 in the internal registry will represent::</span>
+
+<span class="sd">            external = (256 - 512 ) * 0.293255132 ≈ -75.07°</span>
+
+<span class="sd">        Similarly setting a 30° value would be::</span>
+
+<span class="sd">            internal = 30 / 0.293255132 + 512 = 614 </span>
+
+<span class="sd">        (this is rounded to the nearest integer as only ints can be storred </span>
+<span class="sd">        in the registry)</span>
+
+<span class="sd">    values : Dict of int</span>
+<span class="sd">        This is a dictionary with the actual register values with key</span>
+<span class="sd">        the register value; it is not recommended to </span>
+<span class="sd">        access the information in this dictionary directly. Instead you </span>
+<span class="sd">        should use the the accessors implemented by the class automatically </span>
+<span class="sd">        for each register name. For instance if you have a register that </span>
+<span class="sd">        contains the present postion, named `present_postion` you can access </span>
+<span class="sd">        the value by: `pos = servo.present_position`.</span>
+<span class="sd">        In addition to the convenience (you can access all registers) the</span>
+<span class="sd">        getter methods perform the conversion from internal to external </span>
+<span class="sd">        formats as explaied above.</span>
+<span class="sd">        Similar, setter methods allow you to set the value of the register </span>
+<span class="sd">        by performing the conversion exeternal &gt; internal format. In </span>
+<span class="sd">        addition the setter methods will raise ValueError if the register is </span>
+<span class="sd">        read-only (&#39;R&#39; in `access` attribute) or outside the ranges defined </span>
+<span class="sd">        by the min and max attributes.</span>
+<span class="sd">        Also, please note that the values read or written in the `values` </span>
+<span class="sd">        dictionary are only reflecting this surrogate representation of the </span>
+<span class="sd">        servo. A sync loop is necessary to synchronize the values from the </span>
+<span class="sd">        DynamixelServo to the actual physical servo. Keep in mind that </span>
+<span class="sd">        values changed in registers that are not included in a sync loop </span>
+<span class="sd">        will not reflect the real values existing in the physical servo. </span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+
+<div class="viewcode-block" id="DynamixelServo.__getattr__"><a class="viewcode-back" href="../../../roboglia.device.html#roboglia.device.dynamixeldevice.DynamixelServo.__getattr__">[docs]</a>    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Used to create assesors for register values.</span>
+
+<span class="sd">        If the provided member is a name that exists in the `registers`</span>
+<span class="sd">        dictionary it will return the value of that register.</span>
+
+<span class="sd">        It performs a conversion from internal format (as storred in</span>
+<span class="sd">        `values` dict) to output format (as indicated by the `ext_type`)</span>
+<span class="sd">        using the offset (`ext_off`) and the factor (`ext_fact`).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int, float or bool</span>
+<span class="sd">            The content of the register in external format.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        AttributeError </span>
+<span class="sd">            If the member name is not in in the list of registers.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">registers</span><span class="p">:</span>
+            <span class="n">reg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">registers</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">reg</span><span class="o">.</span><span class="n">dir</span> <span class="o">==</span> <span class="s1">&#39;Y&#39;</span> <span class="ow">and</span> <span class="n">val</span> <span class="o">&gt;</span> <span class="n">reg</span><span class="o">.</span><span class="n">max</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">-=</span> <span class="p">(</span><span class="n">reg</span><span class="o">.</span><span class="n">max</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">sign</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sign</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">external</span> <span class="o">=</span> <span class="p">(</span><span class="n">val</span> <span class="o">-</span> <span class="n">reg</span><span class="o">.</span><span class="n">ext_off</span> <span class="p">)</span> <span class="o">*</span> <span class="n">reg</span><span class="o">.</span><span class="n">ext_fact</span> <span class="o">*</span> <span class="n">sign</span>
+            <span class="k">if</span> <span class="n">reg</span><span class="o">.</span><span class="n">ext_type</span> <span class="o">==</span> <span class="s1">&#39;I&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">external</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">reg</span><span class="o">.</span><span class="n">ext_type</span> <span class="o">==</span> <span class="s1">&#39;B&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">external</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">external</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.__class__.__name__}</span><span class="s1">.</span><span class="si">{attr}</span><span class="s1"> is invalid.&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DynamixelServo.__setattr__"><a class="viewcode-back" href="../../../roboglia.device.html#roboglia.device.dynamixeldevice.DynamixelServo.__setattr__">[docs]</a>    <span class="k">def</span> <span class="nf">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Used for setting values of registers.</span>
+
+<span class="sd">        If the provided name is a register the method will try to update</span>
+<span class="sd">        the value into the `values` dictionary by inviking the conversion</span>
+<span class="sd">        external &gt; internal::</span>
+
+<span class="sd">            internal = external / factor + offset</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        attr : str</span>
+<span class="sd">            THe name of the register. Normally passed when invoking</span>
+<span class="sd">            `servo.register`.</span>
+
+<span class="sd">        value : (int, float, bool)</span>
+<span class="sd">            The external-formatted value to the stored in the register</span>
+<span class="sd">            according to the format of that particular register.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        KeyError</span>
+<span class="sd">            If the attribute requested is not in the list of registers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s1">&#39;registers&#39;</span> <span class="ow">or</span> <span class="n">attr</span><span class="o">==</span><span class="s1">&#39;values&#39;</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">registers</span><span class="p">:</span>
+                <span class="n">reg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">registers</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">reg</span><span class="o">.</span><span class="n">access</span> <span class="o">==</span> <span class="s1">&#39;R&#39;</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;attribute </span><span class="si">{}</span><span class="s2"> of DynamixelServo is read-only&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">attr</span><span class="p">))</span>
+                <span class="n">internal</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">/</span> <span class="n">reg</span><span class="o">.</span><span class="n">ext_fact</span> <span class="o">+</span> <span class="n">reg</span><span class="o">.</span><span class="n">ext_off</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">internal</span> <span class="o">&gt;</span> <span class="n">reg</span><span class="o">.</span><span class="n">max</span> <span class="ow">or</span> <span class="n">internal</span> <span class="o">&lt;</span> <span class="n">reg</span><span class="o">.</span><span class="n">min</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;value </span><span class="si">{}</span><span class="s2"> outside allowed domain for attribute </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">attr</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">internal</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;attribute </span><span class="si">{}</span><span class="s2"> does not exist&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">attr</span><span class="p">))</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">roboglia 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../device.html" >roboglia.device</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Alex Sonea.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.1.
+    </div>
+  </body>
+</html>

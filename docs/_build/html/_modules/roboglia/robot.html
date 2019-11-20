@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>roboglia.robot &#8212; roboglia 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">roboglia 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for roboglia.robot</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">.comm</span> <span class="k">import</span> <span class="n">DynamixelBus</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">readIniFile</span>
+<span class="kn">from</span> <span class="nn">.device</span> <span class="k">import</span> <span class="n">DynamixelServo</span>
+
+<div class="viewcode-block" id="Robot"><a class="viewcode-back" href="../../roboglia.robot.html#roboglia.robot.Robot">[docs]</a><span class="k">class</span> <span class="nc">Robot</span><span class="p">():</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ini_file</span><span class="p">):</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">readIniFile</span><span class="p">(</span><span class="n">ini_file</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ports</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">devices</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># load the port configuration</span>
+        <span class="k">for</span> <span class="n">portconfig</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;ports&#39;</span><span class="p">]:</span>
+            <span class="n">PortClass</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()[</span><span class="n">portconfig</span><span class="p">[</span><span class="s1">&#39;Class&#39;</span><span class="p">]]</span>
+            <span class="n">new_port</span> <span class="o">=</span> <span class="n">PortClass</span><span class="p">(</span><span class="n">portconfig</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="n">portconfig</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">new_port</span>
+        
+        <span class="c1"># load the devices</span>
+        <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;devices&#39;</span><span class="p">]:</span>
+            <span class="n">DevClass</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()[</span><span class="n">device</span><span class="p">[</span><span class="s1">&#39;Class&#39;</span><span class="p">]]</span>
+            <span class="n">new_device</span> <span class="o">=</span> <span class="n">DevClass</span><span class="p">(</span><span class="n">device</span><span class="p">[</span><span class="s1">&#39;Type&#39;</span><span class="p">])</span>
+            <span class="n">new_device</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">device</span><span class="p">[</span><span class="s1">&#39;Id&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">devices</span><span class="p">[</span><span class="n">device</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">new_device</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="n">device</span><span class="p">[</span><span class="s1">&#39;Bus&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_device</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">devices</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">devices</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.__class__.__name__}</span><span class="s1">.</span><span class="si">{attr}</span><span class="s1"> is invalid.&#39;</span><span class="p">)</span>        </div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">roboglia 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Alex Sonea.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.1.
+    </div>
+  </body>
+</html>

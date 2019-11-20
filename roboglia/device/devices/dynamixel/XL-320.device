@@ -1,0 +1,33 @@
+[registers]
+Address | Size | Name                  | Description                      | Access | Memory | Min    | Max   | Dir | Ext_type | Ext_off   | Ext_fact
+0       | 2    | model_number          | Model Number                     | R      | EEPROM | 0      | 254   | N   | I        | 0.0       | 1.0
+2       | 1    | firmware              | Firmware Version                 | R      | EEPROM | 0      | 254   | N   | I        | 0.0       | 1.0
+3       | 1    | id                    | Dynamixel ID                     | RW     | EEPROM | 0      | 252   | N   | I        | 0.0       | 1.0
+4       | 1    | baud_rate             | Communication Speed              | RW     | EEPROM | 0      | 3     | N   | I        | 0.0       | 1.0
+5       | 1    | return_delay_time     | Response Delay Time              | RW     | EEPROM | 0      | 254   | N   | I        | 0.0       | 1.0
+6       | 2    | cw_angle_limit        | Clockwise Angle Limit            | RW     | EEPROM | 0      | 1023  | N   | F        | 512.0     | 0.2932551319648094     # deg centered
+8       | 2    | ccw_angle_limit       | Counter-Clockwise Angle Limit    | RW     | EEPROM | 0      | 1023  | N   | F        | 512.0     | 0.2932551319648094     # deg centered
+11      | 1    | control_mode          | Control Mode                     | RW     | EEPROM | 1      | 2     | N   | I        | 0.0       | 1.0
+12      | 1    | temperature_limit     | Max Internal Temperature Limit   | RW     | EEPROM | 0      | 150   | N   | I        | 0.0       | 1.0                    # deg C
+13      | 1    | min_voltage_limit     | Min Input Voltage Limit          | RW     | EEPROM | 50     | 250   | N   | F        | 0.0       | 100.0                  # in V
+14      | 1    | max_voltage_limit     | Max Input Voltage Limit          | RW     | EEPROM | 50     | 250   | N   | F        | 0.0       | 100.0                  # in V
+15      | 2    | max_torque            | Maximum Torque                   | RW     | EEPROM | 0      | 1023  | N   | F        | 0.0       | 0.09775171065493646    # percentage
+17      | 1    | status_return_level   | Select Types of Status Return    | RW     | EEPROM | 0      | 2     | N   | I        | 0.0       | 1.0
+18      | 1    | shutdown              | Shutdown Error Information       | RW     | EEPROM | 0      | 7     | N   | I        | 0.0       | 1.0
+24      | 1    | torque_enable         | Motor Torque on/off              | RW     | RAM    | 0      | 1     | N   | B        | 0.0       | 1.0
+25      | 1    | status_led            | Status LED on/off                | RW     | RAM    | 0      | 7     | N   | I        | 0.0       | 1.0
+27      | 1    | d_gain                | Derivative Gain                  | RW     | RAM    | 0      | 254   | N   | F        | 0.0       | 0.004                  # actual factor
+28      | 1    | i_gain                | Integral Gain                    | RW     | RAM    | 0      | 254   | N   | F        | 0.0       | 0.48828125             # actual factor
+29      | 1    | p_gain                | Proportional Gain                | RW     | RAM    | 0      | 254   | N   | F        | 0.0       | 0.125                  # actual factor
+30      | 2    | goal_position         | Desired Position                 | RW     | RAM    | 0      | 1023  | N   | F        | 512.0     | 0.2932551319648094     # deg centered
+32      | 2    | goal_speed            | Moving Speed (Velocity)          | RW     | RAM    | 0      | 1023  | N   | F        | 0.0       | 0.11143695014662756    # rpm
+35      | 2    | goal_torque           | Goal Torque                      | RW     | RAM    | 0      | 1023  | N   | F        | 0.0       | 0.09775171065493646    # percentage
+37      | 2    | present_position      | Present Position                 | R      | RAM    | 0      | 1023  | N   | F        | 512.0     | 0.2932551319648094     # deg centered
+39      | 2    | present_speed         | Moving Speed (Velocity)          | R      | RAM    | 0      | 1023  | Y   | F        | 0.0       | 0.11143695014662756    # rpm (signed)
+41      | 2    | goal_torque           | Goal Torque                      | R      | RAM    | 0      | 1023  | Y   | F        | 0.0       | 0.09775171065493646    # percentage (signed)
+45      | 1    | present_voltage       | Present Voltage                  | R      | RAM    | 50     | 250   | N   | F        | 0.0       | 100.0                  # in V
+46      | 1    | present_temperature   | Present Temperature              | R      | RAM    | 0      | 150   | N   | I        | 0.0       | 1.0                    # deg C
+47      | 1    | registered            | If instruction is registered     | R      | RAM    | 0      | 1     | N   | B        | 0.0       | 1.0
+49      | 1    | moving                | Movement Status                  | R      | RAM    | 0      | 1     | N   | B        | 0.0       | 1.0
+50      | 1    | hardware_error_status | Hardware Error Status            | R      | RAM    | 0      | 255   | N   | I        | 0.0       | 1.0
+51      | 2    | punch                 | Minimum Current Threshhold       | RW     | RAM    | 0      | 1023  | N   | I        | 0.0       | 1.0                    # should not be used
