@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>roboglia.comm module &#8212; roboglia 0.0.1 documentation</title>
+    <title>roboglia.comm module &#8212; roboglia 0.0.2 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
@@ -26,7 +26,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">roboglia 0.0.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">roboglia 0.0.2 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -104,6 +104,27 @@ RS485 mode.</p></li>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="roboglia.comm.DynamixelBus.close">
+<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboglia/comm.html#DynamixelBus.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboglia.comm.DynamixelBus.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Closes the actual physical bus. Must be overriden by the
+subclass.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.comm.DynamixelBus.isOpen">
+<code class="sig-name descname">isOpen</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboglia/comm.html#DynamixelBus.isOpen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboglia.comm.DynamixelBus.isOpen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns <cite>True</cite> or <cite>False</cite> if the bus is open. Must be overriden
+by the subclass.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.comm.DynamixelBus.open">
+<code class="sig-name descname">open</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboglia/comm.html#DynamixelBus.open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboglia.comm.DynamixelBus.open" title="Permalink to this definition">¶</a></dt>
+<dd><p>Opens the actual physical bus. Must be overriden by the
+subclass.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="roboglia.comm.DynamixelBus.ping">
 <code class="sig-name descname">ping</code><span class="sig-paren">(</span><em class="sig-param">dxl_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboglia/comm.html#DynamixelBus.ping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboglia.comm.DynamixelBus.ping" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -178,7 +199,7 @@ RS485 mode.</p></li>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">roboglia 0.0.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">roboglia 0.0.2 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

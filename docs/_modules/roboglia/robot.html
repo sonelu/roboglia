@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>roboglia.robot &#8212; roboglia 0.0.1 documentation</title>
+    <title>roboglia.robot &#8212; roboglia 0.0.2 documentation</title>
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     
@@ -26,7 +26,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">roboglia 0.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">roboglia 0.0.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -51,13 +51,16 @@
         <span class="c1"># load the port configuration</span>
         <span class="k">for</span> <span class="n">portconfig</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;ports&#39;</span><span class="p">]:</span>
             <span class="n">PortClass</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()[</span><span class="n">portconfig</span><span class="p">[</span><span class="s1">&#39;Class&#39;</span><span class="p">]]</span>
-            <span class="n">new_port</span> <span class="o">=</span> <span class="n">PortClass</span><span class="p">(</span><span class="n">portconfig</span><span class="p">)</span>
+            <span class="n">new_port</span> <span class="o">=</span> <span class="n">PortClass</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">portconfig</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">],</span>
+                                 <span class="n">port</span><span class="o">=</span><span class="n">portconfig</span><span class="p">[</span><span class="s1">&#39;Port&#39;</span><span class="p">])</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="n">portconfig</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">new_port</span>
         
         <span class="c1"># load the devices</span>
         <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;devices&#39;</span><span class="p">]:</span>
             <span class="n">DevClass</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()[</span><span class="n">device</span><span class="p">[</span><span class="s1">&#39;Class&#39;</span><span class="p">]]</span>
-            <span class="n">new_device</span> <span class="o">=</span> <span class="n">DevClass</span><span class="p">(</span><span class="n">device</span><span class="p">[</span><span class="s1">&#39;Type&#39;</span><span class="p">])</span>
+            <span class="n">new_device</span> <span class="o">=</span> <span class="n">DevClass</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">device</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">],</span>
+                                  <span class="n">model</span><span class="o">=</span><span class="n">device</span><span class="p">[</span><span class="s1">&#39;Type&#39;</span><span class="p">],</span>
+                                  <span class="n">bus</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="n">device</span><span class="p">[</span><span class="s1">&#39;Bus&#39;</span><span class="p">]])</span>
             <span class="n">new_device</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">device</span><span class="p">[</span><span class="s1">&#39;Id&#39;</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">devices</span><span class="p">[</span><span class="n">device</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">new_device</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="n">device</span><span class="p">[</span><span class="s1">&#39;Bus&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">devices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_device</span><span class="p">)</span>
@@ -97,7 +100,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">roboglia 0.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">roboglia 0.0.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>roboglia.device.dynamixeldevice &#8212; roboglia 0.0.1 documentation</title>
+    <title>roboglia.device.dynamixeldevice &#8212; roboglia 0.0.2 documentation</title>
     <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     
@@ -26,9 +26,8 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">roboglia 0.0.1 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="../device.html" accesskey="U">roboglia.device</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">roboglia 0.0.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -40,9 +39,10 @@
   <h1>Source code for roboglia.device.dynamixeldevice</h1><div class="highlight"><pre>
 <span></span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">roboglia.utils</span> <span class="k">import</span> <span class="n">readIniFile</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
-<span class="kn">from</span> <span class="nn">.basedevice</span> <span class="k">import</span> <span class="n">BaseDevice</span>
+
+<span class="kn">from</span> <span class="nn">roboglia.utils</span> <span class="k">import</span> <span class="n">readIniFile</span>
+<span class="kn">from</span> <span class="nn">roboglia.device.basedevice</span> <span class="k">import</span> <span class="n">BaseDevice</span>
 
 <span class="c1"># defintion of the parameters for a register in a Dynamnixel Servo</span>
 <span class="n">regparams</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;address&#39;</span><span class="p">,</span>     <span class="c1"># address of the register</span>
@@ -148,6 +148,26 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     
+<div class="viewcode-block" id="DynamixelServo.getModelPath"><a class="viewcode-back" href="../../../roboglia.device.html#roboglia.device.dynamixeldevice.DynamixelServo.getModelPath">[docs]</a>    <span class="k">def</span> <span class="nf">getModelPath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;devices/dynamixel&#39;</span><span class="p">,</span> <span class="n">model</span><span class="o">+</span><span class="s1">&#39;.device&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DynamixelServo.processRegister"><a class="viewcode-back" href="../../../roboglia.device.html#roboglia.device.dynamixeldevice.DynamixelServo.processRegister">[docs]</a>    <span class="k">def</span> <span class="nf">processRegister</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reginfo</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">DynamixelRegister</span><span class="p">(</span>
+            <span class="n">address</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">reginfo</span><span class="p">[</span><span class="s1">&#39;Address&#39;</span><span class="p">]),</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">reginfo</span><span class="p">[</span><span class="s1">&#39;Size&#39;</span><span class="p">]),</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">reginfo</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">],</span>
+            <span class="n">description</span> <span class="o">=</span> <span class="n">reginfo</span><span class="p">[</span><span class="s1">&#39;Description&#39;</span><span class="p">],</span>
+            <span class="n">access</span> <span class="o">=</span> <span class="n">reginfo</span><span class="p">[</span><span class="s1">&#39;Access&#39;</span><span class="p">],</span>
+            <span class="n">memory</span> <span class="o">=</span> <span class="n">reginfo</span><span class="p">[</span><span class="s1">&#39;Memory&#39;</span><span class="p">],</span>
+            <span class="nb">min</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">reginfo</span><span class="p">[</span><span class="s1">&#39;Min&#39;</span><span class="p">]),</span>
+            <span class="nb">max</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">reginfo</span><span class="p">[</span><span class="s1">&#39;Max&#39;</span><span class="p">]),</span>
+            <span class="nb">dir</span> <span class="o">=</span> <span class="n">reginfo</span><span class="p">[</span><span class="s1">&#39;Dir&#39;</span><span class="p">],</span>
+            <span class="n">ext_type</span> <span class="o">=</span> <span class="n">reginfo</span><span class="p">[</span><span class="s1">&#39;Ext_type&#39;</span><span class="p">],</span>
+            <span class="n">ext_off</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">reginfo</span><span class="p">[</span><span class="s1">&#39;Ext_off&#39;</span><span class="p">]),</span>
+            <span class="n">ext_fact</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">reginfo</span><span class="p">[</span><span class="s1">&#39;Ext_fact&#39;</span><span class="p">])</span>
+        <span class="p">)</span></div>
+        
+
 
 <div class="viewcode-block" id="DynamixelServo.__getattr__"><a class="viewcode-back" href="../../../roboglia.device.html#roboglia.device.dynamixeldevice.DynamixelServo.__getattr__">[docs]</a>    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Used to create assesors for register values.</span>
@@ -213,7 +233,7 @@
 <span class="sd">            If the attribute requested is not in the list of registers.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s1">&#39;registers&#39;</span> <span class="ow">or</span> <span class="n">attr</span><span class="o">==</span><span class="s1">&#39;values&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;registers&#39;</span><span class="p">,</span> <span class="s1">&#39;values&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;bus&#39;</span><span class="p">]:</span>
             <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">registers</span><span class="p">:</span>
@@ -256,9 +276,8 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">roboglia 0.0.1 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="../device.html" >roboglia.device</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">roboglia 0.0.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

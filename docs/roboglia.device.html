@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>roboglia.device module &#8212; roboglia 0.0.1 documentation</title>
+    <title>roboglia.device module &#8212; roboglia 0.0.2 documentation</title>
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
@@ -26,7 +26,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">roboglia 0.0.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">roboglia 0.0.2 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -85,6 +85,27 @@ dictionary it will return the value of that register.</p>
 </dd>
 <dt class="field-odd">Raises</dt>
 <dd class="field-odd"><p><strong>AttributeError</strong> – If the member name is not in in the list of registers.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.basedevice.BaseDevice.__setattr__">
+<code class="sig-name descname">__setattr__</code><span class="sig-paren">(</span><em class="sig-param">attr</em>, <em class="sig-param">value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboglia/device/basedevice.html#BaseDevice.__setattr__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboglia.device.basedevice.BaseDevice.__setattr__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used for setting values of registers.</p>
+<p>If the provided name is a register the method will try to update
+the value into the <cite>values</cite> dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>attr</strong> (<em>str</em>) – THe name of the register. Normally passed when invoking
+<cite>servo.register</cite>.</p></li>
+<li><p><strong>value</strong> – The external-formatted value to the stored in the register
+according to the format of that particular register.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>KeyError</strong> – If the attribute requested is not in the list of registers.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -336,6 +357,34 @@ according to the format of that particular register.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="method">
+<dt id="roboglia.device.dynamixeldevice.DynamixelServo.getModelPath">
+<code class="sig-name descname">getModelPath</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboglia/device/dynamixeldevice.html#DynamixelServo.getModelPath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelServo.getModelPath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the path to the <cite>.device</cite> documents.</p>
+<p>For BaseDevice it will return a file path located in the directory
+<cite>devices</cite> imediately under the current directory of the Python
+modeule code.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A full document path including the name of the model and the
+externasion <cite>.device</cite>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="roboglia.device.dynamixeldevice.DynamixelServo.processRegister">
+<code class="sig-name descname">processRegister</code><span class="sig-paren">(</span><em class="sig-param">reginfo</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/roboglia/device/dynamixeldevice.html#DynamixelServo.processRegister"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#roboglia.device.dynamixeldevice.DynamixelServo.processRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defualt processing method for setting up a register.</p>
+<p>Does nothhing in the case of a BaseDevice and subclasses need to
+define their own internal format for the registers and this method
+should return a fully initialized register class based on the
+information included in <cite>reginfo</cite>.</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -376,7 +425,7 @@ according to the format of that particular register.</p></li>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">roboglia 0.0.1 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">roboglia 0.0.2 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>roboglia.comm &#8212; roboglia 0.0.1 documentation</title>
+    <title>roboglia.comm &#8212; roboglia 0.0.2 documentation</title>
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     
@@ -26,7 +26,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">roboglia 0.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">roboglia 0.0.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -121,16 +121,29 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span> <span class="o">=</span> <span class="n">protocol</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">baudrate</span> <span class="o">=</span> <span class="n">baudrate</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rs485</span> <span class="o">=</span> <span class="n">rs485</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">portHandler</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">packetHandler</span> <span class="o">=</span> <span class="kc">None</span>
 
+        <span class="c1"># assigned devices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">devices</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="DynamixelBus.open"><a class="viewcode-back" href="../../roboglia.comm.html#roboglia.comm.DynamixelBus.open">[docs]</a>    <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">portHandler</span> <span class="o">=</span> <span class="n">PortHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">portHandler</span><span class="o">.</span><span class="n">setBaudRate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">baudrate</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rs485</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">portHandler</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">rs485_mode</span> <span class="o">=</span> <span class="n">rs485</span><span class="o">.</span><span class="n">RS485Settings</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">portHandler</span><span class="o">.</span><span class="n">openPort</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">packetHandler</span> <span class="o">=</span> <span class="n">PacketHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">)</span>
-        <span class="c1"># assigned devices</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">devices</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">packetHandler</span> <span class="o">=</span> <span class="n">PacketHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DynamixelBus.close"><a class="viewcode-back" href="../../roboglia.comm.html#roboglia.comm.DynamixelBus.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">packetHandler</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">portHandler</span><span class="o">.</span><span class="n">closePort</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">portHandler</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="DynamixelBus.isOpen"><a class="viewcode-back" href="../../roboglia.comm.html#roboglia.comm.DynamixelBus.isOpen">[docs]</a>    <span class="k">def</span> <span class="nf">isOpen</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">packetHandler</span> <span class="o">!=</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="DynamixelBus.ping"><a class="viewcode-back" href="../../roboglia.comm.html#roboglia.comm.DynamixelBus.ping">[docs]</a>    <span class="k">def</span> <span class="nf">ping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dxl_id</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">packetHandler</span><span class="o">.</span><span class="n">ping</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">portHandler</span><span class="p">,</span> <span class="n">dxl_id</span><span class="p">)</span></div>
@@ -204,7 +217,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">roboglia 0.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">roboglia 0.0.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
