@@ -5,6 +5,11 @@ Welcome to roboglia's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   roboglia
+   roboglia.comm
+   roboglia.device
+   roboglia.robot
+   roboglia.utils
 
 
 Indices and tables

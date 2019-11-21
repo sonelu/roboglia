@@ -12,17 +12,66 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =============================================================================
-"""Module defining classes used to manipulate devices.
+"""Module defining the base classes.
 
-A device is a physical robot component that has a state and can send or
-receive information. Example of devices are: actuators, sensors, cameras,
-displays, etc.
-
+The base classes for Bus, Device and Robot are defined here. Specific
+classes for dedicated bus and device processing will be derived from
+these classes.
 """
 
-import os
+
 from roboglia.utils import readIniFile
-from collections import namedtuple
+
+
+class BaseBus():
+    """A base abstract class for handling an arbitrary bus.
+
+    You will normally subclass `BaseBus` and define particular functionality
+    specific to the bus by impementing the methods of the `BaseBus`.
+    This class only stores the name of the bus and the access to the
+    physical object. Your subclass can add additional attributes and 
+    methods to deal with the particularities of the real bus represented.
+
+    Parameters
+    ---------
+    name
+        A string used to identify the bus.
+
+    port
+        A string that indentifies technically the bus. For instance a
+        serial bus would be `/dev/ttyUSB0` while an SPI bus might be
+        represented as `0` only (indicating the SPI 0 bus).
+
+    """
+    def __init__(self, name, port):
+        """Initializes the bus information.
+
+
+        """
+        self.name = name
+        self.port = port
+
+    def open(self):
+        """Opens the actual physical bus. Must be overriden by the
+        subclass.
+
+        """
+        pass
+
+    def close(self):
+        """Closes the actual physical bus. Must be overriden by the
+        subclass.
+
+        """
+        pass
+
+    def isOpen(self):
+        """Returns `True` or `False` if the bus is open. Must be overriden 
+        by the subclass.
+
+        """
+        return False
+
 
 class BaseDevice():
     """A base virtual class for all devices.
@@ -52,7 +101,24 @@ class BaseDevice():
 
     bus : BaseBus or subclass
         It is the bus that the device uses to read or write values when
-        syncronising with the actual device. 
+        syncronising with the actual device.
+
+    Attributes
+    ----------
+    name : str
+        The name of the device.
+
+    bus : object
+        The bus that operates the device.
+
+    registers : dict of objects
+        A dictionary with the imutable data of the device's registries
+        as loaded from the model `.device` file and initialized.
+
+    values : dict of int
+        A dictionary with the current values of the registers. Please note
+        that the synchronisation with the physical device must be 
+        implemented separatelly.
     """
 
     def __init__(self, name, model, bus):
@@ -82,8 +148,7 @@ class BaseDevice():
             A full document path including the name of the model and the
             externasion `.device`.
         """
-
-        return os.path.join(os.path.dirname(__file__), 'devices', model+'.device')
+        pass
 
     def processRegister(self, reginfo):
         """Defualt processing method for setting up a register.
@@ -92,6 +157,18 @@ class BaseDevice():
         define their own internal format for the registers and this method
         should return a fully initialized register class based on the 
         information included in `reginfo`.
+
+        Parameters
+        ----------
+        reginfo : dict
+            A dictionry with the register attributes and values.
+
+        Returns
+        -------
+        object
+            An allocated registered which normally should be a
+            `namedtuple` class with the attributes of the regiter 
+            initialized from the `reginfo` dictionary.
         """
         pass
 
@@ -99,12 +176,25 @@ class BaseDevice():
         """Used to create assesors for register values.
 
         If the provided member is a name that exists in the `registers`
-        dictionary it will return the value of that register.
+        dictionary it will return the value of that register. Subclasses
+        might want to overide this method and implement a more complex
+        one that performs conversions between the internal and external
+        format of the data (see the DynamixelServo class).
 
+        Parameters
+        ----------
+        attr: str
+            The name of the attribute to be evaluated. Please note that
+            this method is called only after the class has already tried
+            to evaluate the `attr` against it's own dictionary of 
+            attributes and will be called only if the class instance does
+            not already have a member with the name as indicated in 
+            `attr`. For instance `device.bus` will return the value from
+            the `bus` member of the class.
         Returns
         -------
         int
-            The content of the register in external format.
+            The content of the register.
 
         Raises
         ------
@@ -146,3 +236,34 @@ class BaseDevice():
                 self.values[attr] = value
             else:
                 raise KeyError("attribute {} does not exist".format(attr))
+
+
+class BaseRobot():
+
+    def __init__(self, ini_file):
+        config = readIniFile(ini_file)
+        self.ports = {}
+        self.devices = {}
+
+        # load the port configuration
+        for portconfig in config['ports']:
+            PortClass = globals()[portconfig['Class']]
+            new_port = PortClass(name=portconfig['Name'],
+                                 port=portconfig['Port'])
+            self.ports[portconfig['Name']] = new_port
+        
+        # load the devices
+        for device in config['devices']:
+            DevClass = globals()[device['Class']]
+            new_device = DevClass(name=device['Name'],
+                                  model=device['Type'],
+                                  bus=self.ports[device['Bus']])
+            new_device.id = device['Id']
+            self.devices[device['Name']] = new_device
+            self.ports[device['Bus']].devices.append(new_device)
+
+    def __getattr__(self, attr):
+        if attr in self.devices:
+            return self.devices[attr]
+        else:
+            raise AttributeError(f'{self.__class__.__name__}.{attr} is invalid.')        

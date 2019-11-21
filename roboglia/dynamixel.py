@@ -1,9 +1,103 @@
-
+# Copyright 2019 Alexandru Sonea. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# =============================================================================
+"""Module defining the Dynamixel specific bus and device.
+"""
+from roboglia.base import BaseBus, BaseDevice
+from dynamixel_sdk import PortHandler, PacketHandler
+from serial import rs485
 import os
 from collections import namedtuple
 
-from roboglia.utils import readIniFile
-from roboglia.device.basedevice import BaseDevice
+
+class DynamixelBus(BaseBus):
+    """A class for handling the communication on a Dynamixel bus.
+
+    Parameters
+    ----------
+
+    name : str
+        Identifier of the bus. Ex. `lower_body`.
+
+    port : str
+        The port name for communication. Ex. `/dev/ttyUB0`.
+
+    protocol : (1.0, 2.0)
+        Could be `1.0` or `2.0` indicating the two possible protocls 
+        supported by the `dynamixel_sdk` communincation.
+
+    baudrate : int
+        Desired baudrate for the port.
+
+    rs485 : bool
+        Set to `True` if you need the port to be configured (software) in
+        RS485 mode.
+    """
+    def __init__(self, name, port, 
+                protocol=2.0, baudrate=1000000, rs485=False):
+        super().__init__(name, port)
+        self.protocol = protocol
+        self.baudrate = baudrate
+        self.rs485 = rs485
+        self.portHandler = None
+        self.packetHandler = None
+
+        # assigned devices
+        self.devices = []
+
+    def open(self):
+        self.portHandler = PortHandler(self.port)
+        self.portHandler.setBaudRate(self.baudrate)
+        if self.rs485:
+            self.portHandler.ser.rs485_mode = rs485.RS485Settings()
+        self.portHandler.openPort()
+
+        self.packetHandler = PacketHandler(self.protocol)
+
+
+    def close(self):
+        self.packetHandler = None
+        self.portHandler.closePort()
+        self.portHandler = None
+
+    def isOpen(self):
+        return self.packetHandler != None
+
+    def ping(self, dxl_id):
+        return self.packetHandler.ping(self.portHandler, dxl_id)
+
+    def broadcastPing(self):
+        return self.packetHandler.broadcastPing(self.portHandler)
+
+    def read1Byte(self, dxl_id, address, value):
+        return self.packetHandler.read1ByteTxRx(self.portHandler, dxl_id, address, value)
+
+    def read2Byte(self, dxl_id, address, value):
+        return self.packetHandler.read2ByteTxRx(self.portHandler, dxl_id, address, value)
+
+    def read4Byte(self, dxl_id, address, value):
+        return self.packetHandler.read4ByteTxRx(self.portHandler, dxl_id, address, value)
+
+    def write1Byte(self, dxl_id, address, value):
+        return self.packetHandler.write1ByteTxRx(self.portHandler, dxl_id, address, value)
+
+    def write2Byte(self, dxl_id, address, value):
+        return self.packetHandler.write2ByteTxRx(self.portHandler, dxl_id, address, value)
+
+    def write4Byte(self, dxl_id, address, value):
+        return self.packetHandler.write4ByteTxRx(self.portHandler, dxl_id, address, value)
+
 
 # defintion of the parameters for a register in a Dynamnixel Servo
 regparams = ['address',     # address of the register
@@ -25,13 +119,9 @@ regparams = ['address',     # address of the register
                             # allways the internal value is typecasted to int() while external
                             # value is typecasted depending on the ext_type
 
+#A convenience representation of a Dynamixel register.
 DynamixelRegister = namedtuple('DynamixelRegister', regparams)
-"""A convenience representation of a Dynamixel register.
 
-Implemented as a `namedtuple` so that the properties can be easily accessed
-via dot notation (ex. `register.name`).
-
-"""
 
 class DynamixelServo(BaseDevice):
     """Convenience class for interacting with a Dynamixel servo.

@@ -11,6 +11,7 @@ Submodules
 
 .. toctree::
 
+   roboglia.base
    roboglia.comm
    roboglia.device
    roboglia.robot
