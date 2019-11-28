@@ -5,7 +5,7 @@ def readIniFile(filename):
     result = {}
     if filename == '':
         return result
-        
+
     with open(filename, 'r') as f:
 
         current_section = None
@@ -44,3 +44,16 @@ def readIniFile(filename):
             result[current_section] = section_content
 
         return result
+
+def processParams(parstring):
+    if parstring == '':
+        return {}
+    if parstring.count(',') + 1  != parstring.count('='):
+        raise ValueError("Params: {} incorrect; the number of commas should be one less than the number of equal signs".format(parstring))
+    # split and strip
+    return dict([item.strip().split('=') for item in parstring.split(',')])
+
+def processList(liststring):
+    if liststring == '':
+        return []
+    return [item.strip() for item in liststring.split(',')]

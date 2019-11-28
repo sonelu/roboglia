@@ -14,11 +14,17 @@
 # =============================================================================
 """Module defining the Dynamixel specific bus and device.
 """
-from roboglia.base import BaseBus, BaseRegister, BaseDevice, BaseRobot
-from dynamixel_sdk import PortHandler, PacketHandler
+from roboglia.base import BaseBus, BaseRegister, BaseDevice, \
+                          BaseRobot, BaseGroup, BaseSync
+from dynamixel_sdk import PortHandler, PacketHandler, \
+                          GroupBulkRead, GroupBulkWrite, \
+                          GroupSyncRead, GroupSyncWrite, \
+                          DXL_LOBYTE, DXL_HIBYTE, DXL_LOWORD, DXL_HIWORD, \
+                          COMM_SUCCESS
 from serial import rs485
 import os
 from collections import namedtuple
+from roboglia.utils import processParams, processList
 
 
 class DynamixelBus(BaseBus):
@@ -45,16 +51,26 @@ class DynamixelBus(BaseBus):
         RS485 mode.
     """
     def __init__(self, name, port, 
-                protocol=2.0, baudrate=1000000, rs485=False):
+                 baudrate=1000000, rs485=False):
         super().__init__(name, port)
-        self.protocol = protocol
         self.baudrate = baudrate
         self.rs485 = rs485
         self.portHandler = None
-        self.packetHandler = None
-
+        self.packetHandler1 = None
+        self.packetHandler2 = None
         # assigned devices
         self.devices = []
+
+    @classmethod
+    def fromInfoDict(cls, businfo, andOpen=True):
+        params=processParams(businfo['Params'])
+        new_bus = cls(name=businfo['Name'],
+                      port=businfo['Port'], 
+                      baudrate=int(params['Baudrate']), 
+                      rs485=(params['RS485']=='Y'))
+        if andOpen:
+            new_bus.open()
+        return new_bus
 
     def open(self):
         self.portHandler = PortHandler(self.port)
@@ -63,54 +79,59 @@ class DynamixelBus(BaseBus):
             self.portHandler.ser.rs485_mode = rs485.RS485Settings()
         self.portHandler.openPort()
 
-        self.packetHandler = PacketHandler(self.protocol)
-
+        self.packetHandler1 = PacketHandler(1.0)
+        self.packetHandler2 = PacketHandler(2.0)
 
     def close(self):
-        self.packetHandler = None
+        self.packetHandler1 = None
+        self.packetHandler2 = None
         self.portHandler.closePort()
         self.portHandler = None
 
     def isOpen(self):
-        return self.packetHandler != None
+        return self.portHandler != None
 
-    def ping(self, dxl_id):
-        return self.packetHandler.ping(self.portHandler, dxl_id)
+    def packetHandler(self, protocol):
+        return self.packetHandler1 if protocol==1.0 else self.packetHandler2
 
-    def broadcastPing(self):
-        return self.packetHandler.broadcastPing(self.portHandler)
+    def ping(self, protocol, dxl_id):
+        return self.packetHandler(protocol).ping(dxl_id)
 
-    def read1Byte(self, dxl_id, address):
-        return self.packetHandler.read1ByteTxRx(self.portHandler, dxl_id, address)
+    def broadcastPing(self, protocol):
+        return self.packetHandler(protocol).broadcastPing(self.portHandler)
 
-    def read2Byte(self, dxl_id, address):
-        return self.packetHandler.read2ByteTxRx(self.portHandler, dxl_id, address)
+    def read1Byte(self, protocol, dxl_id, address):
+        return self.packetHandler(protocol).read1ByteTxRx(self.portHandler, dxl_id, address)
 
-    def read4Byte(self, dxl_id, address):
-        return self.packetHandler.read4ByteTxRx(self.portHandler, dxl_id, address)
+    def read2Byte(self, protocol, dxl_id, address):
+        return self.packetHandler(protocol).read2ByteTxRx(self.portHandler, dxl_id, address)
 
-    def write1Byte(self, dxl_id, address, value):
-        return self.packetHandler.write1ByteTxRx(self.portHandler, dxl_id, address, value)
+    def read4Byte(self, protocol, dxl_id, address):
+        return self.packetHandler(protocol).read4ByteTxRx(self.portHandler, dxl_id, address)
 
-    def write2Byte(self, dxl_id, address, value):
-        return self.packetHandler.write2ByteTxRx(self.portHandler, dxl_id, address, value)
+    def write1Byte(self, protocol, dxl_id, address, value):
+        return self.packetHandler(protocol).write1ByteTxRx(self.portHandler, dxl_id, address, value)
 
-    def write4Byte(self, dxl_id, address, value):
-        return self.packetHandler.write4ByteTxRx(self.portHandler, dxl_id, address, value)
+    def write2Byte(self, protocol, dxl_id, address, value):
+        return self.packetHandler(protocol).write2ByteTxRx(self.portHandler, dxl_id, address, value)
+
+    def write4Byte(self, protocol, dxl_id, address, value):
+        return self.packetHandler(protocol).write4ByteTxRx(self.portHandler, dxl_id, address, value)
 
 
 class DynamixelRegister(BaseRegister):
 
-    def __init__(self, reginfo):
-        super().__init__(reginfo)
-        self.size = int(reginfo['Size'])
-        self.memory = reginfo['Memory']
-        self.min = int(reginfo['Min'])
-        self.max = int(reginfo['Max'])
-        self.dir = reginfo['Dir']
-        self.ext_type = reginfo['Ext_type']
-        self.ext_off = float(reginfo['Ext_off'])
-        self.ext_fact = float(reginfo['Ext_fact'])
+    def __init__(self, device, name, address, access, sync, size, memory, 
+                 min, max, dir, ext_type, ext_off, ext_fact):
+        super().__init__(device, name, address, access, sync)
+        self.size = size
+        self.memory = memory
+        self.min = min
+        self.max = max
+        self.dir = dir
+        self.ext_type = ext_type
+        self.ext_off = ext_off
+        self.ext_fact = ext_fact
 
     def valueToExternal(self, value):
         intval = self.int_value
@@ -119,7 +140,7 @@ class DynamixelRegister(BaseRegister):
             sign = -1
         else:
             sign = 1
-        external = (intval - self.ext_off ) * self.ext_fact * sign
+        external = (intval / self.ext_fact - self.ext_off ) * sign
         if self.ext_type == 'I':
             return int(external)
         elif self.ext_type == 'B':
@@ -128,15 +149,42 @@ class DynamixelRegister(BaseRegister):
             return external
 
     def valueToInternal(self, value):
-        if self.access == 'R':
-            raise ValueError("DynamixelRegister: {} register is read-only")
-        internal = round(value / self.ext_fact + self.ext_off)
+        internal = round((value + self.ext_off) * self.ext_fact)
         if internal < self.min or internal > self.max:
-            raise ValueError("DynamixelRegister: internal value {} outside [{}:{}] range".format(internal, self.min, self.max))
+            raise ValueError("DynamixelRegister internal value {} outside [{}..{}] range".format(internal, self.min, self.max))
         return internal
 
+    def read(self):
+        if self.size == 1:
+            function = self.device.bus.read1Byte
+        elif self.size == 2:
+            function = self.device.bus.read2Byte
+        else:
+            function = self.device.bus.read4Byte
+        rxpacket, result, error = function(self.device.protocol,
+                                       self.device.dev_id,
+                                       self.address)
+        if result != 0 or error !=0:
+            return False
+        else:
+            self.int_value = int(rxpacket)
+            return True
 
-class DynamixelServo(BaseDevice):
+    def write(self):
+        if self.size == 1:
+            function = self.device.bus.write1Byte
+        elif self.size == 2:
+            function = self.device.bus.write2Byte
+        else:
+            function = self.device.bus.write4Byte
+        result, error = function(self.device.protocol,
+                             self.device.dev_id, 
+                             self.address, 
+                             self.int_value)
+        return result == 0 and error == 0
+
+
+class DynamixelDevice(BaseDevice):
     """Convenience class for interacting with a Dynamixel servo.
 
     DynamixelServo represents the structure of the registers defined for 
@@ -210,53 +258,187 @@ class DynamixelServo(BaseDevice):
         values changed in registers that are not included in a sync loop 
         will not reflect the real values existing in the physical servo. 
 
-    """    
+    """
+    def __init__(self, name, model, bus, dev_id, protocol):
+        super().__init__(name, model, bus, dev_id)
+        self.protocol=protocol
+
+    @classmethod
+    def fromInfoDict(cls, devinfo, robot):
+        bus = robot.buses[devinfo['Bus']]
+        params = processParams(devinfo['Params'])
+        return cls(name=devinfo['Name'],
+                   model=devinfo['Model'],
+                   bus=bus,
+                   dev_id=int(devinfo['Id']),
+                   protocol=params['Protocol'])
+
     def getModelPath(self, model):
         return os.path.join(os.path.dirname(__file__), 'devices/dynamixel', model+'.device')
 
     def initRegister(self, reginfo):
-        return DynamixelRegister(reginfo)
+        return DynamixelRegister(device=self,
+                                 name=reginfo['Name'],
+                                 address=int(reginfo['Address']),
+                                 access=reginfo['Access'],
+                                 sync=reginfo['Sync'],
+                                 size=int(reginfo['Size']),
+                                 memory=reginfo['Memory'],
+                                 min=int(reginfo['Min']),
+                                 max=int(reginfo['Max']),
+                                 dir=reginfo['Dir'],
+                                 ext_type=reginfo['Ext_type'],
+                                 ext_off=float(reginfo['Ext_off']),
+                                 ext_fact=float(reginfo['Ext_fact']))
 
-    def pullRegister(self, regname):
-        if super().pullRegister(regname) == False:
-            # some basic processing did not work
-            return False
-        else:
-            reg = self.registers[regname]
-            # pick the correct read method
-            if reg.size == 1:
-                function = self.bus.read1ByteTxRx
-            if reg.size == 2:
-                function = self.bus.read2ByteTxRx
-            if reg.size == 4:
-                function = self.bus.read4ByteTxRx
-            # execute the method  
-            rxpacket, result, _ = function(reg.dev_id, reg.address)
-            if result != 0:
-                return False
-            else:
-                reg.int_value = rxpacket
-                return True
 
-    def pushRegister(self, regname):
-        if super().pushRegister(regname) == False:
-            # some basic processing did not work
-            return False
-        else:
-            reg = self.registers[regname]
-            # pick the correct read method
+
+class DynamixelGroup(BaseGroup):
+
+    def __init__(self, devlist, subgrouplist):
+        super().__init__(devlist, subgrouplist)
+        if len(self.items) > 0:
+            protocol = self.items[0].protocol
+            for device in self.items:
+                if device.protocol != protocol:
+                    raise ValueError("groups of dynamixel devices must have the same protocol")
+
+
+class DynamixelSync(BaseSync):
+
+    def __init__(self, devlist, regnamelist):
+        # save the details
+        self.devlist = devlist
+        self.regnamelist = regnamelist
+        self.port = devlist[0].bus.portHandler
+        self.ph = devlist[0].bus.packetHandler(devlist[0].protocol)
+        firstReg = getattr(devlist[0], regnamelist[0])
+        lastReg = getattr(devlist[0], regnamelist[-1])
+        self.addrStart = firstReg.address
+        self.addrLen = lastReg.address + lastReg.size - firstReg.address
+
+    @classmethod
+    def fromInfoDict(cls, syncinfo, robot):
+        identifiers = processList(syncinfo['Devices'])
+        devices = robot.devicesFromMixedList(identifiers)
+        bus = robot.buses[syncinfo['Bus']]
+        # filter devices for the sync's bus
+        selectedDevices = [device for device in devices if device.bus==bus]
+        if len(selectedDevices) == 0:
+            raise ValueError('Device list is empty for sync: {}'.format(syncinfo['Name']))
+        # check if all devices have the same protocol
+        protocol = selectedDevices[0].protocol
+        for device in selectedDevices:
+            if device.protocol != protocol:
+                raise ValueError('Devices in sync {} must have the same protocol'.format(syncinfo['Name']))
+        regnames = processList(syncinfo['Registers'])
+        return cls(selectedDevices, regnames)
+
+    def makeBuffer(self, device, regnamelist):
+        buffer = bytearray(self.addrLen)
+        for regname in regnamelist:
+            reg = getattr(device, regname)
             if reg.size == 1:
-                function = self.bus.write1ByteTxRx
-            if reg.size == 2:
-                function = self.bus.write2ByteTxRx
-            if reg.size == 4:
-                function = self.bus.write4ByteTxRx
-            # execute the method   
-            result, _ = function(reg.dev_id, reg.address, reg.int_value)
-            if result != 0:
-                return False
-            else:
-                return True
+                buffer[reg.address-self.addrStart] = reg.int_value
+            elif reg.size == 2:
+                buffer[reg.address-self.addrStart] = DXL_LOBYTE(reg.int_value)
+                buffer[reg.address-self.addrStart+1] = DXL_HIWORD(reg.int_value)
+            elif reg.size == 4:
+                buffer[reg.address-self.addrStart] = DXL_LOWORD(DXL_LOBYTE(reg.int_value))
+                buffer[reg.address-self.addrStart+1] = DXL_LOWORD(DXL_HIWORD(reg.int_value))
+                buffer[reg.address-self.addrStart+2] = DXL_HIWORD(DXL_LOBYTE(reg.int_value))
+                buffer[reg.address-self.addrStart+3] = DXL_HIWORD(DXL_HIWORD(reg.int_value))
+        return buffer
+
+
+class DynamixelBulkRead(DynamixelSync):
+
+    def __init__(self, devlist, regnamelist):
+        super().__init__(devlist, regnamelist)
+        # allocate GroupBulkRead
+        self.gbr = GroupBulkRead(self.port, self.ph)
+        for device in devlist:
+            res = self.gbr.addParam(device.dev_id, self.addrStart, self.addrLen)
+            if res != True:
+                raise ValueError("addParam failed for BulkRead for ID: {}".format(device.dev_id))
+
+    def run(self):
+        res = self.gbr.txRxPacket()
+        if res != COMM_SUCCESS:
+            raise IOError("BulkRead txRxPacket() failed")
+        for device in self.devlist:
+            for regname in self.regnamelist:
+                reg = getattr(device, regname)
+                if self.gbr.isAvailable(device.dev_id, reg.address, reg.size):
+                    reg.int_value = self.gbr.getData(device.dev_id, reg.address, reg.size)
+                else:
+                    raise IOError("BulkRead getData failed for ID {} and register {}".format(device.dev_id, regname))
+
+
+class DynamixelBulkWrite(DynamixelSync):
+
+    def __init__(self, devlist, regnamelist):
+        super().__init__(devlist, regnamelist)
+        if devlist[0].protocol == 1.0:
+            raise ValueError("BulkWrite not supported for protocol 1.0; use SyncWrite instead")
+        # allocate GroupBulkWrite
+        self.gbw = GroupBulkWrite(self.port, self.ph)
+
+    def run(self):
+        for device in self.devlist:
+            buffer = self.makeBuffer(device, self.regnamelist)
+            res = self.gbw.addParam(device.dev_id, self.addrStart, self.addrLen, buffer)
+            if res != True:
+                raise ValueError("addParam failed for BulkWrite for ID: {}".format(device.dev_id))
+        res = self.gbw.txPacket()
+        if res != COMM_SUCCESS:
+            raise IOError("BulkWrite failed in txPacket()")
+        self.gbw.clearParam()
+
+
+class DynamixelSyncRead(DynamixelSync):
+
+    def __init__(self, devlist, regnamelist):
+        super().__init__(devlist, regnamelist)
+        if devlist[0].protocol == 1.0:
+            raise ValueError("SyncRead not supported for protocol 1.0; use BulkRead instead")
+        # allocate GroupSyncRead
+        self.gsr = GroupSyncRead(self.port, self.ph, self.addrStart, self.addrLen)
+        for device in devlist:
+            res = self.gsr.addParam(device.dev_id)
+            if res != True:
+                raise ValueError("addParam failed for SyncRead for ID: {}".format(device.dev_id))
+
+    def run(self):
+        res = self.gsr.txRxPacket()
+        if res != COMM_SUCCESS:
+            raise IOError("BulkRead txRxPacket() failed")
+        for device in self.devlist:
+            for regname in self.regnamelist:
+                reg = getattr(device, regname)
+                if self.gsr.isAvailable(device.dev_id, reg.address, reg.size):
+                    reg.int_value = self.gsr.getData(device.dev_id, reg.address, reg.size)
+                else:
+                    raise IOError("SyncRead getData failed for ID {} and register {}".format(device.dev_id, regname))
+
+
+class DynamixelSyncWrite(DynamixelSync):
+
+    def __init__(self, devlist, regnamelist):
+        super().__init__(devlist, regnamelist)
+        # allocate GroupSyncWrite
+        self.gsw = GroupSyncWrite(self.port, self.ph, self.addrStart, self.addrLen)
+
+    def run(self):
+        for device in self.devlist:
+            buffer = self.makeBuffer(device, self.regnamelist)
+            res = self.gsw.addParam(device.dev_id, buffer)
+            if res != True:
+                raise ValueError("addParam failed for SyncWrite for ID: {}".format(device.dev_id))
+        res = self.gsw.txPacket()
+        if res != COMM_SUCCESS:
+            raise IOError("SyncWrite failed in txPacket()")
+        self.gsw.clearParam()
 
 
 class DynamixelRobot(BaseRobot):
@@ -269,23 +451,32 @@ class DynamixelRobot(BaseRobot):
     are using (including your own custom subclasses of buses and devices).
     """
 
-    def processBus(self, businfo):
+    def initBus(self, businfo, robot):
         if businfo['Class'] == 'DynamixelBus':
-            new_bus = DynamixelBus(businfo['Name'], 
-                                businfo['Port'], 
-                                float(businfo['Protocol']), 
-                                int(businfo['Baudrate']), 
-                                businfo['RS485']=='Y')
-            #new_bus.open()
-            return new_bus
+            return DynamixelBus.fromInfoDict(businfo)
         else:
-            return super().processBus(businfo)
+            return super().initBus(businfo, robot)
 
-
-    def processDevice(self, devinfo, bus):
-        if devinfo['Class'] == 'DynamixelServo':
-            return DynamixelServo(model=devinfo['Model'], 
-                                  bus=bus, 
-                                  dev_id=int(devinfo['Id']))
+    def initDevice(self, devinfo, robot):
+        if devinfo['Class'] == 'DynamixelDevice':
+            return DynamixelDevice.fromInfoDict(devinfo, robot)
         else:
-            return super().processDevice(devinfo, bus)
+            return super().initDevice(devinfo, robot)
+
+    def initGroup(self, groupinfo, robot):
+        if groupinfo['Class'] == 'DynamixelGroup':
+            return DynamixelGroup.fromInfoDict(groupinfo, robot)
+        else:
+            return super().initGroup(groupinfo, robot)
+
+    def initSync(self, syncinfo, robot):
+        if syncinfo['Class'] == 'DynamixelBulkRead':
+            return DynamixelBulkRead.fromInfoDict(syncinfo, robot)
+        elif syncinfo['Class'] == 'DynamixelBulkWrite':
+            return DynamixelBulkWrite.fromInfoDict(syncinfo, robot)
+        elif syncinfo['Class'] == 'DynamixelSyncRead':
+            return DynamixelSyncRead.fromInfoDict(syncinfo, robot)
+        elif syncinfo['Class'] == 'DynamixelSyncWrite':
+            return DynamixelSyncWrite.fromInfoDict(syncinfo, robot)
+        else:
+            return super().initSync(syncinfo, robot)
