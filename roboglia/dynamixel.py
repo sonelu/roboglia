@@ -14,7 +14,7 @@
 # =============================================================================
 """Module defining the Dynamixel specific bus and device.
 """
-from roboglia.base import BaseBus, BaseDevice
+from roboglia.base import BaseBus, BaseRegister, BaseDevice, BaseRobot
 from dynamixel_sdk import PortHandler, PacketHandler
 from serial import rs485
 import os
@@ -80,14 +80,14 @@ class DynamixelBus(BaseBus):
     def broadcastPing(self):
         return self.packetHandler.broadcastPing(self.portHandler)
 
-    def read1Byte(self, dxl_id, address, value):
-        return self.packetHandler.read1ByteTxRx(self.portHandler, dxl_id, address, value)
+    def read1Byte(self, dxl_id, address):
+        return self.packetHandler.read1ByteTxRx(self.portHandler, dxl_id, address)
 
-    def read2Byte(self, dxl_id, address, value):
-        return self.packetHandler.read2ByteTxRx(self.portHandler, dxl_id, address, value)
+    def read2Byte(self, dxl_id, address):
+        return self.packetHandler.read2ByteTxRx(self.portHandler, dxl_id, address)
 
-    def read4Byte(self, dxl_id, address, value):
-        return self.packetHandler.read4ByteTxRx(self.portHandler, dxl_id, address, value)
+    def read4Byte(self, dxl_id, address):
+        return self.packetHandler.read4ByteTxRx(self.portHandler, dxl_id, address)
 
     def write1Byte(self, dxl_id, address, value):
         return self.packetHandler.write1ByteTxRx(self.portHandler, dxl_id, address, value)
@@ -99,28 +99,41 @@ class DynamixelBus(BaseBus):
         return self.packetHandler.write4ByteTxRx(self.portHandler, dxl_id, address, value)
 
 
-# defintion of the parameters for a register in a Dynamnixel Servo
-regparams = ['address',     # address of the register
-             'size',        # size of register in bytes (typical 1,2 or 4)
-             'name',        # name of the register; must not use whitespaces
-             'description', # a long description for the register; free text
-             'access',      # 'R' or 'RW' indicating read-only or read-write
-             'memory',      # 'EEPROM' or 'RAM'; where is located
-             'min',         # minimum value in internal format
-             'max',         # maximum value in internal format
-             'dir',         # register has an extra bit for direction
-             'ext_type',    # external format of the register value ; 
-                            # 'I' for integer, 'F' for float, 'B' for bool
-             'ext_off',     # offset for converting from internal to external format
-             'ext_fact']    # factor for converting from internal to external format
-                            # converting the data is done as:
-                            #     external = (internal - offset) * factor
-                            #     internal = (external / factor + offset)
-                            # allways the internal value is typecasted to int() while external
-                            # value is typecasted depending on the ext_type
+class DynamixelRegister(BaseRegister):
 
-#A convenience representation of a Dynamixel register.
-DynamixelRegister = namedtuple('DynamixelRegister', regparams)
+    def __init__(self, reginfo):
+        super().__init__(reginfo)
+        self.size = int(reginfo['Size'])
+        self.memory = reginfo['Memory']
+        self.min = int(reginfo['Min'])
+        self.max = int(reginfo['Max'])
+        self.dir = reginfo['Dir']
+        self.ext_type = reginfo['Ext_type']
+        self.ext_off = float(reginfo['Ext_off'])
+        self.ext_fact = float(reginfo['Ext_fact'])
+
+    def valueToExternal(self, value):
+        intval = self.int_value
+        if self.dir == 'Y' and intval > self.max:
+            intval -= (self.max+1)
+            sign = -1
+        else:
+            sign = 1
+        external = (intval - self.ext_off ) * self.ext_fact * sign
+        if self.ext_type == 'I':
+            return int(external)
+        elif self.ext_type == 'B':
+            return external > 0
+        else:
+            return external
+
+    def valueToInternal(self, value):
+        if self.access == 'R':
+            raise ValueError("DynamixelRegister: {} register is read-only")
+        internal = round(value / self.ext_fact + self.ext_off)
+        if internal < self.min or internal > self.max:
+            raise ValueError("DynamixelRegister: internal value {} outside [{}:{}] range".format(internal, self.min, self.max))
+        return internal
 
 
 class DynamixelServo(BaseDevice):
@@ -197,103 +210,82 @@ class DynamixelServo(BaseDevice):
         values changed in registers that are not included in a sync loop 
         will not reflect the real values existing in the physical servo. 
 
-    """
-    
+    """    
     def getModelPath(self, model):
         return os.path.join(os.path.dirname(__file__), 'devices/dynamixel', model+'.device')
 
-    def processRegister(self, reginfo):
-        return DynamixelRegister(
-            address = int(reginfo['Address']),
-            size = int(reginfo['Size']),
-            name = reginfo['Name'],
-            description = reginfo['Description'],
-            access = reginfo['Access'],
-            memory = reginfo['Memory'],
-            min = int(reginfo['Min']),
-            max = int(reginfo['Max']),
-            dir = reginfo['Dir'],
-            ext_type = reginfo['Ext_type'],
-            ext_off = float(reginfo['Ext_off']),
-            ext_fact = float(reginfo['Ext_fact'])
-        )
-        
+    def initRegister(self, reginfo):
+        return DynamixelRegister(reginfo)
 
-
-    def __getattr__(self, attr):
-        """Used to create assesors for register values.
-
-        If the provided member is a name that exists in the `registers`
-        dictionary it will return the value of that register.
-
-        It performs a conversion from internal format (as storred in
-        `values` dict) to output format (as indicated by the `ext_type`)
-        using the offset (`ext_off`) and the factor (`ext_fact`).
-
-        Returns
-        -------
-        int, float or bool
-            The content of the register in external format.
-
-        Raises
-        ------
-        AttributeError 
-            If the member name is not in in the list of registers.
-
-        """
-        if attr in self.registers:
-            reg = self.registers[attr]
-            val = self.values[attr]
-            if reg.dir == 'Y' and val > reg.max:
-                val -= (reg.max+1)
-                sign = -1
-            else:
-                sign = 1
-            external = (val - reg.ext_off ) * reg.ext_fact * sign
-            if reg.ext_type == 'I':
-                return int(external)
-            elif reg.ext_type == 'B':
-                return external > 0
-            else:
-                return external
+    def pullRegister(self, regname):
+        if super().pullRegister(regname) == False:
+            # some basic processing did not work
+            return False
         else:
-            raise AttributeError(f'{self.__class__.__name__}.{attr} is invalid.')
-
-    def __setattr__(self, attr, value):
-        """Used for setting values of registers.
-
-        If the provided name is a register the method will try to update
-        the value into the `values` dictionary by inviking the conversion
-        external > internal::
-
-            internal = external / factor + offset
-        
-        Parameters
-        ----------
-        attr : str
-            THe name of the register. Normally passed when invoking
-            `servo.register`.
-
-        value : (int, float, bool)
-            The external-formatted value to the stored in the register
-            according to the format of that particular register.
-
-        Raises
-        ------
-        KeyError
-            If the attribute requested is not in the list of registers.
-        """
-
-        if attr in ['registers', 'values', 'name', 'bus']:
-            super().__setattr__(attr, value)
-        else:
-            if attr in self.registers:
-                reg = self.registers[attr]
-                if reg.access == 'R':
-                    raise ValueError("attribute {} of DynamixelServo is read-only".format(attr))
-                internal = round(float(value) / reg.ext_fact + reg.ext_off)
-                if internal > reg.max or internal < reg.min:
-                    raise ValueError("value {} outside allowed domain for attribute {}".format(value, attr))
-                self.values[attr] = internal
+            reg = self.registers[regname]
+            # pick the correct read method
+            if reg.size == 1:
+                function = self.bus.read1ByteTxRx
+            if reg.size == 2:
+                function = self.bus.read2ByteTxRx
+            if reg.size == 4:
+                function = self.bus.read4ByteTxRx
+            # execute the method  
+            rxpacket, result, _ = function(reg.dev_id, reg.address)
+            if result != 0:
+                return False
             else:
-                raise KeyError("attribute {} does not exist".format(attr))
+                reg.int_value = rxpacket
+                return True
+
+    def pushRegister(self, regname):
+        if super().pushRegister(regname) == False:
+            # some basic processing did not work
+            return False
+        else:
+            reg = self.registers[regname]
+            # pick the correct read method
+            if reg.size == 1:
+                function = self.bus.write1ByteTxRx
+            if reg.size == 2:
+                function = self.bus.write2ByteTxRx
+            if reg.size == 4:
+                function = self.bus.write4ByteTxRx
+            # execute the method   
+            result, _ = function(reg.dev_id, reg.address, reg.int_value)
+            if result != 0:
+                return False
+            else:
+                return True
+
+
+class DynamixelRobot(BaseRobot):
+    """This is a convenience class to be used for robots that only use
+    Dynamixel servos.
+
+    In principle complex robots use other types of buses and devices 
+    and you should subclass `BaseRobot` and implement your own methods
+    for initializing Bus and Device object, based on the classes you
+    are using (including your own custom subclasses of buses and devices).
+    """
+
+    def processBus(self, businfo):
+        if businfo['Class'] == 'DynamixelBus':
+            new_bus = DynamixelBus(businfo['Name'], 
+                                businfo['Port'], 
+                                float(businfo['Protocol']), 
+                                int(businfo['Baudrate']), 
+                                businfo['RS485']=='Y')
+            #new_bus.open()
+            return new_bus
+        else:
+            return super().processBus(businfo)
+
+
+    def processDevice(self, devinfo, bus):
+        if devinfo['Class'] == 'DynamixelServo':
+            return DynamixelServo(model=devinfo['Model'], 
+                                  bus=bus, 
+                                  dev_id=int(devinfo['Id']))
+        else:
+            return super().processDevice(devinfo, bus)

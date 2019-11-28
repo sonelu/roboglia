@@ -2,8 +2,12 @@
 
 def readIniFile(filename):
 
+    result = {}
+    if filename == '':
+        return result
+        
     with open(filename, 'r') as f:
-        result = {}
+
         current_section = None
         section_content = []
         content_size = 0

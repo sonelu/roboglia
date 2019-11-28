@@ -73,6 +73,29 @@ class BaseBus():
         return False
 
 
+class BaseRegister():
+    
+    def __init__(self, reginfo):
+        self.address = int(reginfo['Address'])
+        self.access = reginfo['Access']
+        self.sync = reginfo['Sync']
+        self.int_value = 0
+
+    @property
+    def value(self):
+        return self.valueToExternal(self.int_value)
+
+    @value.setter
+    def value(self, value):
+        self.int_value = self.valueToInternal(value)
+
+    def valueToExternal(self, value):
+        return value
+
+    def valueToInternal(self, value):
+        return int(value)
+
+
 class BaseDevice():
     """A base virtual class for all devices.
 
@@ -120,20 +143,17 @@ class BaseDevice():
         that the synchronisation with the physical device must be 
         implemented separatelly.
     """
-
-    def __init__(self, name, model, bus):
-        self.name = name
+    def __init__(self, model, bus, dev_id):
         self.bus = bus
+        self.dev_id = dev_id
         self.registers = {}
-        self.values = {}
         model_file = self.getModelPath(model)
         model_ini = readIniFile(model_file)
         for reginfo in model_ini['registers']:
-            new_register = self.processRegister(reginfo)
-            reg_name = reginfo['Name']
-            self.registers[reg_name] = new_register
-            self.values[reg_name] = 0
-        
+            new_register = self.initRegister(reginfo)
+            self.__dict__[reginfo['Name']] = new_register
+            self.registers[reginfo['Name']] = new_register
+
 
     def getModelPath(self, model):
         """Builds the path to the `.device` documents.
@@ -150,11 +170,11 @@ class BaseDevice():
         """
         pass
 
-    def processRegister(self, reginfo):
-        """Defualt processing method for setting up a register.
+    def initRegister(self, reginfo):
+        """Default processing method for setting up a register.
 
         Does nothhing in the case of a BaseDevice and subclasses need to
-        define their own internal format for the registers and this method
+        define their own internal format for the registers. This method
         should return a fully initialized register class based on the 
         information included in `reginfo`.
 
@@ -170,97 +190,85 @@ class BaseDevice():
             `namedtuple` class with the attributes of the regiter 
             initialized from the `reginfo` dictionary.
         """
-        pass
+        return BaseRegister(reginfo)
 
-    def __getattr__(self, attr):
-        """Used to create assesors for register values.
-
-        If the provided member is a name that exists in the `registers`
-        dictionary it will return the value of that register. Subclasses
-        might want to overide this method and implement a more complex
-        one that performs conversions between the internal and external
-        format of the data (see the DynamixelServo class).
-
-        Parameters
-        ----------
-        attr: str
-            The name of the attribute to be evaluated. Please note that
-            this method is called only after the class has already tried
-            to evaluate the `attr` against it's own dictionary of 
-            attributes and will be called only if the class instance does
-            not already have a member with the name as indicated in 
-            `attr`. For instance `device.bus` will return the value from
-            the `bus` member of the class.
-        Returns
-        -------
-        int
-            The content of the register.
-
-        Raises
-        ------
-        AttributeError 
-            If the member name is not in in the list of registers.
-
-        """   
-        if attr in self.registers:
-            return self.values[attr]
+    def pullRegister(self, regname):
+        if regname not in self.registers:
+            raise KeyError("Register {} does not exist")
         else:
-            raise AttributeError(f'{self.__class__.__name__}.{attr} is invalid.')
+            return True
 
-    def __setattr__(self, attr, value):
-        """Used for setting values of registers.
-
-        If the provided name is a register the method will try to update
-        the value into the `values` dictionary.
-
-        Parameters
-        ----------
-        attr : str
-            THe name of the register. Normally passed when invoking
-            `servo.register`.
-
-        value 
-            The external-formatted value to the stored in the register
-            according to the format of that particular register.
-
-        Raises
-        ------
-        KeyError
-            If the attribute requested is not in the list of registers.
-        """
-
-        if attr in ['registers', 'values', 'name', 'bus']:
-            super().__setattr__(attr, value)
+    def pushRegister(self, regname):
+        if regname not in self.registers:
+            raise KeyError("Register {} does not exist")
+        reg = self.registers[regname]
+        if reg.access == 'R':
+            raise ValueError("Register {} is read-only. Cannot pushRegister()")
         else:
-            if attr in self.registers:
-                self.values[attr] = value
-            else:
-                raise KeyError("attribute {} does not exist".format(attr))
+            return True
+
+    def pullRegisterList(self, reglist=[]):
+        result = []
+        for register in reglist:
+            result.append(self.pullRegister(register))
+        return result
+
+    def pushRegisterList(self, reglist=[]):
+        result = []
+        for register in reglist:
+            result.append(self.pushRegister(register))
+        return result
+
+    def pullAllRegisters(self):
+        result = []
+        for register in self.registers.keys():
+            result.append(self.pullRegister(register))
+        return result
+
+    def pushAllRegisters(self):
+        result = []
+        for register in self.registers.keys():
+            result.append(self.pushRegister(register))
+        return result
 
 
 class BaseRobot():
 
     def __init__(self, ini_file):
         config = readIniFile(ini_file)
-        self.ports = {}
+        self.buses = {}
         self.devices = {}
 
-        # load the port configuration
-        for portconfig in config['ports']:
-            PortClass = globals()[portconfig['Class']]
-            new_port = PortClass(name=portconfig['Name'],
-                                 port=portconfig['Port'])
-            self.ports[portconfig['Name']] = new_port
+        # load the bus configuration
+        for businfo in config['buses']:
+            new_bus = self.processBus(businfo)
+            self.buses[businfo['Name']] = new_bus
         
         # load the devices
         for device in config['devices']:
-            DevClass = globals()[device['Class']]
-            new_device = DevClass(name=device['Name'],
-                                  model=device['Type'],
-                                  bus=self.ports[device['Bus']])
-            new_device.id = device['Id']
+            new_device = self.processDevice(device, self.buses[device['Bus']])
+
             self.devices[device['Name']] = new_device
-            self.ports[device['Bus']].devices.append(new_device)
+            self.buses[device['Bus']].devices.append(new_device)
+
+
+    def processBus(self, businfo):
+        """BaseRobot only knows BaseBus and this default method
+        will allocate one. Subclasses should override this method and
+        implement allocation for all the device classes they use.
+        """
+        if businfo['Class'] == 'BaseBus':
+            return BaseBus(businfo['Name'], businfo['Port'])
+        else:
+            raise KeyError('Unknown bus class name: {}'.format(businfo['Class']))
+
+
+    def processDevice(self, devinfo, bus):
+        if devinfo['Class'] == 'BaseDevice':
+            return BaseDevice(devinfo['Model'], bus, devinfo['Id'])
+        else:
+            raise KeyError('Unknown device class name {}'.format(devinfo['Class']))
+
 
     def __getattr__(self, attr):
         if attr in self.devices:
