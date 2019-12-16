@@ -19,66 +19,47 @@ classes for dedicated bus and device processing will be derived from
 these classes.
 """
 
-from roboglia.utils import readIniFile, processList
+from roboglia.utils import readIniFile, processList, processParams
 from collections import deque
 
 
-class BaseBus():
+class BaseNamedOwed():
+    """A base class for all objects that have a name and a parent.
+    """
+    def __init__(self, parent, dictInfo):
+        self.name = dictInfo['Name']
+        self.parent = parent
+
+
+class BaseBus(BaseNamedOwed):
     """A base abstract class for handling an arbitrary bus.
 
     You will normally subclass ``BaseBus`` and define particular functionality
-    specific to the bus by impementing the methods of the ``BaseBus``.
-    This class only stores the name of the bus and the access to the
-    physical object. Your subclass can add additional attributes and 
+    specific to the bus by implementing the methods of the ``BaseBus``.
+    This class stores the name of the bus and the access to the
+    physical object as well as a ``deque`` for postponed writes to the
+    actual bus. Your subclass can add additional attributes and 
     methods to deal with the particularities of the real bus represented.
 
     Parameters
     ----------
-    name : str
-        Identifucation of the bus. Should not contain whitespaces.
+    parent : object
+        The owner of the bus, usually the robot.
 
-    port : str
-        A string that indentifies technically the bus. For instance a
-        serial bus would be `/dev/ttyUSB0` while an SPI bus might be
-        represented as `0` only (indicating the SPI 0 bus).
-
+    dictInfo : dict
+        The data in the dictionary is usually taken from an INI file and
+        should include at least (for this class) the keys 'Name' and 'Port'.
+        
     Attributes
     ----------
     writeQueue : collections.deque
         A queue that holds deferred updates to devices' registries. See
-        more in the description of `BaseDevice`. 
+        more in the description of ``BaseDevice``. 
     """
-    def __init__(self, name, port):
-        """Initializes a ``BaseBus``.
-
-        Parameters
-        ----------
-        name : str
-            The name of the bus. Must not contain whitespaces.
-
-        port : str
-            The port used by the bus.
-        """
-        self.name = name
-        self.port = port
+    def __init__(self, parent, dictInfo):
+        super().__init__(parent, dictInfo)
+        self.port = dictInfo['Port']
         self.writeQueue = deque()
-
-    @classmethod
-    def fromInfoDict(cls, businfo):
-        """Instantiate a ``BaseBus`` from a dictionary.
-
-        Parameters
-        ----------
-        businfo : dict
-            A dictionary with information about the bus. Must
-            have at least the following 2 keys:
-
-            * `Name` : the name of the bus
-            * `Port` : the port for the bus
-
-            All values are expected to be strings.
-        """
-        return BaseBus(businfo['Name'], businfo['Port'])
 
     def open(self):
         """Opens the actual physical bus. Must be overriden by the
@@ -104,13 +85,12 @@ class BaseBus():
         Parameters
         ----------
         register : BaseRegister or subclass
-            Register that is queed for deferred write. 
+            Register that is queued for deferred write. 
         """
         self.writeQueue.append(register)
-        print('added to queue; len={}'.format(len(self.writeQueue)))
 
     def writeQueueExec(self):
-        """Invokes the register's `write()` method to syncronize the content
+        """Invokes the register's ``write()`` method to syncronize the content
         of a register for all the requests in the ``writeQueue``. The robot
         is responsible for setting up a thread that calls regularly this 
         method for each bus owned in order to flush all queued requests
@@ -122,128 +102,42 @@ class BaseBus():
            of devices (ex. Dynamixel servos) there are more performant methods
            like using SyncWrite or BulkWrite that perform the write in a
            single communication packet for a series of devices and registers.
-
         """
         while len(self.writeQueue) > 0:
             register = self.writeQueue.popleft()
             register.write()
 
 
-class BaseRegister():
+class BaseRegister(BaseNamedOwed):
     """A minimal representation of a device register.
-
-    Parameters
-    ----------
-    device : BaseDevice or subclass
-        The owner of the register
-
-    name : str
-        The name of the register. Must not contain whitespaces.
-
-    address : int
-        How the register is phisically addressed.
-
-    access : str
-        Should be 'R' for read-only registers and 'RW' for writtable
-        registers. You will not be able to set values of a 'R' register.
-
-    sync : str
-        The way the register is syncronised with the real device. Possible
-        values are: 
-            * 'D' - direct syncronisation: a read or write of the register 
-              will trigger a low level hardware read or write and produce 
-              the value of from the actual device
-            * 'Q' - queued synchronisation: applies only for a write to a
-              register; it will queue the request to the bus's writeQueue
-              and it is the responsibility of the bus owner (ex. the robot)
-              to schedule a thread that will periodically flush the queue.
-              Subsequent reads of the register's value will reflect the
-              requested write value and not the actual value until the 
-              queue request is processed.
-            * 'B' - batch synchronisation; this assumes that the bus owner
-              (ex. the robot) schedules a period thread to synchronize the
-              information of this register (for efficency purposes). As a
-              result result the values in these registers might be different
-              from the actual values in the device until such a refresh
-              thread completes.
-
-    Attributes
-    ----------
-    device : BaseDevice or subclass
-        Stores the owner of the register
-
-    name : str
-        The name of the register
-
-    address : int
-        The address of the register in the device
-
-    access : str
-        How the register is accessed
-
-    sync : str
-        The syncronization mode
-
-    int_value : int
-        The internal representation of the register's value
     """
-    def __init__(self, device, name, address, access, sync):
-        self.device = device
-        self.name = name
-        self.address = address
-        self.access = access
-        self.sync = sync
-        self.int_value = 0
+    def __init__(self, parent, dictInfo):
+        super().__init__(parent, dictInfo)
+        self.address = int(dictInfo['Address'])
+        self.size = int(dictInfo['Size'])
+        self.type = dictInfo['Type']
+        self.access = dictInfo['Access']
+        self.sync = dictInfo['Sync']
+        self._int_value = 0
 
     @property
-    def value(self):
-        """
-        The external representation of the register's value.
-        
-        The getter will return external representation of the register.
-        If the register has a 'D' sych property (direct) it will also 
-        try to invoke the `read()` method of the register to 
-        get the most up to date value. ``BaseRegister`` assumes all
-        values are represented as ``int``.
-
-        The setter will invoke the ``valueToInteral`` method before
-        storring the result in the ``int_value``. If the register is read 
-        only it will raise an exception. If the register has a sync 'D' it 
-        will invoke the ``write()`` method of the register. If the sync 
-        mode is 'Q' it will push the update request to the bus' 
-        ``writeQueue``.
-        """
+    def int_value(self):
         if self.sync == 'D':
-            self.read()
-        return self.valueToExternal(self.int_value)
+            # refresh the value of the register
+            if not self.read():
+                msg = "Failed to read register {} of {}"
+                raise IOError(msg.format(self.name, self.parent.name))
+        return self._int_value
 
-    @value.setter
-    def value(self, value):
-        if self.access == 'R':
-            raise ValueError('Register: {} is read-only. You cannot assign a value to it'.format(self.name))
-        self.int_value = self.valueToInternal(value)
+    @int_value.setter
+    def int_value(self, value):
+        self._int_value = value
         if self.sync == 'D':
-            # direct sync
-            self.write()
+            if not self.write():
+                msg = "Failed to write register {} of {}"
+                raise IOError(msg.format(self.name, self.parent.name))
         elif self.sync == 'Q':
-            print('Adding to queue...')
-            self.device.bus.writeQueueAdd(self)
-
-    def valueToExternal(self, value):
-        """Converts the internal value to an external one. For `BaseRegister`
-        this simply returns the input value without any conversion. 
-        Subclasses might overwrite this method to provide more complex
-        behaviour.
-        """
-        return value
-
-    def valueToInternal(self, value):
-        """Converts the external value to an internal one. For `BaseRegister`
-        this simply returns the input value converted to an integer. 
-        Subclasses might overwrite this method to provide more complex
-        behaviour.
-        """
-        return int(value)
+            self.parent.writeQueueAdd(self)
 
     def write(self):
         """Performs the actual writing of the internal value of the register
@@ -251,7 +145,7 @@ class BaseRegister():
         subclasses should overwrite this mehtod to actually invoke the 
         buses' methods for writing information to the device.
         """
-        pass
+        return True
 
     def read(self):
         """Performs the actual reading of the internal value of the register
@@ -259,10 +153,105 @@ class BaseRegister():
         subclasses should overwrite this mehtod to actually invoke the 
         buses' methods for reading information from the device.
         """
-        pass
+        return True
 
 
-class BaseDevice():
+class RegisterWithMinMax(BaseRegister):
+    """An extension of the ``BaseRegister`` to include Min and Max values
+    with checks.
+    """
+    def __init__(self, parent, dictInfo):
+        super().__init__(parent, dictInfo)
+        self.min = int(dictInfo['Min'])
+        self.max = int(dictInfo['Max'])
+
+    @property
+    def int_value(self):
+        return super().int_value
+
+    @int_value.setter
+    def int_value(self, value):
+        if value < self.min or value > self.max:
+            msg = "Value {} outside of range {} - {} for register {} of {}"
+            raise ValueError(msg.format(value, self.min, self.max, self.name, self.parent.name))
+        else:
+            super().int_value = value
+
+
+class RegisterWithExternalRepresentation(BaseRegister):
+    """An extension of ``BaseRegister`` to include external representation
+    and conversion.
+    """
+    def __init__(self, parent, dictInfo):
+        super().__init__(parent, dictInfo)
+        extParams = processParams(dictInfo['External'])
+        self.ext_type = extParams['Type']
+        # no conversion functions by default
+        self.to_ext = None
+        self.to_int = None
+        # default Divisor and Offset
+        self.ext_div = 1.0
+        self.ext_offPre = 0.0
+        self.ext_offPost = 0.0
+        if 'Div' in extParams:
+            self.ext_div = float(extParams['Div'])
+            self.to_ext = 'convDaOtoExternal'
+            self.to_int = 'convDaOtoInternal'
+        if 'OffPre' in extParams:
+            self.ext_offPre = float(extParams['OffPre'])
+            self.to_ext = 'convDaOtoExternal'
+            self.to_int = 'convDaOtoInternal'
+        if 'OffPost' in extParams:
+            self.ext_offPost = float(extParams['OffPost'])
+            self.to_ext = 'convDaOtoExternal'
+            self.to_int = 'convDaOtoInternal'
+        if 'Fun' in extParams:
+            # make sure only 'Fun' used
+            if self.to_ext != None:
+                msg = "You cannot set both Divisor/Offset and custom function for register {} for parent {}"
+                raise ValueError(msg.format(self.name, self.parent.name))
+            else:
+                self.to_ext = extParams['Fun']+'ToExternal'
+                self.to_int = extParams['Fun']+'ToInternal'
+                # check methods exist
+                if not hasattr(self, self.to_ext):
+                    raise ValueError("Class {} has no method {}".format(self.__class__.__name__, self.to_ext))
+                if not hasattr(self, self.to_int):
+                    raise ValueError("Class {} has no method {}".format(self.__class__.__name__, self.to_int))
+
+    def convDaOtoExternal(self, value):
+        return ((value -self.ext_offPre) / self.ext_div - self.ext_offPost ) #* sign
+
+    def convDaOtoInternal(self, value):
+        return round((value + self.ext_offPost) * self.ext_div + self.ext_offPre)
+
+    @property
+    def value(self):
+        if self.to_ext != None:
+            converted = getattr(self, self.to_ext)(self.int_value)
+        else:
+            converted = self.int_value
+        # convert to type
+        if self.ext_type == 'I':
+            return int(converted)
+        elif self.ext_type == 'F':
+            return float(converted)
+        elif self.ext_type == 'B':
+            return converted != 0
+        else:
+            msg = "Unknown external type {} for register {} of {}"
+            raise KeyError(msg.format(self.ext_type, self.name, self.parent.name))
+
+    @value.setter
+    def value(self, external):
+        if self.to_int != None:
+            converted = getattr(self, self.to_int)(external)
+        else:
+            converted = int(external)
+        self.int_value = converted
+
+
+class BaseDevice(BaseNamedOwed):
     """A base virtual class for all devices.
 
     A BaseDevice is a surrogate representation of an actual device,
@@ -309,25 +298,16 @@ class BaseDevice():
         that the synchronisation with the physical device must be 
         implemented separatelly.
     """
-    def __init__(self, name, model, bus, dev_id):
-        self.name = name
-        self.bus = bus
-        self.dev_id = dev_id
+    def __init__(self, parent, dictInfo):
+        super().__init__(parent, dictInfo)
+        self.dev_id = int(dictInfo['Id'])
         self.registers = {}
-        model_file = self.getModelPath(model)
+        model_file = self.getModelPath(dictInfo['Model'])
         model_ini = readIniFile(model_file)
         for reginfo in model_ini['registers']:
             new_register = self.initRegister(reginfo)
             self.__dict__[reginfo['Name']] = new_register
             self.registers[reginfo['Name']] = new_register
-
-    @classmethod
-    def fromInfoDict(cls, devinfo, robot):
-        bus = robot.buses[devinfo['Bus']]
-        return cls(name=devinfo['Name'],
-                   model=devinfo['Model'],
-                   bus=bus,
-                   dev_id=devinfo['Id'])
 
     def getModelPath(self, model):
         """Builds the path to the `.device` documents.
@@ -342,7 +322,7 @@ class BaseDevice():
             A full document path including the name of the model and the
             externasion `.device`.
         """
-        pass
+        return ''
 
     def initRegister(self, reginfo):
         """Default processing method for setting up a register.
@@ -364,38 +344,35 @@ class BaseDevice():
             `namedtuple` class with the attributes of the regiter 
             initialized from the `reginfo` dictionary.
         """
-        return BaseRegister(device=self,
-                            name=reginfo['Name'],
-                            address=reginfo['Address'],
-                            access=reginfo['Access'],
-                            sync=reginfo['Sync'])
+        return BaseRegister(parent=self,
+                            dictInfo = reginfo)
 
-    def readRegisterList(self, reglist=[]):
-        result = {}
-        for regname in reglist:
-            register = self.registers[regname]
-            result[register.name] = register.read()
-        return result
+    # def readRegisterList(self, reglist=[]):
+    #     result = {}
+    #     for regname in reglist:
+    #         register = self.registers[regname]
+    #         result[register.name] = register.read()
+    #     return result
 
-    def writeRegisterList(self, reglist=[]):
-        result = {}
-        for regname in reglist:
-            register = self.registers[regname]
-            if register.access != 'R':
-                result[register.name] = register.write()
-        return result
+    # def writeRegisterList(self, reglist=[]):
+    #     result = {}
+    #     for regname in reglist:
+    #         register = self.registers[regname]
+    #         if register.access != 'R':
+    #             result[register.name] = register.write()
+    #     return result
 
-    def readAllRegisters(self):
-        return self.readRegisterList(self.registers.keys())
+    # def readAllRegisters(self):
+    #     return self.readRegisterList(self.registers.keys())
 
-    def writeAllRegisters(self):
-        return self.writeRegisterList(self.registers.keys())
+    # def writeAllRegisters(self):
+    #     return self.writeRegisterList(self.registers.keys())
 
-    def toDict(self):
-        result = {}
-        for regname, reg in self.registers.items():
-            result[regname] = reg.value
-        return result
+    # def toDict(self):
+    #     result = {}
+    #     for regname, reg in self.registers.items():
+    #         result[regname] = reg.value
+    #     return result
 
 
 class BaseGroup():
@@ -483,15 +460,14 @@ class BaseRobot():
         self.sync = {}
         # load the bus configuration
         for businfo in config['buses']:
-            new_bus = self.initBus(businfo, self)
+            new_bus = self.initBus(self, businfo)
             self.buses[businfo['Name']] = new_bus
-            self.__dict__[businfo['Name']] = new_bus
         # load the devices
         for devinfo in config['devices']:
-            new_device = self.initDevice(devinfo, self)
+            bus = self.buses[devinfo['Bus']]
+            new_device = self.initDevice(bus, devinfo)
             self.devices[devinfo['Name']] = new_device
-            self.buses[devinfo['Bus']].devices.append(new_device)
-            self.__dict__[devinfo['Name']] = new_device
+            bus.devices.append(new_device)
         # load groups
         for groupinfo in config['groups']:
             new_group = self.initGroup(groupinfo, self)
@@ -514,19 +490,20 @@ class BaseRobot():
                 raise KeyError('Unknown device {}'.format(identifier))
         return devices
         
-    def initBus(self, businfo, robot):
+    def initBus(self, owner, businfo):
         """BaseRobot only knows BaseBus and this default method
         will allocate one. Subclasses should override this method and
         implement allocation for all the device classes they use.
         """
         if businfo['Class'] == 'BaseBus':
-            return BaseBus.fromInfoDict(businfo)
+            return BaseBus(parent=owner, dictInfo=businfo)
         else:
-            raise KeyError('Unknown bus class name: {}'.format(businfo['Class']))
+            msg = "Unknown bus class name: {}"
+            raise KeyError(msg.format(businfo['Class']))
 
-    def initDevice(self, devinfo, robot):
+    def initDevice(self, owner, devinfo):
         if devinfo['Class'] == 'BaseDevice':
-            return BaseDevice.fromInfoDict(devinfo, robot)
+            return BaseDevice(owner, devinfo)
         else:
             raise KeyError('Unknown device class name {}'.format(devinfo['Class']))
 

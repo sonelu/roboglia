@@ -1,33 +1,55 @@
 [registers]
-Address | Size | Name                  | Description                      | Access | Sync | Memory | Min    | Max   | Dir | Ext_type | Ext_off   | Ext_fact
-0       | 2    | model_number          | Model Number                     | R      | D    | EEPROM | 0      | 254   | N   | I        | 0.0       | 1.0
-2       | 1    | firmware              | Firmware Version                 | R      | D    | EEPROM | 0      | 254   | N   | I        | 0.0       | 1.0
-3       | 1    | id                    | Dynamixel ID                     | R      | D    | EEPROM | 0      | 252   | N   | I        | 0.0       | 1.0
-4       | 1    | baud_rate             | Communication Speed              | R      | D    | EEPROM | 0      | 3     | N   | I        | 0.0       | 1.0
-5       | 1    | return_delay_time     | Response Delay Time              | RW     | D    | EEPROM | 0      | 254   | N   | I        | 0.0       | 1.0
-6       | 2    | cw_angle_limit        | Clockwise Angle Limit            | RW     | D    | EEPROM | 0      | 1023  | N   | F        | 150.0     | 3.41333333333333333    # deg centered
-8       | 2    | ccw_angle_limit       | Counter-Clockwise Angle Limit    | RW     | D    | EEPROM | 0      | 1023  | N   | F        | 150.0     | 3.41333333333333333    # deg centered
-11      | 1    | control_mode          | Control Mode                     | RW     | D    | EEPROM | 1      | 2     | N   | I        | 0.0       | 1.0
-12      | 1    | temperature_limit     | Max Internal Temperature Limit   | RW     | D    | EEPROM | 0      | 150   | N   | I        | 0.0       | 1.0                    # deg C
-13      | 1    | min_voltage_limit     | Min Input Voltage Limit          | RW     | D    | EEPROM | 50     | 250   | N   | F        | 0.0       | 10.0                   # in V
-14      | 1    | max_voltage_limit     | Max Input Voltage Limit          | RW     | D    | EEPROM | 50     | 250   | N   | F        | 0.0       | 10.0                   # in V
-15      | 2    | max_torque            | Maximum Torque                   | RW     | D    | EEPROM | 0      | 1023  | N   | F        | 0.0       | 10.24                  # percentage
-17      | 1    | status_return_level   | Select Types of Status Return    | RW     | D    | EEPROM | 0      | 2     | N   | I        | 0.0       | 1.0
-18      | 1    | shutdown              | Shutdown Error Information       | RW     | D    | EEPROM | 0      | 7     | N   | I        | 0.0       | 1.0
-24      | 1    | torque_enable         | Motor Torque on/off              | RW     | D    | RAM    | 0      | 1     | N   | B        | 0.0       | 1.0
-25      | 1    | status_led            | Status LED on/off                | RW     | Q    | RAM    | 0      | 7     | N   | I        | 0.0       | 1.0
-27      | 1    | d_gain                | Derivative Gain                  | RW     | Q    | RAM    | 0      | 254   | N   | F        | 0.0       | 250.0                  # actual factor; you shuld use values in the range  0...1.02 with the default being 0.0
-28      | 1    | i_gain                | Integral Gain                    | RW     | Q    | RAM    | 0      | 254   | N   | F        | 0.0       | 2.048                  # actual factor; you should use values in the range 0...124.51 with the default being 0.0; be careful about large values
-29      | 1    | p_gain                | Proportional Gain                | RW     | Q    | RAM    | 0      | 254   | N   | F        | 0.0       | 8.0                    # actual factor; you should use values in the range 0...31.875 with default being 4.0
-30      | 2    | goal_position         | Desired Position                 | RW     | B    | RAM    | 0      | 1023  | N   | F        | 150.0     | 3.41333333333333333    # deg centered
-32      | 2    | goal_speed            | Moving Speed (Velocity)          | RW     | B    | RAM    | 0      | 1023  | N   | F        | 0.0       | 8.982456140350877      # rpm
-35      | 2    | goal_torque           | Goal Torque                      | RW     | B    | RAM    | 0      | 1023  | N   | F        | 0.0       | 10.24                  # percentage
-37      | 2    | present_position      | Present Position                 | R      | B    | RAM    | 0      | 1023  | N   | F        | 150.0     | 3.41333333333333333    # deg centered
-39      | 2    | present_speed         | Moving Speed (Velocity)          | R      | B    | RAM    | 0      | 1023  | Y   | F        | 0.0       | 8.982456140350877      # rpm (signed)
-41      | 2    | present_torque        | Present Torque                   | R      | B    | RAM    | 0      | 1023  | Y   | F        | 0.0       | 10.24                  # percentage (signed)
-45      | 1    | present_voltage       | Present Voltage                  | R      | B    | RAM    | 50     | 250   | N   | F        | 0.0       | 10.0                   # in V
-46      | 1    | present_temperature   | Present Temperature              | R      | B    | RAM    | 0      | 150   | N   | I        | 0.0       | 1.0                    # deg C
-47      | 1    | registered            | If instruction is registered     | R      | D    | RAM    | 0      | 1     | N   | B        | 0.0       | 1.0
-49      | 1    | moving                | Movement Status                  | R      | D    | RAM    | 0      | 1     | N   | B        | 0.0       | 1.0
-50      | 1    | hardware_error_status | Hardware Error Status            | R      | D    | RAM    | 0      | 255   | N   | I        | 0.0       | 1.0
-51      | 2    | punch                 | Minimum Current Threshhold       | RW     | D    | RAM    | 0      | 1023  | N   | I        | 0.0       | 1.0                    # should not be used
+Class              | Address | Type | Size | Name                  | Description                      | Access | Sync | Memory | Min    | Max   | Dir | External
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+DynamixelRegister  | 0       | B    | 2    | model_number          | Model Number                     | R      | D    | EEPROM | 0      | 254   | N   | Type=I
+DynamixelRegister  | 2       | B    | 1    | firmware              | Firmware Version                 | R      | D    | EEPROM | 0      | 254   | N   | Type=I
+DynamixelRegister  | 3       | B    | 1    | id                    | Dynamixel ID                     | R      | D    | EEPROM | 0      | 252   | N   | Type=I
+DynamixelRegister  | 4       | B    | 1    | baud_rate             | Communication Speed              | R      | D    | EEPROM | 0      | 3     | N   | Type=I
+DynamixelRegister  | 5       | B    | 1    | return_delay_time     | Response Delay Time              | RW     | D    | EEPROM | 0      | 254   | N   | Type=I
+DynamixelRegister  | 6       | B    | 2    | cw_angle_limit        | Clockwise Angle Limit            | RW     | D    | EEPROM | 0      | 1023  | N   | Type=F, Div=3.41333333333333333, OffPost=150.0
+DynamixelRegister  | 8       | B    | 2    | ccw_angle_limit       | Counter-Clockwise Angle Limit    | RW     | D    | EEPROM | 0      | 1023  | N   | Type=F, Div=3.41333333333333333, OffPost=150.0
+DynamixelRegister  | 11      | B    | 1    | control_mode          | Control Mode                     | RW     | D    | EEPROM | 1      | 2     | N   | Type=I
+DynamixelRegister  | 12      | B    | 1    | temperature_limit     | Max Internal Temperature Limit   | RW     | D    | EEPROM | 0      | 150   | N   | Type=I
+DynamixelRegister  | 13      | B    | 1    | min_voltage_limit     | Min Input Voltage Limit          | RW     | D    | EEPROM | 50     | 250   | N   | Type=F, Div=10.0
+DynamixelRegister  | 14      | B    | 1    | max_voltage_limit     | Max Input Voltage Limit          | RW     | D    | EEPROM | 50     | 250   | N   | Type=F, Div=10.0
+DynamixelRegister  | 15      | B    | 2    | max_torque            | Maximum Torque                   | RW     | D    | EEPROM | 0      | 1023  | N   | Type=F, Div=10.24
+DynamixelRegister  | 17      | B    | 1    | status_return_level   | Select Types of Status Return    | RW     | D    | EEPROM | 0      | 2     | N   | Type=I
+DynamixelRegister  | 18      | B    | 1    | shutdown              | Shutdown Error Information       | RW     | D    | EEPROM | 0      | 7     | N   | Type=I
+DynamixelRegister  | 24      | B    | 1    | torque_enable         | Motor Torque on/off              | RW     | D    | RAM    | 0      | 1     | N   | Type=B
+DynamixelRegister  | 25      | B    | 1    | status_led            | Status LED on/off                | RW     | Q    | RAM    | 0      | 7     | N   | Type=I
+DynamixelRegister  | 27      | B    | 1    | d_gain                | Derivative Gain                  | RW     | Q    | RAM    | 0      | 254   | N   | Type=F, Div=250.0
+DynamixelRegister  | 28      | B    | 1    | i_gain                | Integral Gain                    | RW     | Q    | RAM    | 0      | 254   | N   | Type=F, Div=2.048 
+DynamixelRegister  | 29      | B    | 1    | p_gain                | Proportional Gain                | RW     | Q    | RAM    | 0      | 254   | N   | Type=F, Div=8.0
+DynamixelRegister  | 30      | B    | 2    | goal_position         | Desired Position                 | RW     | B    | RAM    | 0      | 1023  | N   | Type=F, Div=3.41333333333333333, OffPost=150.0
+DynamixelRegister  | 32      | B    | 2    | goal_speed            | Moving Speed (Velocity)          | RW     | B    | RAM    | 0      | 1023  | N   | Type=F, Div=8.982456140350877
+DynamixelRegister  | 35      | B    | 2    | goal_torque           | Goal Torque                      | RW     | B    | RAM    | 0      | 1023  | N   | Type=F, Div=10.24
+DynamixelRegister  | 37      | B    | 2    | present_position      | Present Position                 | R      | B    | RAM    | 0      | 1023  | N   | Type=F, Div=3.41333333333333333, OffPost=150.0
+DynamixelRegister  | 39      | B    | 2    | present_speed         | Moving Speed (Velocity)          | R      | B    | RAM    | 0      | 1023  | Y   | Type=F, Div=8.982456140350877
+DynamixelRegister  | 45      | B    | 1    | present_voltage       | Present Voltage                  | R      | B    | RAM    | 50     | 250   | N   | Type=F, Div=10.0
+DynamixelRegister  | 46      | B    | 1    | present_temperature   | Present Temperature              | R      | B    | RAM    | 0      | 150   | N   | Type=I
+DynamixelRegister  | 47      | B    | 1    | registered            | If instruction is registered     | R      | D    | RAM    | 0      | 1     | N   | Type=B
+DynamixelRegister  | 49      | B    | 1    | moving                | Movement Status                  | R      | D    | RAM    | 0      | 1     | N   | Type=B
+DynamixelRegister  | 50      | B    | 1    | hardware_error_status | Hardware Error Status            | R      | D    | RAM    | 0      | 255   | N   | Type=I
+DynamixelRegister  | 51      | B    | 2    | punch                 | Minimum Current Threshhold       | RW     | D    | RAM    | 0      | 1023  | N   | Type=I
+
+# NOTES:
+# ======
+
+# 'id' and 'baud_rate' 
+# -------------------
+# These registers are actually RW in the documentation, but for robot control we should not change them.
+# Normally, we should configure the servos with a Robotis tool (like Dynamixel Wizzard) and then make sure
+# that the framework doesn't mess with these parameters
+
+# size 2 registers
+# ----------------
+# A number of registers are defined in the specifications with a low byte and a high byte register.
+# To simplify things we describe them as a 2 byte register located at the start of the low byte address 
+# and the framework will do the necessary reads and conversions to handle both bytes together.
+
+# position registers
+# ------------------
+# Position registers (cw_angle_limit, ccw_angle_limit, goal_position, present_position) are converted to degress
+# with 0 in the middle (range -150, 150). This makes it easier to deal with the rounding errors compared with
+# radians. If your framework needs later radians (ex. you publish states in ROS) then implement the conversion in 
+# the publisher node. 
