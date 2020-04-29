@@ -125,8 +125,8 @@ class BoolRegister(BaseRegister):
 class FloatRegisterWithConversion(BaseRegister):
     """A register with an external representation that is produced by 
     using a linear transformation:
-    `external = internal / factor - offset`
-    `internal = (external + offset ) * factor`
+    `external = (internal - offset) / factor`
+    `internal = external * factor + offset`
     """
     def __init__(self, init_dict):
         super().__init__(init_dict)
@@ -141,7 +141,7 @@ class FloatRegisterWithConversion(BaseRegister):
         Performs the translation of the value after calling the inherited
         method.
         """
-        return float(super().value_to_external()) / self.factor - self.offset
+        return (float(super().value_to_external()) - self.offset) / self.factor 
 
 
     def value_to_internal(self, value):
@@ -151,7 +151,7 @@ class FloatRegisterWithConversion(BaseRegister):
         Performs the translation of the value before calling the inherited
         method.
         """
-        value = round((float(value) + self.offset) * self.factor)
+        value = round(float(value)  * self.factor + self.offset)
         super().value_to_internal(value)
 
     value = property(value_to_external, value_to_internal)

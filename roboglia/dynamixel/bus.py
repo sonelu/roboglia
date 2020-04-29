@@ -25,7 +25,6 @@ class DynamixelBus(BaseBus):
 
         self.packet_handler = dynamixel_sdk.PacketHandler(self.protocol)
         
-
     def close(self):
         """Closes the actual physical bus. Must be overriden by the
         subclass.
@@ -34,13 +33,11 @@ class DynamixelBus(BaseBus):
         self.port_handler.closePort()
         self.port_handler = None
 
-
     def isOpen(self):
         """Returns `True` or `False` if the bus is open. Must be overriden 
         by the subclass.
         """
         return self.port_handler != None
-
 
     def ping(self, dxl_id):
         _, cerr, derr =  self.packet_handler.ping(self.port_handler, dxl_id)
@@ -48,37 +45,6 @@ class DynamixelBus(BaseBus):
             return True
         else:
             return False
-
-
-    # def broadcastPing(self):
-    #     return self.packet_handler.broadcastPing(self.port_handler)
-
-
-    # def read1Byte(self, dev , reg):
-    #     res, cerr, derr = self.packet_handler.read1ByteTxRx(self.port_handler, dev.dev_id, reg.address)
-    #     if cerr == 0 and derr == 0:
-    #         return res
-
-
-    # def read2Byte(self, dev, reg):
-    #     return self.packet_handler.read2ByteTxRx(self.port_handler, dev.dev_id, reg.address)
-
-
-    # def read4Byte(self, dev, reg):
-    #     return self.packet_handler.read4ByteTxRx(self.port_handler, dev.dev_id, reg.address)
-
-
-    # def write1Byte(self, dev, reg, value):
-    #     return self.packet_handler.write1ByteTxRx(self.port_handler, dev.dev_id, reg.address, value)
-
-
-    # def write2Byte(self, dev, reg, value):
-    #     return self.packet_handler.write2ByteTxRx(self.port_handler, dev.dev_id, reg.address, value)
-
-
-    # def write4Byte(self, dev, reg, value):
-    #     return self.packet_handler.write4ByteTxRx(self.port_handler, dev.dev_id, reg.address, value)
-
 
     def read(self, dev, reg):
         """Depending on the size of the register is calls the corresponding
@@ -101,7 +67,6 @@ class DynamixelBus(BaseBus):
             return res
         else:
             raise ConnectionError(f'failed to communicte wtih bus {self.name}, cerr={cerr}, derr={derr}')
-
 
     def write(self, dev, reg, value):
         """Depending on the size of the register is calls the corresponding

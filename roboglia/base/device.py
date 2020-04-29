@@ -80,8 +80,12 @@ class BaseDevice():
 
 
     def open(self):
-        """Performs initialization of the device.
-        """
+        """Performs initialization of the device."""
+        pass
+
+
+    def close(self):
+        """Perform device closure."""
         pass
 
 
