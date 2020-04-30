@@ -6,16 +6,16 @@ class Joint():
     A Joint class provides an abstract access to a device providing:
 
     - access to arbitrary registers in device to retrieve / set the position
-    - conversion between degrees and radians (if necessary)
     - possibility to invert coordinates
     - possibility to add an offset so that the 0 of the joint is different
       from the 0 of the device
     - include max and min range in joint coordinates to reflect physical
       limitation of the joint
 
-    """
-    def __init__(self, init_dict):
-        """Initializes the Joint from an ``init_dict``.
+    Parameters
+    ----------
+    init_dict: dict
+        The dictionary used to initialize the joint.
 
         The following keys are exepcted in the dictionary:
 
@@ -50,14 +50,26 @@ class Joint():
         
         ``min`` and ``max`` are used only when writing values to device.
         You can use both, only one of them or none.
-        """
-        #: the name of the joint
+
+    Attributes
+    ----------
+    name: str
+        The name of the joint
+
+    device: obj
+        The device object connected to the joint
+
+    pos_r: reference to property method
+        Accessor for reading register with current position from device
+
+    pos_w: reference to property method
+        Accessor for writing register with desired position to device
+    """
+    def __init__(self, init_dict):
+        """Initializes the Joint from an ``init_dict``."""
         self.name = init_dict['name']
-        #: the device object connected to the joint
         device = init_dict['device']
-        #: accessor for reading register  with current position  from device
         self.pos_r = getattr(device, init_dict['pos_read']).value
-        #: accessor for writing register with desired position to device
         self.pos_w = getattr(device, init_dict['pos_write']).value
         #: accessor for activating register of device 
         self.activate = getattr(device, init_dict['activate']).value
