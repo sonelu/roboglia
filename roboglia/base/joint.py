@@ -9,10 +9,10 @@ class Joint():
     - conversion between degrees and radians (if necessary)
     - possibility to invert coordinates
     - possibility to add an offset so that the 0 of the joint is different
-    from the 0 of the device
+      from the 0 of the device
     - include max and min range in joint coordinates to reflect physical
-    limitation of the joint
-    
+      limitation of the joint
+
     """
     def __init__(self, init_dict):
         self.name = init_dict['name']
