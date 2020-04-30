@@ -1,5 +1,5 @@
 from math import log
-from roboglia.base.register import BaseRegister, FloatRegisterWithConversion
+from roboglia.base.register import BaseRegister
 
 
 class DynamixelAXBaudRateRegister(BaseRegister):

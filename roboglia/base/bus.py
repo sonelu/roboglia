@@ -22,6 +22,10 @@ class BaseBus():
     def __init__(self, init_dict):
         # these will throw exceptions if info not provided in the init dict
         self.name = init_dict['name']
+        if 'port' not in init_dict:
+            mess = f'Bus {self.name} has no port defined. All buses must have a port.'
+            logger.critical(mess)
+            raise KeyError(mess)
         self.port = init_dict['port']
 
     def open(self):
@@ -54,8 +58,9 @@ class BaseBus():
 
 
 class FileBus(BaseBus):
-    """A bus that writes to a file. Read returns the last writen data.
-    Provided for testing purposes.
+    """A bus that writes to a file with cache. 
+    
+    Read returns the last writen data. Provided for testing purposes.
     """
     def __init__(self, init_dict):
         super().__init__(init_dict)

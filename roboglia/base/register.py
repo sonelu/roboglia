@@ -1,4 +1,8 @@
+import logging
+
 from .device import BaseDevice
+
+logger = logging.getLogger(__name__)
 
 class BaseRegister():
     """A minimal representation of a device register.
@@ -18,27 +22,52 @@ class BaseRegister():
     the setter method will check that the desired value is within the 
     [min, max] and trim it accordingly
     - `access`: read ('R') or read-write ('RW'); default 'R'
-    - `sync`: True is the register will be updated from the real device
+    - `sync`: True if the register will be updated from the real device
     using a sync loop. If `sync` is False access to the register through
     the value property will invoke reading / writing to the real register;
     default 'False'
     - `default`: the default value for the register; implicit 0
+
     """
     def __init__(self, init_dict):
-        # these will throw exceptions if not provided
-        self.device = init_dict['device']
-        assert(isinstance(self.device, BaseDevice))
         self.name = init_dict['name']
+        self.device = init_dict['device']
+        if 'address' not in init_dict:
+            mess = f'No address specified for register {self.name} of device {self.device.name}. All registers must have an address speficied.'
+            logger.critical(mess)
+            raise KeyError(mess)
         self.address = init_dict['address']
         # optionals
         self.size = init_dict.get('size', 1)
+        if type(self.size) is not int:
+            mess = f'Size for register {self.name} of device {self.device.name} must be an integer.'
+            logger.critical(mess)
+            raise ValueError(mess)
         self.min = init_dict.get('min', 0)
+        if type(self.min) is not int:
+            mess = f'Min for register {self.name} of device {self.device.name} must be an integer.'
+            logger.critical(mess)
+            raise ValueError(mess)
         self.max = init_dict.get('max', pow(2, self.size*8)-1)
+        if type(self.min) is not int:
+            mess = f'Min for register {self.name} of device {self.device.name} must be an integer.'
+            logger.critical(mess)
+            raise ValueError(mess)
         self.access = init_dict.get('access', 'R')
-        assert(self.access in ['R', 'RW'])
+        if self.access not in ['R', 'RW']:
+            mess = f'Access for register {self.name} of device {self.device.name} must be "R" or "RW".'
+            logger.critical(mess)
+            raise ValueError(mess)
         self.sync = init_dict.get('sync', False)
-        assert(self.sync in [True, False])
+        if self.sync not in [True, False]:
+            mess = f'Sync for register {self.name} of device {self.device.name} must be "True" or "False".'
+            logger.critical(mess)
+            raise ValueError(mess)
         self.default = init_dict.get('default', 0)
+        if type(self.default) is not int:
+            mess = f'Default for register {self.name} of device {self.device.name} must be an integer.'
+            logger.critical(mess)
+            raise ValueError(mess)
         self.int_value = self.default
 
     def value_to_external(self):
@@ -122,17 +151,25 @@ class BoolRegister(BaseRegister):
     value = property(value_to_external, value_to_internal)
 
 
-class FloatRegisterWithConversion(BaseRegister):
+class RegisterWithConversion(BaseRegister):
     """A register with an external representation that is produced by 
-    using a linear transformation:
-    `external = (internal - offset) / factor`
-    `internal = external * factor + offset`
+    using a linear transformation::
+
+        external = (internal - offset) / factor
+        internal = external * factor + offset
     """
     def __init__(self, init_dict):
         super().__init__(init_dict)
+        if 'factor' not in init_dict:
+            mess = f'No factor specified for register {self.name} of device {self.device.name}.'
+            logging.critical(mess)
+            raise KeyError(mess)
         self.factor = init_dict['factor']
         self.offset = init_dict.get('offset', 0)
-
+        if type(self.offset) is not int:
+            mess = f'Offset for register {self.name} of device {self.device.name} must be an integer.'
+            logger.critical(mess)
+            raise ValueError(mess)
     
     def value_to_external(self):
         """
@@ -157,7 +194,7 @@ class FloatRegisterWithConversion(BaseRegister):
     value = property(value_to_external, value_to_internal)
 
 
-class FloatRegisterWithThreshold(BaseRegister):
+class RegisterWithThreshold(BaseRegister):
     """A register with an external representation that is produced by 
     using a linear transformation:
     `external = internal / factor - offset`

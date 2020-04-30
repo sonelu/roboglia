@@ -1,6 +1,9 @@
 import os
 import yaml
+import logging
 from .factory import get_registered_class
+
+logger = logging.getLogger(__name__)
 
 class BaseDevice():
     """A base virtual class for all devices.
@@ -26,17 +29,26 @@ class BaseDevice():
         self.dev_id = init_dict['id']
         # registers
         model_path = init_dict.get('path', self.get_model_path())
-        model_file = os.path.join(model_path, init_dict['model']+'.yml')
+        if 'model' not in init_dict:
+            mess = f'No model indicated for device {self.name}'
+            logger.critical(mess)
+            raise KeyError(mess)
+        self.model = init_dict['model']
+        model_file = os.path.join(model_path, self.model+'.yml')
         with open(model_file, 'r') as f:
             model_ini = yaml.load(f, Loader=yaml.FullLoader)
         self.registers = {}
-        for reginfo in model_ini['registers']:
-            reg_class_name = reginfo.get('class', self.default_register())
+        for index, reg_info in enumerate(model_ini['registers']):
+            if 'name' not in reg_info:
+                mess = f'Register index {index} in model {self.model} does not have a name. You need to supply a name for each register.'
+                logging.critical(mess)
+                raise KeyError(mess)
+            reg_class_name = reg_info.get('class', self.default_register())
             register_class = get_registered_class(reg_class_name)
-            reginfo['device'] = self
-            new_register = register_class(reginfo)
-            self.__dict__[reginfo['name']] = new_register
-            self.registers[reginfo['name']] = new_register
+            reg_info['device'] = self
+            new_register = register_class(reg_info)
+            self.__dict__[reg_info['name']] = new_register
+            self.registers[reg_info['name']] = new_register
 
 
     def get_model_path(self):

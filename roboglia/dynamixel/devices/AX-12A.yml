@@ -22,7 +22,7 @@ registers:
     max: 207
 
   - name: return_delay_time
-    class: FloatRegisterWithConversion
+    class: RegisterWithConversion
     address: 5
     access: RW
     default: 250
@@ -30,7 +30,13 @@ registers:
     factor: 0.5
 
   - name: cw_angle_limit
-    class: FloatRegisterWithConversion
+    address: 6
+    size: 2
+    max: 1023
+    access: RW
+
+  - name: cw_angle_limit_deg
+    class: RegisterWithConversion
     address: 6
     size: 2
     max: 1023
@@ -38,8 +44,17 @@ registers:
     factor: 3.41
     offset: 512
 
+  - name: cw_angle_limit_rad
+    class: RegisterWithConversion
+    address: 6
+    size: 2
+    max: 1023
+    access: RW
+    factor: 195.3786081396107
+    offset: 512
+
   - name: ccw_angle_limit
-    class: FloatRegisterWithConversion
+    class: RegisterWithConversion
     address: 8
     size: 2
     max: 1023
@@ -55,7 +70,7 @@ registers:
     max: 99
 
   - name: min_voltage_limit
-    class: FloatRegisterWithConversion
+    class: RegisterWithConversion
     address: 12
     access: RW
     min: 50
@@ -64,7 +79,7 @@ registers:
     default: 60
 
   - name: max_voltage_limit
-    class: FloatRegisterWithConversion
+    class: RegisterWithConversion
     address: 13
     access: RW
     min: 50
@@ -73,7 +88,7 @@ registers:
     default: 140
 
   - name: max_torque
-    class: FloatRegisterWithConversion
+    class: RegisterWithConversion
     address: 14
     size: 2
     access: RW
@@ -108,14 +123,14 @@ registers:
     access: RW
 
   - name: cw_compliance_margin
-    class: FloatRegisterWithConversion
+    class: RegisterWithConversion
     address: 26
     access: RW
     factor: 3.41
     default: 1  
 
   - name: ccw_compliance_margin
-    class: FloatRegisterWithConversion
+    class: RegisterWithConversion
     address: 27
     access: RW
     factor: 3.41
@@ -134,7 +149,7 @@ registers:
     default: 32
 
   - name: goal_position
-    class: FloatRegisterWithConversion
+    class: RegisterWithConversion
     address: 30
     size: 2
     access: RW
@@ -143,7 +158,7 @@ registers:
     offset: 512
 
   - name: moving_speed
-    class: FloatRegisterWithConversion
+    class: RegisterWithConversion
     address: 32
     size: 2
     access: RW
@@ -151,7 +166,7 @@ registers:
     factor: 8.973684210526316
 
   - name: torque_limit
-    class: FloatRegisterWithConversion
+    class: RegisterWithConversion
     address: 34
     size: 2
     access: RW
@@ -159,7 +174,7 @@ registers:
     factor: 10.23
 
   - name: present_position
-    class: FloatRegisterWithConversion
+    class: RegisterWithConversion
     address: 36
     size: 2
     access: R
@@ -168,7 +183,7 @@ registers:
     offset: 512
 
   - name: present_speed
-    class: FloatRegisterWithThreshold
+    class: RegisterWithThreshold
     address: 38
     size: 2
     access: R
@@ -177,7 +192,7 @@ registers:
     threshold: 1024
 
   - name: present_load
-    class: FloatRegisterWithThreshold
+    class: RegisterWithThreshold
     address: 40
     size: 2
     access: R
@@ -186,7 +201,7 @@ registers:
     threshold: 1024
 
   - name: present_voltage
-    class: FloatRegisterWithConversion
+    class: RegisterWithConversion
     address: 42
     access: R
     factor: 10.0

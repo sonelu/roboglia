@@ -4,40 +4,89 @@
 
 .. automodule:: roboglia.base
 
-**Structure**
+Classes in ``roboglia`` can be categorized in two groups in relation to their position to the main robot class:
 
-The following classes from ``base`` module are provided for represeting
-various structural elements of a robot.
+* **Downstream** classes: are classes that are located between the robot class and the physical devices.
+
+* **Upstream** classes are classes that expose the robot capabilities in a uniform way like 'joints', 'sensors', 'moves', etc.
+
+**Downstream**
+
+The following classes from ``base`` module are provided for representing various structural elements of a robot.
+
+*Buses*
 
 .. autosummary::
    :nosignatures:
+   :toctree: base
 
    BaseBus
+   FileBus
+
+*Registers*
+
+.. autosummary::
+   :nosignatures:
+   :toctree: base
+
    BaseRegister
+   BoolRegister
+   RegisterWithConversion
+   RegisterWithThreshold
+
+*Devices*
+
+.. autosummary::
+   :nosignatures:
+   :toctree: base
+
    BaseDevice
-   BaseGroup
+
+*Threads and Loops*
+
+.. autosummary::
+   :nosignatures:
+   :toctree: base
+
+   BaseThread
+   BaseLoop
+   StepLoop
+   
+**Middle**
+
+.. autosummary::
+   :nosignatures:
+   :toctree: base
+
    BaseRobot
 
-**Sync**
+**Upstream**
 
 The following classes from ``base`` module are provided for helping with
 the syncronisation of devices' values task.
 
+*Joints*
+
 .. autosummary::
    :nosignatures:
+   :toctree: base
 
-   BaseSync
-   BaseSyncRead
-   BaseSyncWrite
+   Joint
+   JointPV
+   JointPVL
 
-.. toctree::
-   :maxdepth: 2
+*Sonsors*
 
-   BaseBus
-   BaseRegister
-   BaseDevice
-   BaseGroup
-   BaseRobot
-   BaseSync
-   BaseSyncRead
-   BaseSyncWrite
+.. autosummary::
+   :nosignatures:
+   :toctree: base
+
+   Sensor
+
+*Controller*
+
+.. autosummary::
+   :nosignatures:
+   :toctree: base
+
+   Controller
