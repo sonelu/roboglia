@@ -20,11 +20,12 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = 'roboglia'
-copyright = '2019, Alex Sonea'
+copyright = '2020, Alex Sonea'
 author = 'Alex Sonea'
+version = '0.0.4'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.2'
+release = version
 
 
 # -- General configuration ---------------------------------------------------
@@ -75,3 +76,11 @@ html_theme_options = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+# fixes the table overflow in read the docs theme
+# https://rackerlabs.github.io/docs-rackspace/tools/rtd-tables.html
+html_context = {
+    'css_files': [
+        '_static/theme_overrides.css',  # override wide tables in RTD theme
+        ],
+     }

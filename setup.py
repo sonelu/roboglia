@@ -16,12 +16,19 @@ extra = {}
 if sys.version_info >= (3,):
     extra['use_2to3'] = True
 
-install_requires = ['dynamixel-sdk',
-                    'smbus2'
-                   ]
+"""
+The following  are not included in the dependencies because otherwise it would
+make it impossible to use the framework on platforms where these
+libraries are not avaialble. Instead you should install the dependencies
+manually as needed.
+ - if you want to use Dynamixel servos you need to install dynamixel_sdk
+ - if you want to use I2C devices you need to install SMBus
+ - if you want to use SPI devices you need to install spidev
+"""
+install_requires = ['pyyaml']
 
-if sys.version_info < (2, 7):
-    print("python version < 2.7 is not supported")
+if sys.version_info < (3, 0):
+    print("python version 2 is not supported")
     sys.exit(1)
 
 setup(name='roboglia',
@@ -30,18 +37,17 @@ setup(name='roboglia',
       install_requires=install_requires,
       extras_require={},
       entry_points={},
-      package_data={'roboglia': ['devices/dynamixel/*.device']},
+      package_data={'roboglia': ['dynamixel/devices/*.yml']},
       include_package_data=True,
       exclude_package_data={'': ['.gitignore']},
       zip_safe=False,
       author='Alex Sonea',
       author_email='alex.sonea@gmail.com',
-      description='Robotics Framwork based on Dynamixel SDK',
+      description='Robotics Framework unsing Dynamixel SDK, I2C, SPI',
       long_description=open('README.md', encoding='utf-8').read(),
       url='https://github.com/sonelu/roboglia',
       license='GNU GENERAL PUBLIC LICENSE Version 3',
       classifiers=[
-          "Programming Language :: Python :: 2",
           "Programming Language :: Python :: 3",
           "Topic :: Scientific/Engineering", ],
       **extra
