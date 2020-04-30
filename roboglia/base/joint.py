@@ -65,6 +65,9 @@ class Joint():
     pos_w: reference to property method
         Accessor for writing register with desired position to device
     """
+    name = ''
+    """The name of the joint."""
+    
     def __init__(self, init_dict):
         """Initializes the Joint from an ``init_dict``."""
         self.name = init_dict['name']
