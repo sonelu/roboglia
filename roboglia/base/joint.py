@@ -50,39 +50,46 @@ class Joint():
         
         ``min`` and ``max`` are used only when writing values to device.
         You can use both, only one of them or none.
-
-    Attributes
-    ----------
-    name: str
-        The name of the joint
-
-    device: obj
-        The device object connected to the joint
-
-    pos_r: reference to property method
-        Accessor for reading register with current position from device
-
-    pos_w: reference to property method
-        Accessor for writing register with desired position to device
     """
     name = ''
     """The name of the joint."""
-    
+    device = None
+    """The device object connected to the joint."""
+    pos_r = None
+    """A reference to a `value` property of a device register used for
+    reading the present position of the device."""
+    pos_w = None
+    """A reference to a `value` property of a device register used for
+    writting the desired position to the device."""
+    activate = None
+    """A reference to a `value` property of a device register used for
+    controlling the active state of the device."""
+    inverse = False
+    """If ``True`` it indicates that the Joint is using inverse coordinates
+    in respect to the device (ie. inverted). If ``False`` they are the 
+    same."""
+    offset = 0
+    """Indicates an offset in respect to the device's 0 position. The 
+    offset is applied after the `inverse` parameter is considered."""
+    min = None
+    """Indicates a minimum limit for the Joint after considering the 
+    `inverse` and `offset` parameters. If ``None`` then no limit is
+    imposed."""
+    max = None 
+    """Indicates a maximum limit for the Joint after considering the 
+    `inverse` and `offset` parameters. If ``None`` then no limit is
+    imposed."""
+
     def __init__(self, init_dict):
         """Initializes the Joint from an ``init_dict``."""
         self.name = init_dict['name']
         device = init_dict['device']
         self.pos_r = getattr(device, init_dict['pos_read']).value
         self.pos_w = getattr(device, init_dict['pos_write']).value
-        #: accessor for activating register of device 
         self.activate = getattr(device, init_dict['activate']).value
-        #: indicates if the joint is inverse versus device
         self.inverse = init_dict.get('inverse', False)
-        #: offset of joint in respect to device's 0
         self.offset = init_dict.get('offset', 0.0)
-        #: joint min limit after `inverse` and `offset`
         self.min = init_dict.get('min', None)
-        #: joint max limit after `inverse` and `offset`
         self.max = init_dict.get('max', None)
 
     def get_position(self):
