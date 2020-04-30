@@ -1,0 +1,13 @@
+name: xl320
+registers:
+  - name: model_number
+    address: 0
+    size: 2
+    description: "Model Number"
+    access: R
+    sync: D
+    memory: EEPROM
+    min: 0
+    max: 254
+    dir: false
+    

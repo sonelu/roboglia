@@ -14,7 +14,8 @@
 # =============================================================================
 """Module defining the Dynamixel specific bus and device.
 """
-from roboglia.base import BaseBus, BaseRegister, BaseDevice, \
+from roboglia.base import BaseBus, RegisterWithMinMax, \
+                          RegisterWithExternalRepresentation, BaseDevice, \
                           BaseRobot, BaseGroup, BaseSync
 from dynamixel_sdk import PortHandler, PacketHandler, \
                           GroupBulkRead, GroupBulkWrite, \
@@ -50,27 +51,19 @@ class DynamixelBus(BaseBus):
         Set to `True` if you need the port to be configured (software) in
         RS485 mode.
     """
-    def __init__(self, name, port, 
-                 baudrate=1000000, rs485=False):
-        super().__init__(name, port)
-        self.baudrate = baudrate
-        self.rs485 = rs485
+    def __init__(self, parent, dictInfo):
+        super().__init__(parent, dictInfo)
+        params=processParams(dictInfo['Params'])
+        self.baudrate = int(params['Baudrate'])
+        if 'RS485' in params:
+            self.rs485 = params['RS485'] =='Y'
+        else:
+            self.rs485 = False
         self.portHandler = None
         self.packetHandler1 = None
         self.packetHandler2 = None
         # assigned devices
         self.devices = []
-
-    @classmethod
-    def fromInfoDict(cls, businfo, andOpen=True):
-        params=processParams(businfo['Params'])
-        new_bus = cls(name=businfo['Name'],
-                      port=businfo['Port'], 
-                      baudrate=int(params['Baudrate']), 
-                      rs485=(params['RS485']=='Y'))
-        if andOpen:
-            new_bus.open()
-        return new_bus
 
     def open(self):
         self.portHandler = PortHandler(self.port)
@@ -119,68 +112,45 @@ class DynamixelBus(BaseBus):
         return self.packetHandler(protocol).write4ByteTxRx(self.portHandler, dxl_id, address, value)
 
 
-class DynamixelRegister(BaseRegister):
+class DynamixelRegister(RegisterWithMinMax, RegisterWithExternalRepresentation):
 
-    def __init__(self, device, name, address, access, sync, size, memory, 
-                 min, max, dir, ext_type, ext_off, ext_fact):
-        super().__init__(device, name, address, access, sync)
-        self.size = size
-        self.memory = memory
-        self.min = min
-        self.max = max
-        self.dir = dir
-        self.ext_type = ext_type
-        self.ext_off = ext_off
-        self.ext_fact = ext_fact
-
-    def valueToExternal(self, value):
-        intval = self.int_value
-        if self.dir == 'Y' and intval > self.max:
-            intval -= (self.max+1)
-            sign = -1
-        else:
-            sign = 1
-        external = (intval / self.ext_fact - self.ext_off ) * sign
-        if self.ext_type == 'I':
-            return int(external)
-        elif self.ext_type == 'B':
-            return external > 0
-        else:
-            return external
-
-    def valueToInternal(self, value):
-        internal = round((value + self.ext_off) * self.ext_fact)
-        if internal < self.min or internal > self.max:
-            raise ValueError("DynamixelRegister internal value {} outside [{}..{}] range".format(internal, self.min, self.max))
-        return internal
+    def __init__(self, parent, dictInfo):
+        RegisterWithMinMax.__init__(self, parent, dictInfo)
+        RegisterWithExternalRepresentation.__init__(self, parent, dictInfo)
+        self.memory = dictInfo['Memory']
+        self.dir = dictInfo['Dir']
 
     def read(self):
+        device = self.parent
+        bus = device.parent
         if self.size == 1:
-            function = self.device.bus.read1Byte
+            function = bus.read1Byte
         elif self.size == 2:
-            function = self.device.bus.read2Byte
+            function = bus.read2Byte
         else:
-            function = self.device.bus.read4Byte
-        rxpacket, result, error = function(self.device.protocol,
-                                       self.device.dev_id,
-                                       self.address)
+            function = bus.read4Byte
+        rxpacket, result, error = function(device.protocol,
+                                           device.dev_id,
+                                           self.address)
         if result != 0 or error !=0:
             return False
         else:
-            self.int_value = int(rxpacket)
+            self._int_value = int(rxpacket)
             return True
 
     def write(self):
+        device = self.parent
+        bus = device.parent
         if self.size == 1:
-            function = self.device.bus.write1Byte
+            function = bus.write1Byte
         elif self.size == 2:
-            function = self.device.bus.write2Byte
+            function = bus.write2Byte
         else:
-            function = self.device.bus.write4Byte
-        result, error = function(self.device.protocol,
-                             self.device.dev_id, 
-                             self.address, 
-                             self.int_value)
+            function = bus.write4Byte
+        result, error = function(device.protocol,
+                                 device.dev_id, 
+                                 self.address, 
+                                 self._int_value)
         return result == 0 and error == 0
 
 
@@ -259,24 +229,19 @@ class DynamixelDevice(BaseDevice):
         will not reflect the real values existing in the physical servo. 
 
     """
-    def __init__(self, name, model, bus, dev_id, protocol):
-        super().__init__(name, model, bus, dev_id)
-        self.protocol=protocol
-
-    @classmethod
-    def fromInfoDict(cls, devinfo, robot):
-        bus = robot.buses[devinfo['Bus']]
+    def __init__(self, parent, dictInfo):
+        super().__init__(parent, dictInfo)
         params = processParams(devinfo['Params'])
-        return cls(name=devinfo['Name'],
-                   model=devinfo['Model'],
-                   bus=bus,
-                   dev_id=int(devinfo['Id']),
-                   protocol=params['Protocol'])
+        self.protocol=params['Protocol']    
 
     def getModelPath(self, model):
         return os.path.join(os.path.dirname(__file__), 'devices/dynamixel', model+'.device')
 
     def initRegister(self, reginfo):
+        if reginfo['Class'] == 'DynamixelRegister':
+            return I2CRegister(parent=self, dictInfo = reginfo)
+        else:
+            return super.initRegister(reginfo)
         return DynamixelRegister(device=self,
                                  name=reginfo['Name'],
                                  address=int(reginfo['Address']),
