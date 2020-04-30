@@ -4,6 +4,7 @@ class Joint():
     """A Joint is a convenient class to represent a positional device.
 
     A Joint class provides an abstract access to a device providing:
+
     - access to arbitrary registers in device to retrieve / set the position
     - conversion between degrees and radians (if necessary)
     - possibility to invert coordinates
@@ -11,6 +12,7 @@ class Joint():
     from the 0 of the device
     - include max and min range in joint coordinates to reflect physical
     limitation of the joint
+    
     """
     def __init__(self, init_dict):
         self.name = init_dict['name']
