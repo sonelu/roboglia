@@ -1,5 +1,5 @@
 ===============
-``base`` Module
+``utils`` Module
 ===============
 
 .. automodule:: roboglia.utils
