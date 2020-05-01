@@ -1,6 +1,7 @@
 import logging
 
-from .device import BaseDevice
+from roboglia.base.device import BaseDevice
+from roboglia.utils import check_key, check_type, check_options
 
 logger = logging.getLogger(__name__)
 
@@ -9,65 +10,50 @@ class BaseRegister():
     
     The `init_dict` must contain the following information, otherwise
     a `KeyError` will be thrown:
-    
-    - `device`: the object that owns the register (not the name)
-    - `name`: the name of the register
-    - `address`: the register address
-    
+
+    Args:
+        init_dict (dict): The dictionary used to initialize the register.
+
+    The following keys are exepcted in the dictionary:
+
+    - ``name``: the name of the register
+    - ``device``: the device where the register is attached to
+    - ``address``: the register address
+
     Optionally the following items can be provided or will be defaulted:
     
-    - `size`: the register size in bytes; defaults to 1
-    - `min`: min value represented in register; defaults to 0
-    - `max`: max value represented in register; defaults to 2^size - 1
-    the setter method will check that the desired value is within the 
-    [min, max] and trim it accordingly
-    - `access`: read ('R') or read-write ('RW'); default 'R'
-    - `sync`: True if the register will be updated from the real device
-    using a sync loop. If `sync` is False access to the register through
-    the value property will invoke reading / writing to the real register;
-    default 'False'
-    - `default`: the default value for the register; implicit 0
+    - ``size``: the register size in bytes; defaults to 1
+    - ``min``: min value represented in register; defaults to 0
+    - ``max``: max value represented in register; defaults to 2^size - 1
+        the setter method will check that the desired value is within the 
+        [min, max] and trim it accordingly
+    - ``access``: read ('R') or read-write ('RW'); default 'R'
+    - ``sync``: True if the register will be updated from the real device
+        using a sync loop. If `sync` is False access to the register through
+        the value property will invoke reading / writing to the real register;
+        default 'False'
+    - ``default``: the default value for the register; implicit 0
 
     """
     def __init__(self, init_dict):
+        # these are already checked by the device
         self.name = init_dict['name']
         self.device = init_dict['device']
-        if 'address' not in init_dict:
-            mess = f'No address specified for register {self.name} of device {self.device.name}. All registers must have an address speficied.'
-            logger.critical(mess)
-            raise KeyError(mess)
+        check_key('address', init_dict, 'register', self.name, logger)
         self.address = init_dict['address']
         # optionals
         self.size = init_dict.get('size', 1)
-        if type(self.size) is not int:
-            mess = f'Size for register {self.name} of device {self.device.name} must be an integer.'
-            logger.critical(mess)
-            raise ValueError(mess)
+        check_type(self.size, int, 'register', self.name, logger)
         self.min = init_dict.get('min', 0)
-        if type(self.min) is not int:
-            mess = f'Min for register {self.name} of device {self.device.name} must be an integer.'
-            logger.critical(mess)
-            raise ValueError(mess)
+        check_type(self.min, int, 'register', self.name, logger)
         self.max = init_dict.get('max', pow(2, self.size*8)-1)
-        if type(self.min) is not int:
-            mess = f'Min for register {self.name} of device {self.device.name} must be an integer.'
-            logger.critical(mess)
-            raise ValueError(mess)
+        check_type(self.max, int, 'register', self.name, logger)
         self.access = init_dict.get('access', 'R')
-        if self.access not in ['R', 'RW']:
-            mess = f'Access for register {self.name} of device {self.device.name} must be "R" or "RW".'
-            logger.critical(mess)
-            raise ValueError(mess)
+        check_options(self.access, ['R', 'RW'], 'register', self.name, logger)
         self.sync = init_dict.get('sync', False)
-        if self.sync not in [True, False]:
-            mess = f'Sync for register {self.name} of device {self.device.name} must be "True" or "False".'
-            logger.critical(mess)
-            raise ValueError(mess)
+        check_options(self.sync, [True, False], 'register', self.name, logger)
         self.default = init_dict.get('default', 0)
-        if type(self.default) is not int:
-            mess = f'Default for register {self.name} of device {self.device.name} must be an integer.'
-            logger.critical(mess)
-            raise ValueError(mess)
+        check_type(self.device, int, 'register', self.name, logger)
         self.int_value = self.default
 
     def value_to_external(self):
@@ -114,7 +100,13 @@ class BaseRegister():
         subclasses should overwrite this mehtod to actually invoke the 
         buses' methods for reading information from the device.
         """
-        self.int_value = self.device.read_register(self)
+        value = self.device.read_register(self)
+        # only update the internal value if the read value from device
+        # is not None
+        # a value of None indicates that there was an issue with readind
+        # the data from the device
+        if value != None:   
+            self.int_value = value
 
 
     def __str__(self):
@@ -125,15 +117,18 @@ class BaseRegister():
 class BoolRegister(BaseRegister):
     """A register with BOOL representation (true/false).
     
-    Inherits from `BaseRegister` all methods and defaults `max` to 1."""
+    Inherits from `BaseRegister` all methods and defaults `max` to 1.
+    Overrides `value_to_external` and `value_to_internal` to process
+    a bool value.
+    `value` property is updated to use the new setter / getter methods.
+    """
     def __init__(self, init_dict):
         init_dict['max'] = 1
         super().__init__(init_dict)
 
 
     def value_to_external(self):
-        """
-        The external representation of the register's value.
+        """The external representation of the register's value.
         
         Perform conversion to bool on top of the inherited method.
         """
@@ -141,8 +136,7 @@ class BoolRegister(BaseRegister):
 
 
     def value_to_internal(self, value):
-        """
-        The internal representation of the register's value.
+        """The internal representation of the register's value.
         
         Perform conversion to bool on top of the inherited method.
         """
@@ -157,19 +151,30 @@ class RegisterWithConversion(BaseRegister):
 
         external = (internal - offset) / factor
         internal = external * factor + offset
+
+    Args:
+        init_dict (dict): The dictionary used to initialize the register.
+
+    In addition to the fields used in :py:class:BaseRegister, the following keys 
+    are exepcted in the dictionary:
+
+    - ``factor``: a factor used for conversion (float)
+
+    Optionally the following items can be provided or will be defaulted:
+    
+    - ``offset``: the offset; defaults to 0 (int)
+
+    Raises:
+        KeyError: if any of the mandatory fields are not proviced
+        ValueError: if value provided are wrong or the wrong type
     """
     def __init__(self, init_dict):
         super().__init__(init_dict)
-        if 'factor' not in init_dict:
-            mess = f'No factor specified for register {self.name} of device {self.device.name}.'
-            logging.critical(mess)
-            raise KeyError(mess)
+        check_options('factor', init_dict, 'register', self.name, logger)
         self.factor = init_dict['factor']
+        check_type(self.factor, float, 'register', self.name, logger)
         self.offset = init_dict.get('offset', 0)
-        if type(self.offset) is not int:
-            mess = f'Offset for register {self.name} of device {self.device.name} must be an integer.'
-            logger.critical(mess)
-            raise ValueError(mess)
+        check_type(self.offset, int, 'register', self.name, logger)
     
     def value_to_external(self):
         """
@@ -195,15 +200,42 @@ class RegisterWithConversion(BaseRegister):
 
 
 class RegisterWithThreshold(BaseRegister):
-    """A register with an external representation that is produced by 
-    using a linear transformation:
-    `external = internal / factor - offset`
+    """A register with an external representation that is represented by
+    a threshold between negative and positive values::
+
+        if internal >= threshold:
+            external = (internal - threashold) / factor
+        else:
+            external = - internal / factor
+        
+        and for conversion from external to internal:
+
+        if external >= 0:
+            internal = external * factor + threshold
+        else:
+            internal = - external * factor
+
+    Args:
+        init_dict (dict): The dictionary used to initialize the register.
+
+    In addition to the fields used in :py:class:BaseRegister, the following keys 
+    are exepcted in the dictionary:
+
+    - ``factor``: a factor used for conversion (float)
+    - ``threshold``: a threshold that separates the positive from negative values (int)
+
+    Raises:
+        KeyError: if any of the mandatory fields are not proviced
+        ValueError: if value provided are wrong or the wrong type
     """
     def __init__(self, init_dict):
         super().__init__(init_dict)
+        check_key('factor', init_dict, 'register', self.name, logger)
         self.factor = init_dict['factor']
+        check_type(self.factor, float, 'register', self.name, logger)
+        check_key('threshold', init_dict, 'register', self.name, logger)
         self.threshold = init_dict['threshold']
-
+        check_type(self.threshold, int, 'register', self.name, logger)
     
     def value_to_external(self):
         """The external representation of the register's value.

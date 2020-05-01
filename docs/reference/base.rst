@@ -9,18 +9,6 @@ Classes in ``roboglia`` can be categorized in two groups in relation to their po
 * **Downstream** classes: are classes that are located between the robot class and the physical devices.
 
 * **Upstream** classes are classes that expose the robot capabilities in a uniform way like 'joints', 'sensors', 'moves', etc.
-
-**Utilities**
-
-*Factory*
-
-.. autosummary::
-   :toctree: base/factory
-
-   register_class
-   unregister_class
-   get_registered_class
-   registered_classes
    
 **Downstream**
 

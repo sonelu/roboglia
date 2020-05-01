@@ -22,4 +22,14 @@ roboglia.base.BaseRobot
 
    
    
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~BaseRobot.buses
+      ~BaseRobot.devices
+      ~BaseRobot.groups
+      ~BaseRobot.joints
+      ~BaseRobot.syncs
+   
    

@@ -6,3 +6,4 @@ API Reference
 
    base
    dynamixel
+   utils

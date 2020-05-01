@@ -24,4 +24,11 @@ roboglia.base.BaseBus
 
    
    
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~BaseBus.name
+      ~BaseBus.port
+   
    

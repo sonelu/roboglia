@@ -1,4 +1,7 @@
 import logging
+import threading
+from roboglia.utils import check_key
+
 
 logger = logging.getLogger(__name__)
 
@@ -11,22 +14,31 @@ class BaseBus():
     physical object. Your subclass can add additional attributes and 
     methods to deal with the particularities of the real bus represented.
 
-    Parameters
-    ----------
-    init_dict : dict
-        Dictionary with the initializations values. At least `name` and
-        `port` keys must be present otherwise the constructor will throw
-        an exception.
+    Args:
+        init_dict (dict): The dictionary used to initialize the bus.
 
+    The following keys are exepcted in the dictionary:
+
+    - ``name``: the name of the bus
+    - ``port``: the port used by the bus
+
+    Raises:
+        KeyError: if ``port`` not supplied
     """
     def __init__(self, init_dict):
-        # these will throw exceptions if info not provided in the init dict
-        self.name = init_dict['name']
-        if 'port' not in init_dict:
-            mess = f'Bus {self.name} has no port defined. All buses must have a port.'
-            logger.critical(mess)
-            raise KeyError(mess)
-        self.port = init_dict['port']
+        self._name = init_dict['name'] # alredy checked by robot
+        check_key('port', init_dict, 'bus', self._name, logger)
+        self._port = init_dict['port']
+
+    @property
+    def name(self):
+        """(read-only) the bus name."""
+        return self._name
+
+    @property
+    def port(self):
+        """(read-only) the bus port."""
+        return self._port
 
     def open(self):
         """Opens the actual physical bus. Must be overriden by the
@@ -61,39 +73,75 @@ class FileBus(BaseBus):
     """A bus that writes to a file with cache. 
     
     Read returns the last writen data. Provided for testing purposes.
+
+    Args:
+        init_dict (dict): the initialization dictionary. Same parameters
+            required as for :py:class:BaseBus.
+        
+    Raises:
+        same as :py:class:BaseBus
     """
     def __init__(self, init_dict):
         super().__init__(init_dict)
         self.__fp = None
         self.__last = {}
-        logger.debug(f'FileBus {self.name} initialized')
+        logger.debug(f'FileBus {self._name} initialized')
 
     def open(self):
-        self.__fp = open(self.port, 'w')
-        logger.debug(f'FileBus {self.name} opened')
+        """Opens the file associated with the ``FileBus``."""
+        self.__fp = open(self._port, 'w')
+        logger.debug(f'FileBus {self._name} opened')
 
     def close(self):
+        """Closes the file associated with the ``FileBus``."""
         self.__fp.close()
-        logger.debug(f'FileBus {self.name} closed')
+        logger.debug(f'FileBus {self._name} closed')
 
     def isOpen(self):
+        """Returns ``True`` is the file is opened."""
         return not self.__fp.closed
 
     def write(self, dev, reg, value):
+        """Updates the values in the FileBus.
+
+        Args:
+            dev (obj): is the device that is writing
+            reg (obj): is the regoster object that is written
+            value (int): is the value beein written.
+
+        The method will update the buffer with the value provided then
+        will log the write on the file. A flush() is performed in case
+        you want to inspect the content of the file while the robot
+        is running.
+        """
         self.__last[(dev.dev_id, reg.address)] = value
         text = f'written {value} in register {reg.address} of device {dev.dev_id}'
         self.__fp.write(text+'\n')
         self.__fp.flush()
-        logger.debug(f'FileBus {self.name} {text}')
+        logger.debug(f'FileBus {self._name} {text}')
 
     def read(self, dev, reg):
+        """Reads the value from the buffer of FileBus and logs it.
+
+        Args:
+            dev (obj): the device being read
+            reg (obj): register obhject being read
+
+        Returns:
+            int : the value from the requested register
+
+        The method will try to read from the buffer the value. If there
+        is no value in the buffer it will be defaulted from the register's
+        default value. The method will log the read to the file and return 
+        the value.
+        """
         if (dev.dev_id, reg.address) not in self.__last:
             self.__last[(dev.dev_id, reg.address)] = reg.default            
         val = self.__last[(dev.dev_id,reg.address)]
         text = f'read {val} from register {reg.address} of device {dev.dev_id}'
         self.__fp.write(text+'\n')
         self.__fp.flush()
-        logger.debug(f'FileBus {self.name} {text}')
+        logger.debug(f'FileBus {self._name} {text}')
         return val
         
     def __str__(self):

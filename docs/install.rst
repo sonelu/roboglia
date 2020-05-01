@@ -25,13 +25,13 @@ dependencies on these low level packages. Whihch means when you will install
 ``roboglia`` it will not automatically install them for you. It will also
 not check if they are avaialable, instead it will be your responsiblity
 to install the dependencies as you need them, as explained in the next
-paragraphs. This is an important point to remember, so here is it emphasised
+paragraphs. This is an important point to remember, so here it is emphasised
 in a warning:
 
 .. warning::
-    ``roboglia`` does not install automatically dependent packages for
+    ``roboglia`` does not automatically install  dependent packages for
     hardware access. You will have to install them manually as your
-    robot requires.
+    robot require.
 
 dynamixel_sdk
 ^^^^^^^^^^^^^

@@ -25,4 +25,11 @@ roboglia.base.BaseDevice
 
    
    
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~BaseDevice.name
+      ~BaseDevice.registers
+   
    

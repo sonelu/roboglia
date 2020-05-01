@@ -1,5 +1,3 @@
-
-import os
 from pathlib import Path
 from ..base.device import BaseDevice
 
@@ -13,11 +11,9 @@ class DynamixelDevice(BaseDevice):
     def get_model_path(self):
         """Builds the path to the `.yml` documents.
 
-        Returns
-        -------
-        str
-            A full document path including the name of the model and the
-            extension `.yml`.
+        Returns:
+            str :A full document path including the name of the model and the
+                extension `.yml`.
         """
         #return os.path.join(os.path.dirname(__file__), 'devices')
         return Path(__file__).parent / 'devices/'

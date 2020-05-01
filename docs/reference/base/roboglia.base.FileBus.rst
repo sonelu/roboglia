@@ -24,4 +24,11 @@ roboglia.base.FileBus
 
    
    
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~FileBus.name
+      ~FileBus.port
+   
    
