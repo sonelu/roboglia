@@ -1,4 +1,4 @@
-from .factory import register_class
+from .factory import *
 from .bus import  *
 from .register import *
 from .device import *

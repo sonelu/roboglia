@@ -48,7 +48,7 @@ class Joint():
 
     @property
     def name(self):
-        """Joint's name; Read-only"""
+        """(read-only) Joint's name."""
         return self._name
 
     @property

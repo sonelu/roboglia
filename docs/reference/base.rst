@@ -10,6 +10,18 @@ Classes in ``roboglia`` can be categorized in two groups in relation to their po
 
 * **Upstream** classes are classes that expose the robot capabilities in a uniform way like 'joints', 'sensors', 'moves', etc.
 
+**Utilities**
+
+*Factory*
+
+.. autosummary::
+   :toctree: base/factory
+
+   register_class
+   unregister_class
+   get_registered_class
+   registered_classes
+   
 **Downstream**
 
 The following classes from ``base`` module are provided for representing various structural elements of a robot.
