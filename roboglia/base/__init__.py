@@ -1,4 +1,4 @@
-from .factory import *
+from roboglia.utils.factory import register_class
 from .bus import  *
 from .register import *
 from .device import *
