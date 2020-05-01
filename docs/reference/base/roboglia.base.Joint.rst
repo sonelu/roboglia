@@ -14,8 +14,6 @@ roboglia.base.Joint
    .. autosummary::
    
       ~Joint.__init__
-      ~Joint.get_position
-      ~Joint.set_position
    
    
 
@@ -25,7 +23,16 @@ roboglia.base.Joint
 
    .. autosummary::
    
+      ~Joint.activate
+      ~Joint.activate_register
       ~Joint.desired_position
+      ~Joint.device
+      ~Joint.inverse
+      ~Joint.name
+      ~Joint.offset
       ~Joint.position
+      ~Joint.position_read_register
+      ~Joint.position_write_register
+      ~Joint.range
    
    

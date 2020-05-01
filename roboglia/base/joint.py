@@ -1,4 +1,4 @@
-import math
+
 
 class Joint():
     """A Joint is a convenient class to represent a positional device.
@@ -19,126 +19,113 @@ class Joint():
 
     - ``name``: the name of the joint
     - ``device``: the device object connected to the joint
-    - ``pos_read``: the register name used to retrieve from the
-        device the position
-    - ``pos_write``: the register name used to write to the device
-        the desired position
-    - ``activate``: the register name used to change the activation
-        of the device
+    - ``pos_read``: the register name used to retrieve current position
+    - ``pos_write``: the register name used to write desired position
+    - ``activate``: the register name used to control device activation
     
     The following keys are optional and can be omitted. They will be
     defaulted with the values mentioned bellow:
 
-    - ``inverse``: ``True`` or ``False``, indicates that a joint has
-        inverse coordinate system versus the device (ex. if the device
-        moves counter-clockwise the joint will be clockwise); defaults
-        to ``False``
-    - ``offset``: represents an offset in the units used by the 
-        device registers between the joint's 0 and device's 0; the
-        offset is added **after** the impact of ``inverse``; defaults
-        to 0
-    - ``min``: introduces a minimum limit for the joint value; the
-        limit is applied in joint coordinates (after ``offset`` and 
-        ``inverse``); defaults to ``None`` which means no minimum is
-        applied
-    - ``max``: introduces a maximum limit for the joint value; the
-        limit is applied in joint coordinates (after ``offset`` and 
-        ``inverse``); defaults to ``None`` which means no maximum is
-        applied
+    - ``inverse``: indicates inverse coordinate system versus the device
+    - ``offset``: offset from device's 0
+    - ``min``: introduces a minimum limit for the joint value; ignored if ``None``
+    - ``max``: introduces a maximum limit for the joint value; ignored if ``None
         
-        ``min`` and ``max`` are used only when writing values to device.
-        You can use both, only one of them or none.
-    
-    Attributes:
-
-        name (str): The name of the joint.
-        device (obj): The device object connected to the joint.
-        pos_r (property reference): A reference to a `value` property of a 
-                device register used for reading the present position of 
-                the device.
-        pos_w (property reference): A reference to a `value` property of a 
-                device register used for writting the desired position to 
-                the device.
-        activate (property reference): A reference to a `value` property of 
-                a device register used for controlling the active state of 
-                the device.
-        inverse (bool):  If ``True`` it indicates that the Joint is using 
-                inverse coordinates in respect to the device (ie. inverted).
-                If ``False`` they are the same.
-        offset (float): Indicates an offset in respect to the device's 0 
-                position. The offset is applied after the `inverse` 
-                parameter is considered.
-        min (float): Indicates a minimum limit for the Joint after considering 
-                the `inverse` and `offset` parameters. If ``None`` then no 
-                limit is imposed.
-        max (float): Indicates a maximum limit for the Joint after considering
-                the `inverse` and `offset` parameters. If ``None`` then no 
-                limit is imposed.
-    """
+    ``min`` and ``max`` are used only when writing values to device. You can 
+    use both, only one of them or none.
+   """
     def __init__(self, init_dict):
         """Initializes the Joint from an ``init_dict``."""
-        self.name = init_dict['name']
-        device = init_dict['device']
-        self.pos_r = getattr(device, init_dict['pos_read']).value
-        self.pos_w = getattr(device, init_dict['pos_write']).value
-        self.activate = getattr(device, init_dict['activate']).value
-        self.inverse = init_dict.get('inverse', False)
-        self.offset = init_dict.get('offset', 0.0)
-        self.min = init_dict.get('min', None)
-        self.max = init_dict.get('max', None)
+        self._name = init_dict['name']
+        self._device = init_dict['device']
+        self._pos_r = getattr(self._device, init_dict['pos_read'])
+        self._pos_w = getattr(self._device, init_dict['pos_write'])
+        self._activate = getattr(self._device, init_dict['activate'])
+        self._inverse = init_dict.get('inverse', False)
+        self._offset = init_dict.get('offset', 0.0)
+        self._min = init_dict.get('min', None)
+        self._max = init_dict.get('max', None)
 
-    def get_position(self):
-        """Retrieves the position from the device surrogate and returns
-        it according to the definition of the joint.
-        
-        Processing in order:
+    @property
+    def name(self):
+        """Joint's name. Read-only"""
+        return self._name
 
-        - reads the value from register
-        - if joint has inverse coordinates then invert the value
-        - apply offset
+    @property
+    def device(self):
+        """The name of device used by joint. Read-only."""
+        return self._device.name
 
+    @property
+    def position_read_register(self):
+        """Name of the register for current position. Read-only"""
+        return self._pos_r.name
+
+    @property
+    def position_write_register(self):
+        """Name of the register for desired position. Read-only"""
+        return self._pos_w.name
+
+    @property
+    def activate_register(self):
+        """Name of the register for activation control. Read-only."""
+        return self._activate.name
+
+    @property
+    def activate(self):
+        """Accessor for activating the joint. Read-Write."""
+        return self._activate.value
+
+    @activate.setter
+    def activate(self, value):
+        self._activate.value = value
+
+    @property
+    def inverse(self):
+        """Joint uses inverse coordinates versus the device. Read-only."""
+        return self._inverse
+
+    @property
+    def offset(self):
+        """The offset between joint coords and device coords. Read-only"""
+        return self._offset
+
+    @property
+    def range(self):
+        """Tuple (min, max) of joint limits. Read-only."""
+        return (self._min, self._max)
+
+    @property
+    def position(self):
+        """Getter uses the read register and applies `inverse` and `offset`
+        transformations. Setter clips to (min, max) limit if set, applies
+        `offset` and `inverse` and writes to the write register. Read-write.
         """
-        value = self.pos_r
-        if self.inverse:
+        value = self._pos_r.value
+        if self._inverse:
             value = - value
-        value += self.offset
+        value += self._offset
         return value
 
-
-    def set_position(self, value):
-        """Requeres the position from the device surrogate according to 
-        the definition of the joint.
-        Processing in order:
-
-        - clips the value between min and max
-        - remove offset
-        - if joint has inverse coordinates then invert the value
-        - writes the value to register
-
-        """
-        if self.max != None:
-            value = min(self.max, value)
-        if self.min != None:
-            value = max(self.min, value)
-        value -= self.offset
-        if self.inverse:
+    @position.setter
+    def position(self, value):
+        if self._max != None:
+            value = min(self._max, value)
+        if self._min != None:
+            value = max(self._min, value)
+        value -= self._offset
+        if self._inverse:
             value = -value
-        self.pos_w = value
-
-    position = property(fget=get_position, fset=set_position)
+        self._pos_w.value = value
 
     @property
     def desired_position(self):
-        """Provides a read-only value of the desired position of the joint.
-
-        It is similar to the getter for position, but it uses the write
-        register for the position.
-        Provided for information purposes.
+        """Retrieves the desired position from the write register. Read-only.
         """
-        value = self.pos_w
-        if self.inverse:
+        value = self._pos_w.value
+        if self._inverse:
             value = - value
-        value += self.offset
+        value += self._offset
         return value
 
     def __repr__(self):
