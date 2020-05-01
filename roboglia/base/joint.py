@@ -51,8 +51,6 @@ class Joint():
         ``min`` and ``max`` are used only when writing values to device.
         You can use both, only one of them or none.
     """
-    name = ''
-    """The name of the joint."""
     device = None
     """The device object connected to the joint."""
     pos_r = None
@@ -83,6 +81,7 @@ class Joint():
     def __init__(self, init_dict):
         """Initializes the Joint from an ``init_dict``."""
         self.name = init_dict['name']
+        """The name of the joint."""
         device = init_dict['device']
         self.pos_r = getattr(device, init_dict['pos_read']).value
         self.pos_w = getattr(device, init_dict['pos_write']).value
