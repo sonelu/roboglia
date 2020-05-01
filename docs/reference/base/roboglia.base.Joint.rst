@@ -27,6 +27,5 @@ roboglia.base.Joint
    
       ~Joint.desired_position
       ~Joint.position
-      ~Joint.name
    
    
