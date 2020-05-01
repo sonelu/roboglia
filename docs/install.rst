@@ -126,7 +126,7 @@ first activate the environment where you want to install ``dynamixel_sdk``.
 References
 ----------
 
-.. target-notes:
+.. target-notes::
 
 .. _`16 Channel PWM Bonnet`: https://www.adafruit.com/product/3416
 .. _`dynamixel_sdk`: https://github.com/ROBOTIS-GIT/DynamixelSDK
