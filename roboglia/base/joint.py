@@ -37,10 +37,10 @@ class Joint():
     def __init__(self, init_dict):
         """Initializes the Joint from an ``init_dict``."""
         self._name = init_dict['name']
-        self._device = init_dict['device']
-        self._pos_r = getattr(self._device, init_dict['pos_read'])
-        self._pos_w = getattr(self._device, init_dict['pos_write'])
-        self._activate = getattr(self._device, init_dict['activate'])
+        device = init_dict['device']
+        self._pos_r = getattr(device, init_dict['pos_read'])
+        self._pos_w = getattr(device, init_dict['pos_write'])
+        self._activate = getattr(device, init_dict['activate'])
         self._inverse = init_dict.get('inverse', False)
         self._offset = init_dict.get('offset', 0.0)
         self._min = init_dict.get('min', None)
@@ -48,32 +48,32 @@ class Joint():
 
     @property
     def name(self):
-        """Joint's name. Read-only"""
+        """Joint's name; Read-only"""
         return self._name
 
     @property
     def device(self):
-        """The name of device used by joint. Read-only."""
-        return self._device.name
+        """(read-only) The device used by joint."""
+        return self._pos_r.device
 
     @property
     def position_read_register(self):
-        """Name of the register for current position. Read-only"""
-        return self._pos_r.name
+        """(read-only) The register for current position."""
+        return self._pos_r
 
     @property
     def position_write_register(self):
-        """Name of the register for desired position. Read-only"""
-        return self._pos_w.name
+        """(read-only) The register for desired position."""
+        return self._pos_w
 
     @property
     def activate_register(self):
-        """Name of the register for activation control. Read-only."""
-        return self._activate.name
+        """(read-only) The register for activation control."""
+        return self._activate
 
     @property
     def activate(self):
-        """Accessor for activating the joint. Read-Write."""
+        """(read-write) Accessor for activating the joint."""
         return self._activate.value
 
     @activate.setter
@@ -82,24 +82,24 @@ class Joint():
 
     @property
     def inverse(self):
-        """Joint uses inverse coordinates versus the device. Read-only."""
+        """(read-only) Joint uses inverse coordinates versus the device."""
         return self._inverse
 
     @property
     def offset(self):
-        """The offset between joint coords and device coords. Read-only"""
+        """(read-only) The offset between joint coords and device coords."""
         return self._offset
 
     @property
     def range(self):
-        """Tuple (min, max) of joint limits. Read-only."""
+        """(read-only) Tuple (min, max) of joint limits."""
         return (self._min, self._max)
 
     @property
     def position(self):
-        """Getter uses the read register and applies `inverse` and `offset`
-        transformations. Setter clips to (min, max) limit if set, applies
-        `offset` and `inverse` and writes to the write register. Read-write.
+        """**Getter** uses the read register and applies `inverse` and `offset`
+        transformations, **setter** clips to (min, max) limit if set, applies
+        `offset` and `inverse` and writes to the write register.
         """
         value = self._pos_r.value
         if self._inverse:
@@ -120,8 +120,7 @@ class Joint():
 
     @property
     def desired_position(self):
-        """Retrieves the desired position from the write register. Read-only.
-        """
+        """(read-only) Retrieves the desired position from the write register."""
         value = self._pos_w.value
         if self._inverse:
             value = - value
