@@ -1,0 +1,27 @@
+language: generic
+
+env:
+  global:
+    # Directory of setup.py
+    - SETUP_DIR=$TRAVIS_BUILD_DIR/.
+
+matrix:
+  # Don't wait for allowed failures
+  fast_finish: true
+
+  include:
+
+    - python: 3.6
+      os: linux
+      language: python
+
+before_install:
+  - python --version
+  - pip install -U pip
+
+
+install:
+  - python setup.py install
+
+script:
+  - python test/all_tests.py
