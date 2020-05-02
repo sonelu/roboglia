@@ -24,12 +24,6 @@ before_install:
 install:
   - python setup.py install
 
-# script:
-#   - python tests/all_tests.py
-
-jobs:
-  include:
-    - stage: test
-      script: python tests/all_tests.py
-    - # stage name not required, will continue to use `test`
-      script: flake8 roboglia --statistics --count
+script:
+  - python tests/all_tests.py
+  - flake8 roboglia --statistics --count
