@@ -1,4 +1,7 @@
+import logging
+from roboglia.utils.checks import check_key, check_type, check_options
 
+logger = logging.getLogger(__name__)
 
 class Joint():
     """A Joint is a convenient class to represent a positional device.
@@ -38,13 +41,28 @@ class Joint():
         """Initializes the Joint from an ``init_dict``."""
         self._name = init_dict['name']
         device = init_dict['device']
+        check_key('pos_read', init_dict, 'joint', self._name, logger)
+        check_key(init_dict['pos_read'], device.__dict__, 'joint', self._name,
+                  logger, f'device {device.name} does not a register {init_dict["pos_read"]}')
         self._pos_r = getattr(device, init_dict['pos_read'])
+        check_key('pos_write', init_dict, 'joint', self._name, logger)
+        check_key(init_dict['pos_write'], device.__dict__, 'joint', self._name,
+                  logger, f'device {device.name} does not a register {init_dict["pos_write"]}')
         self._pos_w = getattr(device, init_dict['pos_write'])
+        check_key('activate', init_dict, 'joint', self._name, logger)
+        check_key(init_dict['activate'], device.__dict__, 'joint', self._name,
+                  logger, f'device {device.name} does not a register {init_dict["activate"]}')
         self._activate = getattr(device, init_dict['activate'])
         self._inverse = init_dict.get('inverse', False)
+        check_options(self._inverse, [True, False], 'joint', self._name, logger)
         self._offset = init_dict.get('offset', 0.0)
+        check_type(self._offset, float, 'joint', self._name, logger)
         self._min = init_dict.get('min', None)
+        if self._min:
+            check_type(self._min, float, 'joint', self._name, logger)
         self._max = init_dict.get('max', None)
+        if self._max:
+            check_type(self._max, float, 'joint', self._name, logger)
 
     @property
     def name(self):
@@ -129,3 +147,125 @@ class Joint():
 
     def __repr__(self):
         return f'{self.name}: p={self.position:.3f}'
+
+class JointPV(Joint):
+    """A Joint with position and velocity control.
+
+    Args:
+        init_dict (dict): The dictionary used to initialize the joint.
+
+    In addition to the keys required by the :py:class:`Joint`, the following 
+    keys are exepcted in the dictionary:
+
+    - ``vel_read``: the register name used to retrieve current velocity
+    - ``vel_write``: the register name used to write desired velocity
+   """
+    def __init__(self, init_dict):
+        """Initializes the JointPV from an ``init_dict``."""
+        super().__init__(init_dict)
+        check_key('vel_read', init_dict, 'joint', self._name, logger)
+        check_key(init_dict['vel_read'], self.device.__dict__, 'joint', self._name,
+                  logger, f'device {self.device.name} does not a register {init_dict["vel_read"]}')
+        self._vel_r = getattr(self.device, init_dict['vel_read'])
+        check_key('vel_write', init_dict, 'joint', self._name, logger)
+        check_key(init_dict['vel_write'], self.device.__dict__, 'joint', self._name,
+                  logger, f'device {self.device.name} does not a register {init_dict["vel_write"]}')
+        self._vel_w = getattr(self.device, init_dict['vel_read'])
+
+    @property
+    def velocity(self):
+        """**Getter** uses the read register and applies `inverse` transformation, 
+        **setter** applies `inverse` and writes to the write register.
+        """
+        value = self._vel_r.value
+        if self._inverse:
+            value = - value
+        return value
+
+    @velocity.setter
+    def velocity(self, value):
+        if self._inverse:
+            value = -value
+        self._vel_w.value = value
+
+    @property
+    def velocity_read_register(self):
+        """(read-only) The register for current velocity."""
+        return self._vel_r
+
+    @property
+    def velocity_write_register(self):
+        """(read-only) The register for desired velocity."""
+        return self._vel_w
+
+    @property
+    def desired_velocity(self):
+        """(read-only) Retrieves the desired velocity from the write register."""
+        value = self._vel_w.value
+        if self._inverse:
+            value = - value
+        return value
+
+    def __repr__(self):
+        return f'{self.name}: p={self.position:.3f}, v={self.velocity:.3f}'
+
+class JointPVL(JointPV):
+    """A Joint with position, velocity and load control.
+
+    Args:
+        init_dict (dict): The dictionary used to initialize the joint.
+
+    In addition to the keys required by the :py:class:`JointPV`, the following 
+    keys are exepcted in the dictionary:
+
+    - ``load_read``: the register name used to retrieve current load
+    - ``load_write``: the register name used to write desired load
+   """
+    def __init__(self, init_dict):
+        """Initializes the JointPVL from an ``init_dict``."""
+        super().__init__(init_dict)
+        check_key('load_read', init_dict, 'joint', self._name, logger)
+        check_key(init_dict['load_read'], self.device.__dict__, 'joint', self._name,
+                  logger, f'device {self.device.name} does not a register {init_dict["load_read"]}')
+        self._load_r = getattr(self.device, init_dict['load_read'])
+        check_key('load_write', init_dict, 'joint', self._name, logger)
+        check_key(init_dict['load_write'], self.device.__dict__, 'joint', self._name,
+                  logger, f'device {self.device.name} does not a register {init_dict["load_write"]}')
+        self._load_w = getattr(self.device, init_dict['load_read'])
+
+    @property
+    def load(self):
+        """**Getter** uses the read register and applies `inverse` transformation, 
+        **setter** applies `inverse` and writes to the write register.
+        """
+        value = self._load_r.value
+        if self._inverse:
+            value = - value
+        return value
+
+    @load.setter
+    def load(self, value):
+        if self._inverse:
+            value = -value
+        self._load_w.value = value
+
+    @property
+    def load_read_register(self):
+        """(read-only) The register for current load."""
+        return self._load_r
+
+    @property
+    def load_write_register(self):
+        """(read-only) The register for desired velocity."""
+        return self._load_w
+
+    @property
+    def desired_load(self):
+        """(read-only) Retrieves the desired velocity from the write register."""
+        value = self._load_w.value
+        if self._inverse:
+            value = - value
+        return value
+
+    def __repr__(self):
+        return f'{self.name}: p={self.position:.3f}, v={self.velocity:.3f}, l={self.load:.3f}'
