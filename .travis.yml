@@ -15,6 +15,11 @@ matrix:
       os: linux
       language: python
 
+    - python: 3.6
+      os: linux
+      arch: arm64
+      language: python
+
 before_install:
   - python --version
   - pip install -U pip
