@@ -24,4 +24,4 @@ install:
   - python setup.py install
 
 script:
-  - python test/all_tests.py
+  - python tests/all_tests.py
