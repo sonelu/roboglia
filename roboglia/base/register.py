@@ -155,8 +155,8 @@ class RegisterWithConversion(BaseRegister):
     Args:
         init_dict (dict): The dictionary used to initialize the register.
 
-    In addition to the fields used in :py:class:BaseRegister, the following keys 
-    are exepcted in the dictionary:
+    In addition to the fields used in :py:class:`BaseRegister`, the following keys 
+    are expected in the dictionary:
 
     - ``factor``: a factor used for conversion (float)
 
@@ -218,7 +218,7 @@ class RegisterWithThreshold(BaseRegister):
     Args:
         init_dict (dict): The dictionary used to initialize the register.
 
-    In addition to the fields used in :py:class:BaseRegister, the following keys 
+    In addition to the fields used in :py:class:`BaseRegister`, the following keys 
     are exepcted in the dictionary:
 
     - ``factor``: a factor used for conversion (float)
