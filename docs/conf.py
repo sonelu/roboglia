@@ -18,11 +18,11 @@ import sphinx_rtd_theme
 
 
 # -- Project information -----------------------------------------------------
-
+from roboglia._version import __version__
 project = 'roboglia'
 copyright = '2020, Alex Sonea'
 author = 'Alex Sonea'
-version = '0.0.4'
+version = __version__
 
 # The full version, including alpha/beta/rc tags
 release = version

@@ -10,7 +10,7 @@ activities.
 The name `roboglia` is derived from the glial cells present in the brian. 
 Their role is to support the neurons in their functions by supplying them 
 with nutirients, energy and disposing of the residues produced during the 
-execution of their activities. The analogy is thay `roboglia` provides this 
+execution of their activities. The analogy is that ``roboglia`` provides this 
 boring, but very complex activity of putting together the specific functions 
 of the physical devices used in robots in order to provide a more accessible 
 high-level representation of the robot for the use of the "smart" control logic

@@ -53,7 +53,7 @@ class BaseRegister():
         self.sync = init_dict.get('sync', False)
         check_options(self.sync, [True, False], 'register', self.name, logger)
         self.default = init_dict.get('default', 0)
-        check_type(self.device, int, 'register', self.name, logger)
+        check_type(self.default, int, 'register', self.name, logger)
         self.int_value = self.default
 
     def value_to_external(self):
@@ -78,7 +78,7 @@ class BaseRegister():
         is not synced (`sync` is `False`) it will also invoke the `write`
         method to write the content to the device.
         """
-        # trim accroding to min and max for the register
+        # trim according to min and max for the register
         if self.access != 'R':
             self.int_value = max(self.min, min(self.max, value))
             if not self.sync:

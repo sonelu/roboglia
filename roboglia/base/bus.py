@@ -52,6 +52,7 @@ class BaseBus():
         """
         pass
 
+    @property
     def isOpen(self):
         """Returns `True` or `False` if the bus is open. Must be overriden 
         by the subclass.
@@ -97,9 +98,10 @@ class FileBus(BaseBus):
         self.__fp.close()
         logger.debug(f'FileBus {self._name} closed')
 
+    @property
     def isOpen(self):
         """Returns ``True`` is the file is opened."""
-        return not self.__fp.closed
+        return False if not self.__fp else not self.__fp.closed
 
     def write(self, dev, reg, value):
         """Updates the values in the FileBus.
