@@ -18,7 +18,7 @@ class Joint():
     Args:
         init_dict (dict): The dictionary used to initialize the joint.
 
-    The following keys are exepcted in the dictionary:
+    The following keys are expected in the dictionary:
 
     - ``name``: the name of the joint
     - ``device``: the device object connected to the joint
@@ -155,7 +155,7 @@ class JointPV(Joint):
         init_dict (dict): The dictionary used to initialize the joint.
 
     In addition to the keys required by the :py:class:`Joint`, the following 
-    keys are exepcted in the dictionary:
+    keys are expected in the dictionary:
 
     - ``vel_read``: the register name used to retrieve current velocity
     - ``vel_write``: the register name used to write desired velocity
@@ -216,7 +216,7 @@ class JointPVL(JointPV):
         init_dict (dict): The dictionary used to initialize the joint.
 
     In addition to the keys required by the :py:class:`JointPV`, the following 
-    keys are exepcted in the dictionary:
+    keys are expected in the dictionary:
 
     - ``load_read``: the register name used to retrieve current load
     - ``load_write``: the register name used to write desired load

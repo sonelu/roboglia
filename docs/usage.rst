@@ -1,23 +1,65 @@
 Using ``roboglia``
 ==================
 
-``roboglia`` is a framework that helps developers with the setup of robots in a more reusable fashion. Most of the times the creation of robots involve integrating actuators, sensors, cameras and microphones, periodically accessing the information provided by these or supplying commands according to the desired activities.
+``roboglia`` is a framework that helps developers with the setup of robots 
+in a more reusable fashion. Most of the times the creation of robots involve 
+integrating actuators, sensors, cameras and microphones, periodically accessing 
+the information provided by these or supplying commands according to the desired
+activities.
 
-The name `roboglia` is derived from the glial cells present in the brian. Their role is to support the neurons in their functions by supplying them with nutirients, energy and disposing of the residues produced during the execution of their activities. The analogy is thay `roboglia` provides this boring, but very complex activity of putting together the specific functions of the physical devices used in robots in order to provide a more accessible high-level representation of the robot for the use of the "smart" control logic that sits at the top.
+The name `roboglia` is derived from the glial cells present in the brian. 
+Their role is to support the neurons in their functions by supplying them 
+with nutirients, energy and disposing of the residues produced during the 
+execution of their activities. The analogy is thay `roboglia` provides this 
+boring, but very complex activity of putting together the specific functions 
+of the physical devices used in robots in order to provide a more accessible 
+high-level representation of the robot for the use of the "smart" control logic
+that sits at the top.
 
-With ``roboglia`` some low level functionality, currently split across multiple libraries and frameworks are put together and integrated in an extensible way making it easier for developer to focus on the higher level functionlity, rather than gritty details.
+With ``roboglia`` some low level functionality, currently split across multiple
+libraries and frameworks are put together and integrated in an extensible way 
+making it easier for developer to focus on the higher level functionlity, 
+rather than gritty details.
 
 .. note::
 
-    When using a IMU device developers typically inspect the documentation of the chip or look for some example code and incorporate that in their particular project. It makes it very difficult when moving from a device to another or when the main controller or libraries are changed. With ``roboglia`` this is handled in the following way:
+    When using a IMU device developers typically inspect the documentation of 
+    the chip or look for some example code and incorporate that in their 
+    particular project. It makes it very difficult when moving from a device 
+    to another or when the main controller or libraries are changed. With 
+    ``roboglia`` this is handled in the following way:
     
-    * first a ``Bus`` is instantiated with information from a robot definition (an YAML) file, using an existing class from ``roboglia`` or a custom defined one in case these are not enough. In this example most likely the bus woould be an ``I2CBus`` which is provided out of the box in ``roboglia``.
-    * the robot definition file then contains information about the devices used and their association with the buses. In our example the device will be an ``I2CDevice`` and ``roboglia`` frameowork will construct the specific instance of this device by resorting to a *device defintion file*.  Such a device description is produced in YAML and lists the registers of the device each with  information like name, the address where it is accessed,size. The register is associated with a class that provides convenient transformation of the information in the registers in an external format. Developers have access to sevaral common classes in ``roboglia`` but it is also very simple to extend the framework by writing custom register classes.
-    * once the setup of the device is ready the robot defintion can provide details about a syncronization loop that will be run in a separate thread in order to read / write information to the physical device leveraging those devices and protocols that provide improved efficiency when accessing data in bulk. Of course it is still possible and the framework will default to this, to read / write synchronously each time when we are interested to access the information a register.  
+    * first a ``Bus`` is instantiated with information from a robot definition 
+        (an YAML) file, using an existing class from ``roboglia`` or a custom 
+        defined one in case these are not enough. In this example most likely 
+        the bus woould be an ``I2CBus`` which is provided out of the box in 
+        ``roboglia``.
+    * the robot definition file then contains information about the devices 
+        used and their association with the buses. In our example the device 
+        will be an ``I2CDevice`` and ``roboglia`` frameowork will construct 
+        the specific instance of this device by resorting to a *device 
+        defintion file*.  Such a device description is produced in YAML and 
+        lists the registers of the device each with  information like name, 
+        the address where it is accessed,size. The register is associated 
+        with a class that provides convenient transformation of the 
+        information in the registers in an external format. Developers have 
+        access to sevaral common classes in ``roboglia`` but it is also very 
+        simple to extend the framework by writing custom register classes.
+    * once the setup of the device is ready the robot defintion can provide 
+        details about a syncronization loop that will be run in a separate 
+        thread in order to read / write information to the physical device 
+        leveraging those devices and protocols that provide improved efficiency 
+        when accessing data in bulk. Of course it is still possible and the 
+        framework will default to this, to read / write synchronously each 
+        time when we are interested to access the information a register.  
     
-All in all the approach described above makes it possible to define and run a complete robot only by preparing or reusing existing defintion files without writing any code!
+All in all the approach described above makes it possible to define and run 
+a complete robot only by preparing or reusing existing defintion files without 
+writing any code!
 
-In the next sections we will take you step by step through the modeling of a robot and explain the functionality provided by ``roboglia`` to help you with this activity.
+In the next sections we will take you step by step through the modeling of a 
+robot and explain the functionality provided by ``roboglia`` to help you with 
+this activity.
 
 Creating a robot
 ----------------
@@ -31,10 +73,10 @@ You would normally create a robot instance by instantiating a ``BaseRobot`` clas
 
     from roboglia.base.robot import BaseRobot
 
-    robot = BaseRobot.from_yaml('my_robot_definction.yml')
+    robot = BaseRobot.from_yaml('my_robot_definition.yml')
     ...
 
-This class method simply loads the YAML defition into a dictionary and passes it to the ``BaseRobot`` constructor who parses it and instantiate the various components of the robot. This makes it very easy to adapt the particulars of your robot without needing to change the source code. 
+This class method simply loads the YAML definition into a dictionary and passes it to the ``BaseRobot`` constructor who parses it and instantiate the various components of the robot. This makes it very easy to adapt the particulars of your robot without needing to change the source code. 
 
 You might have noticed that the ``BaseRobot`` constructor takes a single parameter, a  dictionary:
 
@@ -131,7 +173,7 @@ The correct form of the specification would be:
     min: 32
     max: 128
 
-Another convenience introduced by using the ``init_dict`` approach is that the inheritance processing is much simpler. A ``FloatRegisterWithConversion`` is a subclass of the ``BaseRegister`` that introduces a **factor** and an **offset** used to translate the internal value in the register into an external representation (ex. a position in radians). This class constructor will simply call the ``super()`` constructor and then add the specific configuration:
+Another convenience introduced by using the ``init_dict`` technique is that the inheritance processing is much simpler. A ``FloatRegisterWithConversion`` is a subclass of the ``BaseRegister`` that introduces a **factor** and an **offset** used to translate the internal value in the register into an external representation (ex. a position in radians). This class constructor will simply call the ``super()`` constructor and then add the specific configuration:
 
 .. code-block:: python
    :linenos:
