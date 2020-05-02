@@ -1,13 +1,13 @@
 import logging
 
-from roboglia.base.device import BaseDevice
 from roboglia.utils import check_key, check_type, check_options
 
 logger = logging.getLogger(__name__)
 
+
 class BaseRegister():
     """A minimal representation of a device register.
-    
+
     The `init_dict` must contain the following information, otherwise
     a `KeyError` will be thrown:
 
@@ -21,11 +21,11 @@ class BaseRegister():
     - ``address``: the register address
 
     Optionally the following items can be provided or will be defaulted:
-    
+
     - ``size``: the register size in bytes; defaults to 1
     - ``min``: min value represented in register; defaults to 0
     - ``max``: max value represented in register; defaults to 2^size - 1
-        the setter method will check that the desired value is within the 
+        the setter method will check that the desired value is within the
         [min, max] and trim it accordingly
     - ``access``: read ('R') or read-write ('RW'); default 'R'
     - ``sync``: True if the register will be updated from the real device
@@ -46,7 +46,7 @@ class BaseRegister():
         check_type(self.size, int, 'register', self.name, logger)
         self.min = init_dict.get('min', 0)
         check_type(self.min, int, 'register', self.name, logger)
-        self.max = init_dict.get('max', pow(2, self.size*8)-1)
+        self.max = init_dict.get('max', pow(2, self.size * 8) - 1)
         check_type(self.max, int, 'register', self.name, logger)
         self.access = init_dict.get('access', 'R')
         check_options(self.access, ['R', 'RW'], 'register', self.name, logger)
@@ -59,16 +59,15 @@ class BaseRegister():
     def value_to_external(self):
         """
         The external representation of the register's value.
-        
+
         The method will return external representation of the register.
-        If the register is not flagged as a sync registry it will also 
-        try to invoke the `read()` method of the register to 
-        get the most up to date value. 
+        If the register is not flagged as a sync registry it will also
+        try to invoke the `read()` method of the register to
+        get the most up to date value.
         """
         if not self.sync:
             self.read()
         return self.int_value
-
 
     def value_to_internal(self, value):
         """Updates the internal representation of the register's value.
@@ -89,15 +88,15 @@ class BaseRegister():
 
     def write(self):
         """Performs the actual writing of the internal value of the register
-        to the device. Calls the device's method to write the value of register.
+        to the device. Calls the device's method to write the value of
+        register.
         """
         self.device.write_register(self, self.int_value)
-
 
     def read(self):
         """Performs the actual reading of the internal value of the register
         from the device. In `BaseDevice` the method doesn't do anything and
-        subclasses should overwrite this mehtod to actually invoke the 
+        subclasses should overwrite this mehtod to actually invoke the
         buses' methods for reading information from the device.
         """
         value = self.device.read_register(self)
@@ -105,9 +104,8 @@ class BaseRegister():
         # is not None
         # a value of None indicates that there was an issue with readind
         # the data from the device
-        if value != None:   
+        if value is not None:
             self.int_value = value
-
 
     def __str__(self):
         """Representation of the register [name]: value."""
@@ -116,7 +114,7 @@ class BaseRegister():
 
 class BoolRegister(BaseRegister):
     """A register with BOOL representation (true/false).
-    
+
     Inherits from `BaseRegister` all methods and defaults `max` to 1.
     Overrides `value_to_external` and `value_to_internal` to process
     a bool value.
@@ -126,18 +124,16 @@ class BoolRegister(BaseRegister):
         init_dict['max'] = 1
         super().__init__(init_dict)
 
-
     def value_to_external(self):
         """The external representation of the register's value.
-        
+
         Perform conversion to bool on top of the inherited method.
         """
         return bool(super().value_to_external())
 
-
     def value_to_internal(self, value):
         """The internal representation of the register's value.
-        
+
         Perform conversion to bool on top of the inherited method.
         """
         super().value_to_internal(bool(value))
@@ -146,7 +142,7 @@ class BoolRegister(BaseRegister):
 
 
 class RegisterWithConversion(BaseRegister):
-    """A register with an external representation that is produced by 
+    """A register with an external representation that is produced by
     using a linear transformation::
 
         external = (internal - offset) / factor
@@ -155,13 +151,13 @@ class RegisterWithConversion(BaseRegister):
     Args:
         init_dict (dict): The dictionary used to initialize the register.
 
-    In addition to the fields used in :py:class:`BaseRegister`, the following keys 
-    are expected in the dictionary:
+    In addition to the fields used in :py:class:`BaseRegister`, the following
+    keys are expected in the dictionary:
 
     - ``factor``: a factor used for conversion (float)
 
     Optionally the following items can be provided or will be defaulted:
-    
+
     - ``offset``: the offset; defaults to 0 (int)
 
     Raises:
@@ -175,25 +171,24 @@ class RegisterWithConversion(BaseRegister):
         check_type(self.factor, float, 'register', self.name, logger)
         self.offset = init_dict.get('offset', 0)
         check_type(self.offset, int, 'register', self.name, logger)
-    
+
     def value_to_external(self):
         """
         The external representation of the register's value.
-        
+
         Performs the translation of the value after calling the inherited
         method.
         """
-        return (float(super().value_to_external()) - self.offset) / self.factor 
-
+        return (float(super().value_to_external()) - self.offset) / self.factor
 
     def value_to_internal(self, value):
         """
         The internal representation of the register's value.
-        
+
         Performs the translation of the value before calling the inherited
         method.
         """
-        value = round(float(value)  * self.factor + self.offset)
+        value = round(float(value) * self.factor + self.offset)
         super().value_to_internal(value)
 
     value = property(value_to_external, value_to_internal)
@@ -207,7 +202,7 @@ class RegisterWithThreshold(BaseRegister):
             external = (internal - threashold) / factor
         else:
             external = - internal / factor
-        
+
         and for conversion from external to internal:
 
         if external >= 0:
@@ -218,11 +213,12 @@ class RegisterWithThreshold(BaseRegister):
     Args:
         init_dict (dict): The dictionary used to initialize the register.
 
-    In addition to the fields used in :py:class:`BaseRegister`, the following keys 
-    are exepcted in the dictionary:
+    In addition to the fields used in :py:class:`BaseRegister`, the following
+    keys are exepcted in the dictionary:
 
     - ``factor``: a factor used for conversion (float)
-    - ``threshold``: a threshold that separates the positive from negative values (int)
+    - ``threshold``: a threshold that separates the positive from negative
+      values (int)
 
     Raises:
         KeyError: if any of the mandatory fields are not proviced
@@ -236,10 +232,10 @@ class RegisterWithThreshold(BaseRegister):
         check_key('threshold', init_dict, 'register', self.name, logger)
         self.threshold = init_dict['threshold']
         check_type(self.threshold, int, 'register', self.name, logger)
-    
+
     def value_to_external(self):
         """The external representation of the register's value.
-        
+
         Performs the translation of the value after calling the inherited
         method.
         """
@@ -249,10 +245,9 @@ class RegisterWithThreshold(BaseRegister):
         else:
             return (-value) / self.factor
 
-
     def value_to_internal(self, value):
         """The internal representation of the register's value.
-        
+
         Performs the translation of the value before calling the inherited
         method.
         """

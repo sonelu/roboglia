@@ -1,8 +1,10 @@
 import unittest
 import logging
+import pathlib
 
 
 from roboglia.base.bus import BaseBus, FileBus
+from roboglia.base.device import BaseDevice
 from roboglia.base.register import BaseRegister, BoolRegister, \
                                     RegisterWithConversion, RegisterWithThreshold
 
@@ -10,10 +12,15 @@ logging.basicConfig(level=60)       # silent
 
 def test_base_suite():
     suite = unittest.TestSuite()
-    suite.addTest(TestBaseRegister('test_base_register_init'))
-    suite.addTest(TestBaseRegister('test_base_register_value'))
     suite.addTest(TestBaseBus('test_base_bus_init'))
     suite.addTest(TestFileBus('test_file_bus_init'))
+    suite.addTest(TestBaseRegister('test_base_register_init'))
+    suite.addTest(TestBaseRegister('test_base_register_value'))
+    suite.addTest(TestBaseDevice('test_base_device_init'))
+    suite.addTest(TestBaseDevice('test_base_device_default_register'))
+    suite.addTest(TestBaseDevice('test_base_device_read_register'))
+    suite.addTest(TestBaseDevice('test_base_device_write_register'))
+    
     return suite
 
 
@@ -90,6 +97,79 @@ class TestBaseRegister(unittest.TestCase):
         reg = BaseRegister(init_dict)
         #self.assertEqual(reg.value,0)
 
+
+class TestBaseDevice(unittest.TestCase):
+
+    def setUp(self):
+        init_1 = {
+            'name': 'device_1',
+            'bus': None,
+            'id': 42,
+            'model': 'device',
+            'path': pathlib.Path(__file__).parent
+        }
+
+        self.device_1 = BaseDevice(init_1)
+
+        init_2 = {
+            'name': 'test_bus',
+            'port': '/tmp/test.log'
+        }
+
+        bus = FileBus(init_2)
+        bus.open()
+
+        init_3 = {
+            'name': 'device_1',
+            'bus': bus,
+            'id': 42,
+            'model': 'device',
+            'path': pathlib.Path(__file__).parent
+        }
+
+        self.device_2 = BaseDevice(init_3)
+
+    def test_base_device_init(self):
+        init_dict = {}
+        # name
+        message = "name"
+        with self.assertRaisesRegex(KeyError, message):
+            _ = BaseDevice(init_dict)
+        init_dict['name'] = 'device_1'
+        # bus
+        message = "bus"
+        with self.assertRaisesRegex(KeyError, message):
+            _ = BaseDevice(init_dict)
+        init_dict['bus'] = None
+        # id
+        message = '"id" specification missing for device: device_1'
+        with self.assertRaisesRegex(KeyError, message):
+            _ = BaseDevice(init_dict)
+        init_dict['id'] = 42
+        # model
+        message = '"model" specification missing for device: device_1'
+        with self.assertRaisesRegex(KeyError, message):
+            _ = BaseDevice(init_dict)
+        init_dict['model'] = 'device'
+        message = 'No such file or directory'
+        with self.assertRaisesRegex(FileNotFoundError, message):
+            _ = BaseDevice(init_dict)
+        init_dict['path'] = pathlib.Path(__file__).parent
+        _ = BaseDevice(init_dict)
+
+    def test_base_device_default_register(self):
+        self.assertEqual(self.device_1.default_register(), 'BaseRegister')
+
+    def test_base_device_read_register(self):
+        register = self.device_2.registers['model_number']
+        value = self.device_2.read_register(register)
+        self.assertEqual(value, 42)
+
+    def test_base_device_write_register(self):
+        register = self.device_2.registers['firmware']
+        self.device_2.write_register(register, 12)
+        value = self.device_2.read_register(register)
+        self.assertEqual(value, 12)
 
 class TestBaseBus(unittest.TestCase):
 

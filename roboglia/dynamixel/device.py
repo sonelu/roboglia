@@ -7,7 +7,6 @@ class DynamixelDevice(BaseDevice):
     def __init__(self, init_dict):
         super().__init__(init_dict)
 
-
     def get_model_path(self):
         """Builds the path to the `.yml` documents.
 
@@ -15,7 +14,7 @@ class DynamixelDevice(BaseDevice):
             str :A full document path including the name of the model and the
                 extension `.yml`.
         """
-        #return os.path.join(os.path.dirname(__file__), 'devices')
+        # return os.path.join(os.path.dirname(__file__), 'devices')
         return Path(__file__).parent / 'devices/'
 
     def open(self):
@@ -23,4 +22,3 @@ class DynamixelDevice(BaseDevice):
         """
         for reg in self.registers.values():
             reg.int_value = self.read_register(reg)
-        

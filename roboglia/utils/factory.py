@@ -1,10 +1,13 @@
+import logging
+
+logger = logging.getLogger(__name__)
 
 __registered_classes = {}
 
 
 def register_class(class_obj):
-    """Registers a class with the class factory dictionary. If the class is 
-    already registered the function does not replace it. In the factory 
+    """Registers a class with the class factory dictionary. If the class is
+    already registered the function does not replace it. In the factory
     the class is represented by name.
 
     Args:
@@ -16,8 +19,12 @@ def register_class(class_obj):
     if classmethod.__name__ not in __registered_classes:
         if not isinstance(class_obj, type):
             print(type(class_obj))
-            raise ValueError(f'{class_obj} is not a Class object. You must pass a Class not an instance.')
+            mess = f'{class_obj} is not a Class object. ' + \
+                   'You must pass a Class not an instance.'
+            logger.critical(mess)
+            raise ValueError(mess)
         __registered_classes[class_obj.__name__] = class_obj
+
 
 def unregister_class(class_name):
     """Removes a class from the class factory dictionary thus making it
@@ -30,9 +37,12 @@ def unregister_class(class_name):
         KeyError: if the class name is not in the class factory dictionary.
     """
     if class_name not in __registered_classes:
-        raise KeyError(f'class {class_name} not registered with the factory')
+        mess = f'class {class_name} not registered with the factory'
+        logger.critical(mess)
+        raise KeyError(mess)
     else:
         del __registered_classes[class_name]
+
 
 def get_registered_class(class_name):
     """Retrieves a class object from the class factory by name.
@@ -57,7 +67,10 @@ def get_registered_class(class_name):
     if class_name in __registered_classes:
         return __registered_classes[class_name]
     else:
-        raise KeyError(f'class {class_name} not registered with the factory')
+        mess = f'class {class_name} not registered with the factory'
+        logger.critical(mess)
+        raise KeyError(mess)
+
 
 def registered_classes():
     """Convenience function to inspect the dictionary of registered classes.

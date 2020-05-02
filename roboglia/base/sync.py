@@ -1,5 +1,8 @@
 import threading
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class BaseThread():
@@ -9,31 +12,28 @@ class BaseThread():
 
     The main processing should be impemented in the `run` method where the
     subclass should make sure that it checks periodically the status
-    (`paused` or `stopped`) and behave appropriately. The `run` can 
-    be flanked by the `setup` and `teardown` mthods where subclasses can 
+    (`paused` or `stopped`) and behave appropriately. The `run` can
+    be flanked by the `setup` and `teardown` mthods where subclasses can
     impement logic needed before the main processing is started or finished.
     This becomes very handy for loops that normally prepare the work, then
     run for an indefinite time, and later are closed when the owner signals.
     """
     def __init__(self, init_dict):
         self.name = init_dict['name']
-
         self._started = threading.Event()
         self._paused = threading.Event()
         self._crashed = False
         self._thread = None
 
-
     def setup(self):
         """Thread preparation before running. Subclasses should override"""
         pass
 
-
     def run(self):
         """ Run method of the thread.
-        .. note:: In order to be stoppable (resp. pausable), this method has to 
-        check the running property - as often as possible to improve 
-        responsivness - and terminate when :meth:`should_stop` (resp. 
+        .. note:: In order to be stoppable (resp. pausable), this method has to
+        check the running property - as often as possible to improve
+        responsivness - and terminate when :meth:`should_stop` (resp.
         :meth:`should_pause`) becomes True.
             For instance::
                 while <some condition for work>:
@@ -45,38 +45,32 @@ class BaseThread():
         """
         pass
 
-
     def teardown(self):
         """Thread cleanup. Subclasses should override."""
         pass
-
 
     @property
     def started(self):
         """Indicates if the thread was started."""
         return self._started.is_set()
 
-
     @property
     def stopped(self):
         """Indicates if the thread was stopped."""
         return not self._started.is_set()
-
 
     @property
     def running(self):
         """Indicates if the thread is running."""
         return self._started.is_set() and not self._paused.is_set()
 
-    
     @property
     def paused(self):
         """Indicates the thread was paused."""
         return self._started.is_set() and self._paused.is_set()
 
-
     def _wrapped_target(self):
-        """Wrapps the execution of the task between the setup() and 
+        """Wrapps the execution of the task between the setup() and
         teardown() and sets / resets the events."""
         try:
             self.setup()
@@ -91,7 +85,6 @@ class BaseThread():
             self._paused.clear()
             raise
 
-
     def start(self, wait=True):
         """Starts the task in it's own thread."""
         if self.running:
@@ -104,8 +97,9 @@ class BaseThread():
             self._started.wait()
             if self._crashed:
                 self._thread.join()
-                raise RuntimeError(f'Setup failed, see {self._thread.name} for details.')
-
+                mess = f'Setup failed, see {self._thread.name} for details.'
+                logger.critical(mess)
+                raise RuntimeError(mess)
 
     def stop(self, wait=True):
         """Sends the stopping signal to the thread. By default waits for
@@ -123,13 +117,10 @@ class BaseThread():
         if self.running:
             self._paused.set()
 
-
     def resume(self):
         """Requests the thread to resume."""
         if self.paused:
             self._paused.clear()
-
-
 
 
 class BaseLoop(BaseThread):
@@ -142,8 +133,7 @@ class BaseLoop(BaseThread):
     def __init__(self, init_dict):
         super().__init__(init_dict)
         self.frequency = init_dict['frequency']
-        self.period  = 1.0 / self.frequency
-
+        self.period = 1.0 / self.frequency
 
     def run(self):
         while not self.stopped:
@@ -156,7 +146,6 @@ class BaseLoop(BaseThread):
                     time.sleep(wait_time)
             else:
                 time.sleep(self.period)
-
 
     def atomic(self):
         """This method implements the periodic task that needs to be
@@ -176,11 +165,9 @@ class StepLoop(BaseThread):
         self.loop = init_dict.get('loop', False)
         self.index = 0
 
-
     def setup(self):
         """Resets the loop from the begining."""
         self.index = 0
-
 
     def run(self):
         """Wraps the execution between the duration provided and
@@ -202,15 +189,14 @@ class StepLoop(BaseThread):
                     else:
                         break
             else:
-                time.sleep(0.001) # 1ms
-
+                time.sleep(0.001)          # 1ms
 
     def atomic(self):
         """Executes the step.
 
-        Retrieves the execution method and the parameters from the steps 
+        Retrieves the execution method and the parameters from the steps
         dictionary.
-        """ 
+        """
         method = getattr(self, self.steps[self.index]['execute'])
         params = self.steps[self.index]['parameters']
         method(params)

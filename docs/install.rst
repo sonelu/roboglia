@@ -17,11 +17,11 @@ While the package includes these functionalities, we are aware that not
 all robots will need to use all these types of devices. For instance,
 a robot might use only PWM controlled devices accessed through an I2C
 multiplexer like this `16 Channel PWM Bonnet`_ from Adafruit.
-There is therefore no need to install ``dynamixel_sdk`` whihch is a relatively
+There is therefore no need to install ``dynamixel_sdk`` which is a relatively
 complex activity.
 
 With this observation in mind we have decided not to explicitly include
-dependencies on these low level packages. Whihch means when you will install
+dependencies on these low level packages. This means that when you will install
 ``roboglia`` it will not automatically install them for you. It will also
 not check if they are avaialable, instead it will be your responsiblity
 to install the dependencies as you need them, as explained in the next

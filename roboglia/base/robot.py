@@ -4,11 +4,12 @@ from roboglia.utils import get_registered_class, check_key
 
 logger = logging.getLogger(__name__)
 
+
 class BaseRobot():
     """A complete representation of a robot.
 
     A robot has at minimum a ``Bus`` and a ``Device``.
-    """ 
+    """
     def __init__(self, init_dict):
         self.__init_buses(init_dict)
         self.__init_devices(init_dict)
@@ -63,9 +64,11 @@ class BaseRobot():
         logger.info(f'Initializing joints...')
         for index, joint_info in enumerate(init_dict.get('joints', [])):
             check_key('name', joint_info, 'joint', index, logger)
-            check_key('device', joint_info, 'joint', joint_info['name'], logger)
-            check_key(joint_info['device'], self._devices, 'joint', joint_info['name'],
-                      logger, f'device {joint_info["device"]} does not exist')
+            check_key('device', joint_info, 'joint',
+                      joint_info['name'], logger)
+            check_key(joint_info['device'], self._devices, 'joint',
+                      joint_info['name'], logger,
+                      f'device {joint_info["device"]} does not exist')
             check_key('class', joint_info, 'joint', joint_info['name'], logger)
             # convert device reference from name to object
             dev_name = joint_info['device']
@@ -77,14 +80,14 @@ class BaseRobot():
             logger.debug(f'\tjoint {joint_info["name"]} added')
 
     def __init_groups(self, init_dict):
-        """Called by ``__init__`` to parse and instantiate groups."""        
+        """Called by ``__init__`` to parse and instantiate groups."""
         self._groups = {}
         logger.info(f'Initializing groups...')
         for index, grp_info in enumerate(init_dict.get('groups', [])):
             check_key('name', grp_info, 'group', index, logger)
             new_grp = set()
             # groups of devices
-            for dev_name in grp_info.get('devices',[]):
+            for dev_name in grp_info.get('devices', []):
                 check_key(dev_name, self._devices, 'group', grp_info['name'],
                           logger, f'device {dev_name} does not exist')
                 new_grp.add(self._devices[dev_name])
@@ -102,14 +105,15 @@ class BaseRobot():
             logger.debug(f'\tgroup {grp_info["name"]} added')
 
     def __init_syncs(self, init_dict):
-        """Called by ``__init__`` to parse and instantiate syncs."""                
+        """Called by ``__init__`` to parse and instantiate syncs."""
         self._syncs = {}
-        logger.info(f'Initializing syncs...')        
+        logger.info(f'Initializing syncs...')
         for index, sync_info in enumerate(init_dict.get('syncs', [])):
             check_key('name', sync_info, 'sync', index, logger)
             check_key('group', sync_info, 'sync', sync_info['name'], logger)
-            check_key(sync_info['group'], self._groups, 'sync', sync_info['name'],
-                      logger, f'group {sync_info["group"]} does not exist')
+            check_key(sync_info['group'], self._groups, 'sync',
+                      sync_info['name'], logger,
+                      f'group {sync_info["group"]} does not exist')
             check_key('class', sync_info, 'sync', sync_info['name'], logger)
             # convert group references
             group_name = sync_info['group']

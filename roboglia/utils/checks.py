@@ -20,10 +20,11 @@ def check_key(key, dict_info, context, context_id, logger, message=None):
         KeyError: if the `key` is not found in the `dict_info`
     """
     if key not in dict_info:
-        if message == None:
-            message = f'"{key}" specification missing for {context}: {context_id}'
+        if message is None:
+            message = f'"{key}" specification missing ' + \
+                      f'for {context}: {context_id}'
         else:
-            messsge = f'{message} for {context}: {context_id}'
+            message = f'{message} for {context}: {context_id}'
         logger.critical(message)
         raise KeyError(message)
 
@@ -50,12 +51,14 @@ def check_type(value, to_type, context, context_id, logger, message=None):
         ValueError: if the value is not of the type indicated
     """
     if type(value) is not to_type:
-        if message == None:
-            message = f'value {value} should be of type {to_type} for {context}: {context_id}'
+        if message is None:
+            message = f'value {value} should be of type {to_type} ' + \
+                      f'for {context}: {context_id}'
         else:
             message = f'{message} for {context}: {context_id}'
         logger.critical(message)
         raise ValueError(message)
+
 
 def check_options(value, options, context, context_id, logger, message=None):
     """Checks if a value is in a list of allowed options.
@@ -78,8 +81,9 @@ def check_options(value, options, context, context_id, logger, message=None):
         ValueError: if the value is not in the allowed options
     """
     if value not in options:
-        if message == None:
-            message = f'value {value} should be one of {options} for {context}: {context_id}'
+        if message is None:
+            message = f'value {value} should be one of {options} ' + \
+                      f'for {context}: {context_id}'
         else:
             message = f'{message} for {context}: {context_id}'
         logger.critical(message)

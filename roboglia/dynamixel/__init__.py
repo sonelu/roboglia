@@ -1,6 +1,7 @@
 from roboglia.base.factory import register_class
 
-from .register import DynamixelAXBaudRateRegister, DynamixelAXComplianceSlopeRegister
+from .register import DynamixelAXBaudRateRegister
+from .register import DynamixelAXComplianceSlopeRegister
 from .device import DynamixelDevice
 from .bus import DynamixelBus
 

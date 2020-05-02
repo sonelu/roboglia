@@ -5,6 +5,7 @@ from roboglia.utils import get_registered_class, check_key
 
 logger = logging.getLogger(__name__)
 
+
 class BaseDevice():
     """A base virtual class for all devices.
 
@@ -23,14 +24,14 @@ class BaseDevice():
     - ``bus``: the bus object where the device is attached to
     - ``id``: the device ID on the bus
     - ``model``: the model of the device; used to identify the device template
-    
+
     The following keys are optional and can be omitted. They will be
     defaulted with the values mentioned bellow:
 
     - ``path``: a path to the model file; defaulted to `get_model_path`
 
     Raises:
-        KeyError: if mandatory parameters are not found    
+        KeyError: if mandatory parameters are not found
     """
     def __init__(self, init_dict):
         # these are already checked by robot
@@ -42,12 +43,13 @@ class BaseDevice():
         self._model = init_dict['model']
         # registers
         model_path = init_dict.get('path', self.get_model_path())
-        model_file = os.path.join(model_path, self._model+'.yml')
+        model_file = os.path.join(model_path, self._model + '.yml')
         with open(model_file, 'r') as f:
             model_ini = yaml.load(f, Loader=yaml.FullLoader)
         self._registers = {}
         for index, reg_info in enumerate(model_ini['registers']):
-            check_key('name', reg_info, self._model+' register', index, logger)
+            check_key('name', reg_info, self._model + ' register',
+                      index, logger)
             reg_class_name = reg_info.get('class', self.default_register())
             reg_class = get_registered_class(reg_class_name)
             reg_info['device'] = self
@@ -64,6 +66,11 @@ class BaseDevice():
     def registers(self):
         """Device registers as dict."""
         return self._registers
+
+    @property
+    def dev_id(self):
+        """The device number"""
+        return self._dev_id
 
     def get_model_path(self):
         """Builds the path to the `.device` documents.
@@ -110,7 +117,8 @@ class BaseDevice():
         pass
 
     def __str__(self):
-        result = f'Device: {self._name}, ID: {self._dev_id} on bus: {self._bus.name}:\n'
+        result = f'Device: {self._name}, ID: {self._dev_id} ' + \
+                 f'on bus: {self._bus.name}:\n'
         for reg in self._registers.values():
             result += f'\t{reg}\n'
         return result

@@ -1,9 +1,9 @@
 import logging
-import threading
 from roboglia.utils import check_key
 
 
 logger = logging.getLogger(__name__)
+
 
 class BaseBus():
     """A base abstract class for handling an arbitrary bus.
@@ -11,7 +11,7 @@ class BaseBus():
     You will normally subclass ``BaseBus`` and define particular functionality
     specific to the bus by impementing the methods of the ``BaseBus``.
     This class only stores the name of the bus and the access to the
-    physical object. Your subclass can add additional attributes and 
+    physical object. Your subclass can add additional attributes and
     methods to deal with the particularities of the real bus represented.
 
     Args:
@@ -26,7 +26,8 @@ class BaseBus():
         KeyError: if ``port`` not supplied
     """
     def __init__(self, init_dict):
-        self._name = init_dict['name'] # alredy checked by robot
+        # alredy checked by robot
+        self._name = init_dict['name']
         check_key('port', init_dict, 'bus', self._name, logger)
         self._port = init_dict['port']
 
@@ -54,7 +55,7 @@ class BaseBus():
 
     @property
     def isOpen(self):
-        """Returns `True` or `False` if the bus is open. Must be overriden 
+        """Returns `True` or `False` if the bus is open. Must be overriden
         by the subclass.
         """
         return False
@@ -71,14 +72,14 @@ class BaseBus():
 
 
 class FileBus(BaseBus):
-    """A bus that writes to a file with cache. 
-    
+    """A bus that writes to a file with cache.
+
     Read returns the last writen data. Provided for testing purposes.
 
     Args:
         init_dict (dict): the initialization dictionary. Same parameters
             required as for :py:class:BaseBus.
-        
+
     Raises:
         same as :py:class:BaseBus
     """
@@ -116,11 +117,15 @@ class FileBus(BaseBus):
         you want to inspect the content of the file while the robot
         is running.
         """
-        self.__last[(dev.dev_id, reg.address)] = value
-        text = f'written {value} in register {reg.address} of device {dev.dev_id}'
-        self.__fp.write(text+'\n')
-        self.__fp.flush()
-        logger.debug(f'FileBus {self._name} {text}')
+        if not self.isOpen:
+            logger.error(f'attempt to write to closed bus {self.name}')
+        else:
+            self.__last[(dev.dev_id, reg.address)] = value
+            text = f'written {value} in register {reg.name} ' + \
+                   f'({reg.address}) of device {dev.dev_id}'
+            self.__fp.write(text + '\n')
+            self.__fp.flush()
+            logger.debug(f'FileBus {self._name} {text}')
 
     def read(self, dev, reg):
         """Reads the value from the buffer of FileBus and logs it.
@@ -134,20 +139,26 @@ class FileBus(BaseBus):
 
         The method will try to read from the buffer the value. If there
         is no value in the buffer it will be defaulted from the register's
-        default value. The method will log the read to the file and return 
+        default value. The method will log the read to the file and return
         the value.
         """
-        if (dev.dev_id, reg.address) not in self.__last:
-            self.__last[(dev.dev_id, reg.address)] = reg.default            
-        val = self.__last[(dev.dev_id,reg.address)]
-        text = f'read {val} from register {reg.address} of device {dev.dev_id}'
-        self.__fp.write(text+'\n')
-        self.__fp.flush()
-        logger.debug(f'FileBus {self._name} {text}')
-        return val
-        
+        if not self.isOpen:
+            logger.error(f'attempt to write to closed bus {self.name}')
+            return None
+        else:
+            if (dev.dev_id, reg.address) not in self.__last:
+                self.__last[(dev.dev_id, reg.address)] = reg.default
+            val = self.__last[(dev.dev_id, reg.address)]
+            text = f'read {val} from register {reg.name} ){reg.address}) ' + \
+                   f'of device {dev.dev_id}'
+            self.__fp.write(text + '\n')
+            self.__fp.flush()
+            logger.debug(f'FileBus {self._name} {text}')
+            return val
+
     def __str__(self):
         result = ''
         for (dev_id, reg_address), value in self.__last.items():
-            result += f'Device {dev_id}, Register ID {reg_address}: VALUE {value}\n'
+            result += f'Device {dev_id}, Register ID {reg_address}: ' + \
+                      f'VALUE {value}\n'
         return result
