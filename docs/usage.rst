@@ -30,28 +30,28 @@ rather than gritty details.
     ``roboglia`` this is handled in the following way:
     
     * first a ``Bus`` is instantiated with information from a robot definition 
-        (an YAML) file, using an existing class from ``roboglia`` or a custom 
-        defined one in case these are not enough. In this example most likely 
-        the bus woould be an ``I2CBus`` which is provided out of the box in 
-        ``roboglia``.
+      (an YAML) file, using an existing class from ``roboglia`` or a custom 
+      defined one in case these are not enough. In this example most likely 
+      the bus woould be an ``I2CBus`` which is provided out of the box in 
+      ``roboglia``.
     * the robot definition file then contains information about the devices 
-        used and their association with the buses. In our example the device 
-        will be an ``I2CDevice`` and ``roboglia`` frameowork will construct 
-        the specific instance of this device by resorting to a *device 
-        defintion file*.  Such a device description is produced in YAML and 
-        lists the registers of the device each with  information like name, 
-        the address where it is accessed,size. The register is associated 
-        with a class that provides convenient transformation of the 
-        information in the registers in an external format. Developers have 
-        access to sevaral common classes in ``roboglia`` but it is also very 
-        simple to extend the framework by writing custom register classes.
+      used and their association with the buses. In our example the device 
+      will be an ``I2CDevice`` and ``roboglia`` frameowork will construct 
+      the specific instance of this device by resorting to a *device 
+      defintion file*.  Such a device description is produced in YAML and 
+      lists the registers of the device each with  information like name, 
+      the address where it is accessed,size. The register is associated 
+      with a class that provides convenient transformation of the 
+      information in the registers in an external format. Developers have 
+      access to sevaral common classes in ``roboglia`` but it is also very 
+      simple to extend the framework by writing custom register classes.
     * once the setup of the device is ready the robot defintion can provide 
-        details about a syncronization loop that will be run in a separate 
-        thread in order to read / write information to the physical device 
-        leveraging those devices and protocols that provide improved efficiency 
-        when accessing data in bulk. Of course it is still possible and the 
-        framework will default to this, to read / write synchronously each 
-        time when we are interested to access the information a register.  
+      details about a syncronization loop that will be run in a separate 
+      thread in order to read / write information to the physical device 
+      leveraging those devices and protocols that provide improved efficiency 
+      when accessing data in bulk. Of course it is still possible and the 
+      framework will default to this, to read / write synchronously each 
+      time when we are interested to access the information a register.  
     
 All in all the approach described above makes it possible to define and run 
 a complete robot only by preparing or reusing existing defintion files without 
