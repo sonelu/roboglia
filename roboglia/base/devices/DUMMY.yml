@@ -2,43 +2,80 @@
 # should only use registers from base package
 #
 registers:
-  - name: register_1
+  - name: model
     address: 0
     size: 2
     default: 42
 
-  - name: register_2
-    address: 2
+  - name: revision
+    address: 10
     max: 254
+    default: 16
 
-  - name: register_3
+  - name: delay
     class: RegisterWithConversion
-    address: 3
+    address: 20
     access: RW
     default: 250
     max: 254
     factor: 0.5
 
-  - name: register_4
+  - name: desired_pos
     class: RegisterWithConversion
-    address: 4
+    address: 30
     size: 2
     access: RW
-    default: 250
-    max: 254
-    factor: 0.25
-    offset: 100
+    max: 1023
+    factor: 3.41
+    offset: 512
 
-  - name: register_5
+  - name: desired_speed
+    class: RegisterWithConversion
+    address: 40
+    size: 2
+    access: RW
+    max: 1023
+    factor: 8.973684210526316
+
+  - name: desired_load
+    class: RegisterWithConversion
+    address: 50
+    size: 2
+    access: RW
+    max: 1023
+    factor: 10.24
+
+  - name: enable
     class: BoolRegister
-    address: 6
+    address: 60
     access: RW
 
-  - name: register_6
+  - name: current_pos
+    class: RegisterWithConversion
+    address: 70
+    size: 2
+    access: R
+    max: 1023
+    factor: 3.41
+    offset: 512
+    default: 512
+
+  - name: current_speed
     class: RegisterWithThreshold
-    address: 7
+    address: 80
     size: 2
     access: R
     max: 2047
     factor: 8.973684210526316
     threshold: 1024
+    default: 512
+
+  - name: current_load
+    class: RegisterWithThreshold
+    address: 90
+    size: 2
+    access: R
+    max: 2047
+    factor: 10.24
+    threshold: 1024
+    default: 1536

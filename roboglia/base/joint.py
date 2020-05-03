@@ -115,12 +115,12 @@ class Joint():
         return self._activate
 
     @property
-    def activate(self):
+    def active(self):
         """(read-write) Accessor for activating the joint."""
         return self._activate.value
 
-    @activate.setter
-    def activate(self, value):
+    @active.setter
+    def active(self, value):
         self._activate.value = value
 
     @property

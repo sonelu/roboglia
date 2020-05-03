@@ -114,7 +114,7 @@ class BaseRobot():
                 new_grp.add(self._joints[joint_name])
             # groups of groups
             for grp_name in grp_info.get('groups', []):
-                check_key(grp_name, self._groups, 'group', grp_name['name'],
+                check_key(grp_name, self._groups, 'group', grp_info['name'],
                           logger, f'group {grp_name} does not exist')
                 new_grp.update(self._groups[grp_name])
             self._groups[grp_info['name']] = new_grp

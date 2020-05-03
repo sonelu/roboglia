@@ -255,10 +255,10 @@ class RegisterWithThreshold(BaseRegister):
         method.
         """
         value = super().value_to_external()
-        if value >= self.threshold:
-            return (value - self.threshold) / self.factor
+        if value < self.threshold:
+            return value / self.factor
         else:
-            return (-value) / self.factor
+            return (self.threshold - value) / self.factor
 
     def value_to_internal(self, value):
         """The internal representation of the register's value.
@@ -266,10 +266,10 @@ class RegisterWithThreshold(BaseRegister):
         Performs the translation of the value before calling the inherited
         method.
         """
-        if value < 0:
-            value = (-value) * self.factor
+        if value >= 0:
+            value = value * self.factor
         else:
-            value = value * self.factor + self.threshold
+            value = (-value) * self.factor + self.threshold
         super().value_to_internal(round(value))
 
     value = property(value_to_external, value_to_internal)
