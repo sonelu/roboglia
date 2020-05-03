@@ -17,6 +17,7 @@ from smbus2 import SMBus
 
 from ..base import BaseBus
 
+
 class I2CBus(BaseBus):
 
     def __init__(self, init_dict):
