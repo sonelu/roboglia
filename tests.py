@@ -3,11 +3,13 @@ import sys
 import logging
 import yaml
 
-logging.basicConfig(level=60)       # silent
+logging.basicConfig(level=60)           # silent
+logger = logging.getLogger(__name__)     # need for checks
 
 from roboglia.base import BaseRobot
 from roboglia.utils import register_class, unregister_class, \
     get_registered_class, registered_classes
+from roboglia.utils import check_key, check_type, check_options
 
 class TestFactoryNegative(unittest.TestCase):
 
@@ -33,6 +35,38 @@ class TestFactoryNegative(unittest.TestCase):
         with self.assertRaisesRegex(KeyError, mess):
             get_registered_class('dummy')
 
+    def test_register_class_existing(self):
+        class Test: pass
+        register_class(Test)
+        # again
+        register_class(Test)
+        self.assertIn('Test', registered_classes())
+        unregister_class('Test')
+        self.assertNotIn('Test', registered_classes())
+
+
+class TestChecksNegative(unittest.TestCase):
+
+    def test_check_key(self):
+        mess = 'specification missing'
+        with self.assertRaisesRegex(KeyError, mess):
+            check_key('key', {}, 'object', 10, logger)
+        with self.assertRaisesRegex(KeyError, 'custom'):
+            check_key('key', {}, 'object', 10, logger, 'custom')
+
+    def test_check_type(self):
+        mess = 'should be of type'
+        with self.assertRaisesRegex(ValueError, mess):
+            check_type('10', int, 'object', 10, logger)
+        with self.assertRaisesRegex(ValueError, 'custom'):
+            check_type('10', int, 'object', 10, logger, 'custom')
+
+    def test_check_options(self):
+        mess = 'should be one of'
+        with self.assertRaisesRegex(ValueError, mess):
+            check_options(10, ['a', 'b'], 'object', 10, logger)  
+        with self.assertRaisesRegex(ValueError, 'custom'):
+            check_options(10, ['a', 'b'], 'object', 10, logger, 'custom')
 
 class TestRobot(unittest.TestCase):
 
@@ -127,7 +161,9 @@ class TestRobot(unittest.TestCase):
 
 if __name__ == '__main__':
     suite = unittest.TestSuite()
-    suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestFactoryNegative))
-    suite.addTest(unittest.defaultTestLoader.loadTestsFromTestCase(TestRobot))
+    loader = unittest.defaultTestLoader
+    suite.addTest(loader.loadTestsFromTestCase(TestFactoryNegative))
+    suite.addTest(loader.loadTestsFromTestCase(TestChecksNegative))
+    suite.addTest(loader.loadTestsFromTestCase(TestRobot))
     runner = unittest.TextTestRunner(stream=sys.stdout, verbosity=2)
     runner.run(suite)
