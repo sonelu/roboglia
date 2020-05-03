@@ -26,7 +26,6 @@ class TestRobot(unittest.TestCase):
         """, Loader=yaml.FullLoader)
 
     def test_mock_robot(self):
-        mess = '"buses" specification missing for robot:'
         _ = BaseRobot(self.robot)
 
 
