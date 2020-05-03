@@ -31,7 +31,7 @@ def register_class(class_obj):
     Raises:
         ValueError: if the parameter passed is not a Class object.
     """
-    if classmethod.__name__ not in __registered_classes:
+    if class_obj.__name__ not in __registered_classes:
         if not isinstance(class_obj, type):
             mess = f'{class_obj} is not a Class object. ' + \
                    'You must pass a Class not an instance.'
