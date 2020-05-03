@@ -1,0 +1,44 @@
+# A dummy device for testing Base classes
+# should only use registers from base package
+#
+registers:
+  - name: register_1
+    address: 0
+    size: 2
+    default: 42
+
+  - name: register_2
+    address: 2
+    max: 254
+
+  - name: register_3
+    class: RegisterWithConversion
+    address: 3
+    access: RW
+    default: 250
+    max: 254
+    factor: 0.5
+
+  - name: register_4
+    class: RegisterWithConversion
+    address: 4
+    size: 2
+    access: RW
+    default: 250
+    max: 254
+    factor: 0.25
+    offset: 100
+
+  - name: register_5
+    class: BoolRegister
+    address: 6
+    access: RW
+
+  - name: register_6
+    class: RegisterWithThreshold
+    address: 7
+    size: 2
+    access: R
+    max: 2047
+    factor: 8.973684210526316
+    threshold: 1024

@@ -19,10 +19,10 @@ class TestRobot(unittest.TestCase):
 
             devices:
                 - name: d01
-                  class: DynamixelDevice
+                  class: BaseDevice
                   bus: busA
                   id: 1
-                  model: AX-12A
+                  model: DUMMY
         """, Loader=yaml.FullLoader)
 
     def test_mock_robot(self):

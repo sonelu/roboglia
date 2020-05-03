@@ -21,6 +21,7 @@ from .sync import StepLoop                      # noqa: 401
 from .robot import BaseRobot                    # noqa: 401
 
 register_class(FileBus)
+register_class(BaseDevice)
 register_class(BaseRegister)
 register_class(RegisterWithConversion)
 register_class(RegisterWithThreshold)
