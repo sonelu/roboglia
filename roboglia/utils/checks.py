@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
 def check_key(key, dict_info, context, context_id, logger, message=None):
     """Checks if a `key` is in a dictionary `dict_info` and raises a cusomized
     exception message with better context.
