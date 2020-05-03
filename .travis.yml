@@ -24,11 +24,16 @@ before_install:
   - python --version
   - pip install -U pip
   - pip install flake8
+  - pip install coverage
+  - pip install codecov
 
 
 install:
   - python setup.py install
 
 script:
-  - python tests/all_tests.py
+  - coverage run tests.py
   - flake8 roboglia --statistics --count
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

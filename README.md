@@ -17,16 +17,19 @@ functions of the physical devices used in robots in order to provide a more
 accessible high-level representation of the robot for the use of the "smart"
 control logic that sits at the top.
 
-With ``roboglia`` low level functionality, currently split across multiple
-libraries and frameworks are put together and integrated in an extensible way
+With ``roboglia``, low level functionality, currently split across multiple
+libraries and frameworks are put together and integrated in an extensible way,
 making it easier for developer to focus on the higher level functionality,
 rather than gritty details.
 
 ## Installation
 
-Please read carefully the installation instrcutions from the documentation.
+Please read carefully the installation instrcutions from the
+[documentation](https://roboglia.readthedocs.io/en/latest/install.html).
 As ``roboglia`` needs to interact with a lot of hardware devices, it is very
-sensitive to the platform and OS version used.
+sensitive to the platform and OS version used. The documentation provides more
+details about avoiding the installation of packages that are not needed for
+you particular robot.
 
 ## Documentation
 
@@ -49,11 +52,11 @@ two tests on the pull requests:
   sure that you also run them **before** submitting the pull request to avoid
   it failing. You you should install first your version of the package on
   your machine an then run the tests like this (you should be in the top
-  directory of the cloned repository)::
+  directory of the cloned repository):
 
-    sudo python setup.py install
-    cd tests
-    pyton all_tests.py
+      sudo python setup.py install
+      cd tests
+      pyton all_tests.py
 
   Make sure that there are no errors issued by the unit tests. If you created
   new classes or new functions that are not covered by testing, then you will
@@ -62,17 +65,33 @@ two tests on the pull requests:
 
 * it will check PEP8 on the Python code using flake8. You should install
   (if you don't have it already) on your machine and run this (from the
-  top directory of the cloned repository)::
+  top directory of the cloned repository):
 
-    flake8 roboglia --statistics --count
+      flake8 roboglia --statistics --count
 
   Make sure flake8 does not report any problems, and correct any issues
   **before** submitting you are allowed to use ``# noqa`` directives if
   justified.
 
-* if you add classes or methods the documentation templates that produce
-  the API Reference might need to be updated too, but this is something that
-  will be moderated and can be performed centrally once the code is stable.
-  If you know [sphinx](https://www.sphinx-doc.org/en/master/) then you can
-  attempt modifying the files in ``docs/`` folder too and include the changes
-  in the pull request too.
+If you add classes or methods the documentation templates that produce
+the API Reference might need to be updated too, but this is something that
+will be moderated and can be performed centrally once the code is stable.
+If you know [sphinx](https://www.sphinx-doc.org/en/master/) then you can
+attempt modifying the files in ``docs/`` folder too and include the changes
+in the pull request.
+
+If you create new Python files please add the copyright comments as they are
+included in the other files. Make sure you update your name at the top, we want
+people to recieve the creadit for their work. Similarly, if you change an
+existing file feel free to add your name at the top of the file.
+
+## Showcasing your robot
+
+If you use ``roboglia`` in your project we will like to hear about it and
+we will showcase it on this page. Please
+[open an issue](https://github.com/sonelu/roboglia/issues/new) with title
+"Showcase of robot" and provide us with information about your robot. You can
+send us links to the documentaion or code of the robot and one picture
+(link to an public one) that we could use in the showcase. If you want to
+provide an email address for contact we will be more than happy to include
+that too.
