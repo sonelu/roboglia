@@ -6,7 +6,6 @@ import yaml
 logging.basicConfig(level=60)       # silent
 
 from roboglia.base import BaseRobot
-from roboglia.dynamixel import DynamixelDevice
 
 class TestRobot(unittest.TestCase):
 
