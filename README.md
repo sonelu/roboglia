@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.com/sonelu/roboglia.svg?branch=master)](https://travis-ci.com/sonelu/roboglia)
 [![Documentation Status](https://readthedocs.org/projects/roboglia/badge/?version=latest)](https://roboglia.readthedocs.io/en/latest/?badge=latest)
+[![codecov](https://codecov.io/gh/sonelu/roboglia/branch/master/graph/badge.svg)](https://codecov.io/gh/sonelu/roboglia)
 
 # Roboglia
 
