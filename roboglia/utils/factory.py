@@ -33,7 +33,6 @@ def register_class(class_obj):
     """
     if classmethod.__name__ not in __registered_classes:
         if not isinstance(class_obj, type):
-            print(type(class_obj))
             mess = f'{class_obj} is not a Class object. ' + \
                    'You must pass a Class not an instance.'
             logger.critical(mess)
