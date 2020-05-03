@@ -13,9 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from ..base.bus import BaseBus
 from smbus2 import SMBus
 
+from ..base import BaseBus
 
 class I2CBus(BaseBus):
 

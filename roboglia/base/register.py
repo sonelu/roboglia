@@ -15,7 +15,7 @@
 
 import logging
 
-from roboglia.utils import check_key, check_type, check_options
+from ..utils import check_key, check_type, check_options
 
 logger = logging.getLogger(__name__)
 

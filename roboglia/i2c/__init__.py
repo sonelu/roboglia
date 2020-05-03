@@ -1,4 +1,4 @@
-from roboglia.base.factory import register_class
+from ..utils import register_class
 
 from .bus import I2CBus
 

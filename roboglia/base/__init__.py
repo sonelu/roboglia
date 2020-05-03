@@ -1,4 +1,4 @@
-from roboglia.utils.factory import register_class
+from ..utils.factory import register_class
 
 from .bus import BaseBus                        # noqa: 401
 from .bus import FileBus                        # noqa: 401

@@ -14,7 +14,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from roboglia.utils import check_key
+
+from ..utils import check_key
 
 
 logger = logging.getLogger(__name__)

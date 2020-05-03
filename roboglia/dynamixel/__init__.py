@@ -1,4 +1,4 @@
-from roboglia.utils import register_class
+from ..utils import register_class
 
 from .register import DynamixelAXBaudRateRegister
 from .register import DynamixelAXComplianceSlopeRegister

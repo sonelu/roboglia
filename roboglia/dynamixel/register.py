@@ -14,7 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from math import log
-from roboglia.base.register import BaseRegister
+from ..base import BaseRegister
 
 
 class DynamixelAXBaudRateRegister(BaseRegister):

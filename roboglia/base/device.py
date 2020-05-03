@@ -16,7 +16,8 @@
 import os
 import yaml
 import logging
-from roboglia.utils import get_registered_class, check_key
+
+from ..utils import get_registered_class, check_key
 
 logger = logging.getLogger(__name__)
 

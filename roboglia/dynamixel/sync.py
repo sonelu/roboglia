@@ -14,10 +14,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-
-from ..base.sync import BaseLoop
 from dynamixel_sdk import GroupSyncWrite, GroupSyncRead
 #    GroupBulkWrite, GroupBulkRead
+
+from ..base import BaseLoop
 
 logger = logging.getLogger(__name__)
 

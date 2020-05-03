@@ -16,8 +16,8 @@
 import dynamixel_sdk
 from serial import rs485
 import logging
-from roboglia.base.bus import BaseBus
-from roboglia.utils.checks import check_key, check_type, check_options
+from ..base import BaseBus
+from ..utils import check_key, check_type, check_options
 
 logger = logging.getLogger(__name__)
 
