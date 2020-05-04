@@ -50,7 +50,7 @@ class BaseThread():
 
     def setup(self):
         """Thread preparation before running. Subclasses should override"""
-        raise NotImplementedError
+        pass
 
     def run(self):
         """ Run method of the thread.
@@ -70,7 +70,7 @@ class BaseThread():
 
     def teardown(self):
         """Thread cleanup. Subclasses should override."""
-        raise NotImplementedError
+        pass
 
     @property
     def started(self):

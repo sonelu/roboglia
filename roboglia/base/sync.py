@@ -77,6 +77,21 @@ class BaseSync(BaseLoop):
         """
         return self.__start
 
+    @property
+    def bus(self):
+        """The bus this sync works with."""
+        return self.__bus
+
+    @property
+    def devices(self):
+        """The devices used by the sync."""
+        return self.__devices
+
+    @property
+    def registers(self):
+        """The registers used buy the sync."""
+        return self.__registers
+
     def process_devices(self):
         """Processes the provided devices.
 
@@ -100,13 +115,17 @@ class BaseSync(BaseLoop):
 
     def process_registers(self):
         """Checks that the supplied registers are avaialable in all
-        devices."""
+        devices and sets the ``sync`` attribute to ``True`` if not already
+        set."""
         for device in self.__devices:
             for register in self.__registers:
                 mess = f'device {device.name} does not have a ' + \
                        f'register {register}'
                 check_key(register, device.registers, 'sync', self.name,
                           logger, mess)
+                # mark the register for sync
+                if not getattr(device, register).sync:
+                    setattr(device, register, True)
 
 
 class BaseReadSync(BaseSync):
@@ -120,20 +139,20 @@ class BaseReadSync(BaseSync):
         This is a naive implementation that will simply loop over all
         devices and registers and ask them to refresh.
         """
-        if self.__bus.can_use():
-            for device in self.__devices:
-                for register in self.__registers:
+        if self.bus.can_use():
+            for device in self.devices:
+                for register in self.registers:
                     reg = getattr(device, register)
-                    value = self.__bus.naked_read(device, reg)
+                    value = self.bus.naked_read(device, reg)
                     if value is not None:
                         reg.int_value = value
                     else:
                         logger.warning(f'sync {self.name}: failed to read '
                                        f'register {register} '
                                        f'of device {device.name}')
-            self.__bus.stop_using()
+            self.bus.stop_using()
         else:
-            logger.error(f'failed to aquire buss {self.__bus.name}')
+            logger.error(f'failed to aquire buss {self.bus.name}')
 
 
 class BaseWriteSync(BaseSync):
@@ -147,11 +166,11 @@ class BaseWriteSync(BaseSync):
         This is a naive implementation that will simply loop over all
         devices and registers and ask them to refresh.
         """
-        if self.__bus.can_use():
-            for device in self.__devices:
-                for register in self.__registers:
+        if self.bus.can_use():
+            for device in self.devices:
+                for register in self.registers:
                     reg = getattr(device, register)
-                    self.__bus.naked_write(device, reg, reg.int_value)
-            self.__bus.stop_using()
+                    self.bus.naked_write(device, reg, reg.int_value)
+            self.bus.stop_using()
         else:
-            logger.error(f'failed to aquire buss {self.__bus.name}')
+            logger.error(f'failed to aquire buss {self.bus.name}')

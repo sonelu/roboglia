@@ -2,6 +2,7 @@ import unittest
 import sys
 import logging
 import yaml
+import time
 
 logging.basicConfig(level=60)           # silent
 logger = logging.getLogger(__name__)     # need for checks
@@ -71,76 +72,7 @@ class TestChecksNegative(unittest.TestCase):
 class TestRobot(unittest.TestCase):
 
     def setUp(self):
-        robot_init = yaml.load("""
-            buses:
-                - name: busA
-                  class: ShareableFileBus
-                  port: /tmp/busA.log
-
-            devices:
-                - name: d01
-                  class: BaseDevice
-                  bus: busA
-                  id: 1
-                  model: DUMMY
-
-                - name: d02
-                  class: BaseDevice
-                  bus: busA
-                  id: 2
-                  model: DUMMY
-
-            joints:
-                - name: pan
-                  class: JointPVL
-                  device: d01
-                  pos_read: current_pos
-                  pos_write: desired_pos
-                  vel_read: current_speed
-                  vel_write: desired_speed
-                  load_read: current_load
-                  load_write: desired_load
-                  activate: enable
-
-                - name: tilt
-                  class: JointPVL
-                  device: d02
-                  pos_read: current_pos
-                  pos_write: desired_pos
-                  vel_read: current_speed
-                  vel_write: desired_speed
-                  load_read: current_load
-                  load_write: desired_load
-                  inverse: True
-                  activate: enable
-
-            groups:
-                - name: devices
-                  devices: [d01, d02]
-
-                - name: joints
-                  joints: [pan, tilt]
-
-                - name: all
-                  groups: [devices, joints]
-
-            syncs:
-                - name: read
-                  class: BaseReadSync
-                  frequency: 10.0
-                  group: devices
-                  registers: ['current_pos', 'current_speed', 'current_load']
-                  start: False
-
-                - name: write
-                  class: BaseWriteSync
-                  frequency: 10.0
-                  group: devices
-                  registers: ['desired_pos', 'desired_speed', 'desired_load']
-                  start: False
-
-        """, Loader=yaml.FullLoader)
-        self.robot = BaseRobot(robot_init)
+        self.robot = BaseRobot.from_yaml('tests/dummy_robot.yml')
         self.robot.start()
 
     def test_mock_robot_members(self):
@@ -231,11 +163,59 @@ class TestRobot(unittest.TestCase):
         self.robot.stop()
 
 
+class TestBaseLoops(unittest.TestCase):
+
+    def setUp(self):
+        self.robot = BaseRobot.from_yaml('tests/dummy_robot.yml')
+        self.robot.start()
+
+    def test_start_syncs(self):
+        logging.basicConfig(level=logging.WARNING)
+        read_sync = self.robot.syncs['read']
+        read_sync.start()
+        write_sync = self.robot.syncs['write']
+        write_sync.start()
+        time.sleep(0.5)
+        self.assertTrue(read_sync.started)
+        self.assertFalse(read_sync.stopped)
+        self.assertTrue(read_sync.running)
+        self.assertFalse(read_sync.paused)
+        read_sync.stop()
+        write_sync.stop()
+        time.sleep(0.5)
+        self.assertFalse(read_sync.started)
+        self.assertTrue(read_sync.stopped)
+        self.assertFalse(read_sync.running)
+        self.assertFalse(read_sync.paused)
+        logging.basicConfig(level=60)
+
+    def test_pause_syncs(self):
+        logging.basicConfig(level=logging.WARNING)
+        read_sync = self.robot.syncs['read']
+        read_sync.start()
+        time.sleep(0.2)
+        read_sync.pause()
+        time.sleep(0.2)
+        self.assertTrue(read_sync.started)
+        self.assertFalse(read_sync.stopped)
+        self.assertFalse(read_sync.running)
+        self.assertTrue(read_sync.paused)
+        read_sync.resume()
+        time.sleep(0.2)
+        self.assertTrue(read_sync.started)
+        self.assertFalse(read_sync.stopped)
+        self.assertTrue(read_sync.running)
+        self.assertFalse(read_sync.paused)
+        read_sync.stop()
+        time.sleep(0.2)
+        logging.basicConfig(level=60)
+
 
 if __name__ == '__main__':
     loader = unittest.defaultTestLoader
     suite = unittest.TestSuite()
     suite.addTest(loader.loadTestsFromTestCase(TestRobot))
+    suite.addTest(loader.loadTestsFromTestCase(TestBaseLoops))
     suite.addTest(loader.loadTestsFromTestCase(TestFactoryNegative))
     suite.addTest(loader.loadTestsFromTestCase(TestChecksNegative))
     runner = unittest.TextTestRunner(stream=sys.stdout, verbosity=2)
