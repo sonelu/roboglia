@@ -14,8 +14,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+import threading
 
-from ..utils import check_key
+from ..utils import check_key, check_type
 
 
 logger = logging.getLogger(__name__)
@@ -128,6 +129,11 @@ class FileBus(BaseBus):
             reg (obj): is the regoster object that is written
             value (int): is the value beein written.
 
+        Raises:
+            the method intercept the raise erros from writing to the
+            physical file and converts them to errors in the log file
+            so that the rest of the program can continue uninterupted.
+
         The method will update the buffer with the value provided then
         will log the write on the file. A flush() is performed in case
         you want to inspect the content of the file while the robot
@@ -139,8 +145,12 @@ class FileBus(BaseBus):
             self.__last[(dev.dev_id, reg.address)] = value
             text = f'written {value} in register {reg.name} ' + \
                    f'({reg.address}) of device {dev.dev_id}'
-            self.__fp.write(text + '\n')
-            self.__fp.flush()
+            try:
+                self.__fp.write(text + '\n')
+                self.__fp.flush()
+            except Exception:
+                logger.error(f'error executing write and flush to file '
+                             f'for bus: {self.name}')
             logger.debug(f'FileBus {self._name} {text}')
 
     def read(self, dev, reg):
@@ -152,6 +162,11 @@ class FileBus(BaseBus):
 
         Returns:
             int : the value from the requested register
+
+        Raises:
+            the method intercept the raise erros from writing to the
+            physical file and converts them to errors in the log file
+            so that the rest of the program can continue uninterupted.
 
         The method will try to read from the buffer the value. If there
         is no value in the buffer it will be defaulted from the register's
@@ -167,8 +182,12 @@ class FileBus(BaseBus):
             val = self.__last[(dev.dev_id, reg.address)]
             text = f'read {val} from register {reg.name} ){reg.address}) ' + \
                    f'of device {dev.dev_id}'
-            self.__fp.write(text + '\n')
-            self.__fp.flush()
+            try:
+                self.__fp.write(text + '\n')
+                self.__fp.flush()
+            except Exception:
+                logger.error(f'error executing write and flush to file '
+                             f'for bus: {self.name}')
             logger.debug(f'FileBus {self._name} {text}')
             return val
 
@@ -178,3 +197,126 @@ class FileBus(BaseBus):
             result += f'Device {dev_id}, Register ID {reg_address}: ' + \
                       f'VALUE {value}\n'
         return result
+
+
+class ShareableBus():
+    """A class that controls access to shared resources when used in
+    multithreaded programs.
+
+    Args:
+        init_dict (dict): The dictionary used to initialize the shareable.
+
+    The following keys are optional in the dictionary:
+
+    - ``timeout``: the time in seconds to wait to access the object;
+      defaults to 0.5 (s)
+
+    .. warning::
+
+        The user of a class that implements Shareable should be careful
+        when calling the :py:method:`stop_using`. Only the thered that
+        called :py:method:`can_use` should call :py:method:`stop_using`
+        when the processing is finished, and also should make sure that
+        it minimized the amount of time the resource is blocked.
+
+    Raises:
+        ValueError: if ``timeout`` is supplied and not a float
+    """
+    def __init__(self, init_dict):
+        self.__timeout = init_dict.get('timeout', 0.5)
+        check_type(self.__timeout, float, 'bus', init_dict['name'], logger)
+        if self.__timeout > 0.5:
+            logger.warning(f'timeout {self.__timeout} for shareable '
+                           f'{init_dict["name"]} might be excessive.')
+        self.__lock = threading.Lock()
+
+    def can_use(self):
+        """Tries to aquire the resource on behalf of the caller.
+
+        Returns:
+            bool: ``True`` if managed to aquire the resource, ``False`` if
+                  not. It is the responsibility of the caller to decide what
+                  to do in case there is a ``False`` return including
+                  logging or Raising.
+        """
+        return self.__lock.acquire(timeout=self.__timeout)
+
+    def stop_using(self):
+        """Releases the resource."""
+        self.__lock.release()
+
+    def naked_read(self, dev, reg):
+        """Placeholder to be implemented by subclass."""
+        raise NotImplementedError
+
+    def naked_write(self, dev, reg, value):
+        """Placeholder to be implmemented by subclass."""
+        raise NotImplementedError
+
+
+class ShareableFileBus(FileBus, ShareableBus):
+    """A FileBus that can be used in multithreaded environment.
+
+    Includes the functionality of a :py:class:`ShareableBus` in a
+    :py:class:`FileBus`. The :py:method:`write` and :py:method:`read` methods
+    are wrapped around in :py:method:`can_use` and :py:method:`stop_using`
+    to provide the exclusive access.
+
+    In addition, two methods :py:method:`naked_write` and
+    :py:method:`naked_read` are provided so that classes that want sequence
+    of read / writes can do that more efficiently without accessing the
+    lock every time. They simply invoke the *unsafe* methods
+    :py:method:Filebus.`write` and :py:method:Filebus.`read` from the
+    :py:class:`FileBus` class.
+
+    .. warning::
+
+        If you are using :py:method:`naked_write` and :py:method:`naked_read`
+        you **must** ensure that you wrap them in :py:method:`can_use` and
+        :py:method:`stop_using` in the calling code.
+
+    """
+    def __init__(self, init_dict):
+        FileBus.__init__(self, init_dict)
+        ShareableBus.__init__(self, init_dict)
+
+    def write(self, dev, reg, value):
+        """Write to file in a sharead environment.
+        If the method fails to aquire the lock it will log as an error
+        but will not raise an Exception.
+        """
+        if self.can_use():
+            super().write(dev, reg, value)
+            self.stop_using()
+        else:
+            logger.error(f'failed to aquire buss {self.name}')
+
+    def naked_write(self, dev, reg, value):
+        """Provided for efficient sequence write.
+        Simply calls the :py:method:FileBus.`write` method.
+        """
+        super().write(dev, reg, value)
+
+    def read(self, dev, reg):
+        """Read from file in a sharead environment.
+        If the method fails to aquire the lock it will log as an error
+        but will not raise an Exception. Will return None in this case.
+
+        Returns:
+            (int) the value from file or None is failing to read or
+            aquire the lock.
+
+        """
+        if self.can_use():
+            value = super().read(dev, reg)
+            self.stop_using()
+            return value
+        else:
+            logger.error(f'failed to aquire buss {self.name}')
+            return None
+
+    def naked_read(self, dev, reg):
+        """Provided for efficient sequence read.
+        Simply calls the :py:method:FileBus.`read` method.
+        """
+        return super().read(dev, reg)

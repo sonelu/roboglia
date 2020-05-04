@@ -74,7 +74,7 @@ class TestRobot(unittest.TestCase):
         robot_init = yaml.load("""
             buses:
                 - name: busA
-                  class: FileBus
+                  class: ShareableFileBus
                   port: /tmp/busA.log
 
             devices:
@@ -113,7 +113,22 @@ class TestRobot(unittest.TestCase):
                   joints: [pan, tilt]
 
                 - name: all
-                  groups: [devices, joints]   
+                  groups: [devices, joints]
+
+            syncs:
+                - name: read
+                  class: BaseReadSync
+                  frequency: 10.0
+                  group: devices
+                  registers: ['current_pos', 'current_speed', 'current_load']
+                  start: False
+
+                - name: write
+                  class: BaseWriteSync
+                  frequency: 10.0
+                  group: devices
+                  registers: ['desired_pos', 'desired_speed', 'desired_load']
+                  start: False
 
         """, Loader=yaml.FullLoader)
         self.robot = BaseRobot(robot_init)
@@ -124,6 +139,7 @@ class TestRobot(unittest.TestCase):
         self.assertListEqual(list(self.robot.devices.keys()), ['d01', 'd02'])
         self.assertListEqual(list(self.robot.joints.keys()), ['pan', 'tilt'])
         self.assertListEqual(list(self.robot.groups.keys()), ['devices', 'joints', 'all'])
+        self.assertListEqual(list(self.robot.syncs.keys()), ['read', 'write'])
 
     def test_mock_robot_registers(self):  
         d01 = self.robot.devices['d01']
@@ -160,10 +176,10 @@ class TestRobot(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    suite = unittest.TestSuite()
     loader = unittest.defaultTestLoader
+    suite = unittest.TestSuite()
+    suite.addTest(loader.loadTestsFromTestCase(TestRobot))
     suite.addTest(loader.loadTestsFromTestCase(TestFactoryNegative))
     suite.addTest(loader.loadTestsFromTestCase(TestChecksNegative))
-    suite.addTest(loader.loadTestsFromTestCase(TestRobot))
     runner = unittest.TextTestRunner(stream=sys.stdout, verbosity=2)
     runner.run(suite)
