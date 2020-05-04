@@ -175,7 +175,7 @@ class TestBaseLoops(unittest.TestCase):
         read_sync.start()
         write_sync = self.robot.syncs['write']
         write_sync.start()
-        time.sleep(0.5)
+        time.sleep(1.5)         # we need more than 1s to check statistics
         self.assertTrue(read_sync.started)
         self.assertFalse(read_sync.stopped)
         self.assertTrue(read_sync.running)

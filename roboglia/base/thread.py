@@ -182,7 +182,7 @@ class BaseLoop(BaseThread):
         check_key('frequency', init_dict, 'loop', self.name, logger)
         self.__frequency = init_dict['frequency']
         check_type(self.frequency, float, 'loop', self.name, logger)
-        self.__period = 1.0 / self.frequency
+        self.__period = 1.0 / self.__frequency
         self.__warning = init_dict.get('warning', 0.90)
         # to keeep statistics
         self.__exec_counts = 0
