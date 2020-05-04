@@ -62,13 +62,13 @@ class BaseBus():
         """Opens the actual physical bus. Must be overriden by the
         subclass.
         """
-        pass
+        raise NotImplementedError
 
     def close(self):
         """Closes the actual physical bus. Must be overriden by the
         subclass.
         """
-        pass
+        raise NotImplementedError
 
     @property
     def isOpen(self):
@@ -80,12 +80,12 @@ class BaseBus():
     def read(self, dev, reg):
         """Reads one standrd information from the bus. Must be overwriden.
         """
-        pass
+        raise NotImplementedError
 
     def write(self, dev, reg, val):
         """Writes one standrd information from the bus. Must be overwriden.
         """
-        pass
+        raise NotImplementedError
 
 
 class FileBus(BaseBus):
@@ -289,7 +289,7 @@ class ShareableFileBus(FileBus, ShareableBus):
             super().write(dev, reg, value)
             self.stop_using()
         else:
-            logger.error(f'failed to aquire buss {self.name}')
+            logger.error(f'failed to aquire bus {self.name}')
 
     def naked_write(self, dev, reg, value):
         """Provided for efficient sequence write.

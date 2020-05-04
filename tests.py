@@ -170,6 +170,12 @@ class TestRobot(unittest.TestCase):
         self.assertEqual(pan.offset, 0)
         self.assertEqual(pan.range, (None, None))
 
+    def test_mock_robot_devices(self):
+        d02 = self.robot.devices['d02']
+        regs = d02.registers
+        self.assertIn('current_pos', regs)
+        self.assertIn('[model]: 42 (42)', str(d02))
+
     def tearDown(self):
         self.robot.stop()
 
