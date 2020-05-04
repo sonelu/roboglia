@@ -223,7 +223,7 @@ class TestBaseLoops(unittest.TestCase):
         self.assertEqual(write_sync.warning, 1.05)
         logging.basicConfig(level=logging.WARNING)
         write_sync.start()
-        time.sleep(2.5)
+        time.sleep(1.5)
         write_sync.stop()
         time.sleep(0.2)
         logging.basicConfig(level=60)
@@ -237,7 +237,7 @@ class TestBaseLoops(unittest.TestCase):
         # start an already started thread
         write_sync.start()
         write_sync.start()
-        
+
 
 if __name__ == '__main__':
     loader = unittest.defaultTestLoader

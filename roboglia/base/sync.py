@@ -126,7 +126,7 @@ class BaseSync(BaseLoop):
                           logger, mess)
                 # mark the register for sync
                 if not getattr(device, register).sync:
-                    setattr(device, register, True)
+                    getattr(device, register).sync = True
 
 
 class BaseReadSync(BaseSync):

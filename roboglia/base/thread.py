@@ -172,6 +172,9 @@ class BaseLoop(BaseThread):
       the frequency is 10 Hz the statistics will be claculated after
       10 execution cycles and then reset). If not provided the
       value 0.9 (90%) will be used.
+    - ``throttle``: is a float (small) that is used by the monitoring of
+      execution statistics to adjust the wait time in order to produce
+      the desired processing frequency.
 
     Raises:
         KeyError and ValueError if provided data in the initialization
@@ -184,6 +187,9 @@ class BaseLoop(BaseThread):
         check_type(self.frequency, float, 'loop', self.name, logger)
         self.__period = 1.0 / self.__frequency
         self.__warning = init_dict.get('warning', 0.90)
+        check_type(self.__warning, float, 'loop', self.name, logger)
+        self.__throttle = init_dict.get('throttle', 0.02)
+        check_type(self.__throttle, float, 'loop', self.name, logger)
         # to keeep statistics
         self.__exec_counts = 0
         self.__last_count_reset = None
@@ -218,12 +224,14 @@ class BaseLoop(BaseThread):
     def run(self):
         exec_counts = 0
         last_count_reset = time.time()
+        factor = 1.0            # fine adjust the rate
         while not self.stopped:
             if not self.paused:
                 start_time = time.time()
                 self.atomic()
                 end_time = time.time()
                 wait_time = self.__period - (end_time - start_time)
+                wait_time *= factor
                 if wait_time > 0:
                     time.sleep(wait_time)
                 # statistics:
@@ -231,6 +239,13 @@ class BaseLoop(BaseThread):
                 if exec_counts >= self.__frequency:
                     exec_time = time.time() - last_count_reset
                     actual_freq = exec_counts / exec_time
+                    # fine tune the frequency
+                    if actual_freq < self.__frequency:
+                        # will reduce wait time
+                        factor *= (1 - self.__throttle)
+                    else:
+                        # will increase wait time
+                        factor *= (1 + self.__throttle)
                     if actual_freq < (self.__frequency * self.__warning):
                         logger.warning(
                             f'loop {self.name} running under '
@@ -240,6 +255,9 @@ class BaseLoop(BaseThread):
                     exec_counts = 0
                     last_count_reset = time.time()
             else:
+                # paused; reset the statistics
+                exec_counts = 0
+                last_count_reset = time.time()
                 time.sleep(self.period)
 
     def atomic(self):
