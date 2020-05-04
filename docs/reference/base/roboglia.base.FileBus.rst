@@ -15,7 +15,6 @@ roboglia.base.FileBus
    
       ~FileBus.__init__
       ~FileBus.close
-      ~FileBus.isOpen
       ~FileBus.open
       ~FileBus.read
       ~FileBus.write
@@ -28,6 +27,7 @@ roboglia.base.FileBus
 
    .. autosummary::
    
+      ~FileBus.isOpen
       ~FileBus.name
       ~FileBus.port
    
