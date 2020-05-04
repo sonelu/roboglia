@@ -201,7 +201,7 @@ class BaseLoop(BaseThread):
     @property
     def warning(self):
         """Control the warning level for the warning message, the **seter**
-        is smart: if the value is larger than 2 it will assume it is a 
+        is smart: if the value is larger than 2 it will assume it is a
         percentage and divied it by 100 and ignore if the number is higher
         than 110.
         The over 100 is available for testing purposes.
@@ -230,12 +230,12 @@ class BaseLoop(BaseThread):
                 exec_counts += 1
                 if exec_counts >= self.__frequency:
                     exec_time = time.time() - last_count_reset
-                    actual_frequency = exec_counts  / exec_time
-                    if actual_frequency < self.__frequency * self.__warning:
+                    actual_freq = exec_counts / exec_time
+                    if actual_freq < (self.__frequency * self.__warning):
                         logger.warning(
                             f'loop {self.name} running under '
-                            f'warning threshold {actual_frequency:.2f}[Hz] '
-                            f'({actual_frequency/self.__frequency*100:.0f}%')
+                            f'warning threshold {actual_freq:.2f}[Hz] '
+                            f'({actual_freq/self.__frequency*100:.0f}%')
                     # reset counters
                     exec_counts = 0
                     last_count_reset = time.time()
