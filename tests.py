@@ -212,14 +212,32 @@ class TestBaseLoops(unittest.TestCase):
 
     def test_sync_underrun(self):
         write_sync = self.robot.syncs['write']
+        # check warning < 2
+        write_sync.warning = 1.05
+        self.assertEqual(write_sync.warning, 1.05)
+        # warning < 110
         write_sync.warning = 105
+        self.assertEqual(write_sync.warning, 1.05)
+        # warning > 110
+        write_sync.warning = 200
+        self.assertEqual(write_sync.warning, 1.05)
         logging.basicConfig(level=logging.WARNING)
         write_sync.start()
         time.sleep(2.5)
         write_sync.stop()
-        self.assertLogs()
+        time.sleep(0.2)
         logging.basicConfig(level=60)
 
+    def test_sync_small_branches(self):
+        write_sync = self.robot.syncs['write']
+        # resume a not paused thread
+        write_sync.resume()
+        # pause a non running thread
+        write_sync.pause()
+        # start an already started thread
+        write_sync.start()
+        write_sync.start()
+        
 
 if __name__ == '__main__':
     loader = unittest.defaultTestLoader

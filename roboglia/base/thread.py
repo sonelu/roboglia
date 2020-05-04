@@ -210,7 +210,7 @@ class BaseLoop(BaseThread):
 
     @warning.setter
     def warning(self, value):
-        if value > 2.0:
+        if value < 2.0:
             self.__warning = value
         elif value <= 110:
             self.__warning = value / 100.0
