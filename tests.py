@@ -210,6 +210,16 @@ class TestBaseLoops(unittest.TestCase):
         time.sleep(0.2)
         logging.basicConfig(level=60)
 
+    def test_sync_underrun(self):
+        write_sync = self.robot.syncs['write']
+        write_sync.warning = 105
+        logging.basicConfig(level=logging.WARNING)
+        write_sync.start()
+        time.sleep(2.5)
+        write_sync.stop()
+        self.assertLogs()
+        logging.basicConfig(level=60)
+
 
 if __name__ == '__main__':
     loader = unittest.defaultTestLoader

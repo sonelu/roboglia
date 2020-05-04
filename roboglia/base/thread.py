@@ -198,13 +198,26 @@ class BaseLoop(BaseThread):
         """Loop period = 1 / frequency."""
         return self.__period
 
-    def start(self):
-        """Resets the statistics then calls the inherited ``start()``."""
-        self.__exec_counts = 0
-        self.__last_count_reset = time.time()
-        super().start()
+    @property
+    def warning(self):
+        """Control the warning level for the warning message, the **seter**
+        is smart: if the value is larger than 2 it will assume it is a 
+        percentage and divied it by 100 and ignore if the number is higher
+        than 110.
+        The over 100 is available for testing purposes.
+        """
+        return self.__warning
+
+    @warning.setter
+    def warning(self, value):
+        if value > 2.0:
+            self.__warning = value
+        elif value <= 110:
+            self.__warning = value / 100.0
 
     def run(self):
+        exec_counts = 0
+        last_count_reset = time.time()
         while not self.stopped:
             if not self.paused:
                 start_time = time.time()
@@ -214,18 +227,18 @@ class BaseLoop(BaseThread):
                 if wait_time > 0:
                     time.sleep(wait_time)
                 # statistics:
-                self.__exec_counts += 1
-                if self.__exec_counts == self.__frequency:
-                    exec_time = time.time() - self.__last_count_reset
-                    actual_frequency = self.__exec_counts / exec_time
+                exec_counts += 1
+                if exec_counts >= self.__frequency:
+                    exec_time = time.time() - last_count_reset
+                    actual_frequency = exec_counts  / exec_time
                     if actual_frequency < self.__frequency * self.__warning:
                         logger.warning(
                             f'loop {self.name} running under '
                             f'warning threshold {actual_frequency:.2f}[Hz] '
                             f'({actual_frequency/self.__frequency*100:.0f}%')
                     # reset counters
-                    self.__exec_counts = 0
-                    self.__last_count_reset = time.time()
+                    exec_counts = 0
+                    last_count_reset = time.time()
             else:
                 time.sleep(self.period)
 
