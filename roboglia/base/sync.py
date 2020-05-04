@@ -69,6 +69,7 @@ class BaseSync(BaseLoop):
         self.__start = init_dict.get('start', 'True')
         check_options(self.__start, [True, False], 'sync',
                       self.name, logger)
+        self.process_registers()
 
     @property
     def auto_start(self):
@@ -125,7 +126,7 @@ class BaseSync(BaseLoop):
                           logger, mess)
                 # mark the register for sync
                 if not getattr(device, register).sync:
-                    setattr(device, register, True)
+                    getattr(device, register).sync = True
 
 
 class BaseReadSync(BaseSync):

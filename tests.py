@@ -175,7 +175,7 @@ class TestBaseLoops(unittest.TestCase):
         read_sync.start()
         write_sync = self.robot.syncs['write']
         write_sync.start()
-        time.sleep(0.5)
+        time.sleep(1.5)         # we need more than 1s to check statistics
         self.assertTrue(read_sync.started)
         self.assertFalse(read_sync.stopped)
         self.assertTrue(read_sync.running)
@@ -209,6 +209,34 @@ class TestBaseLoops(unittest.TestCase):
         read_sync.stop()
         time.sleep(0.2)
         logging.basicConfig(level=60)
+
+    def test_sync_underrun(self):
+        write_sync = self.robot.syncs['write']
+        # check warning < 2
+        write_sync.warning = 1.05
+        self.assertEqual(write_sync.warning, 1.05)
+        # warning < 110
+        write_sync.warning = 105
+        self.assertEqual(write_sync.warning, 1.05)
+        # warning > 110
+        write_sync.warning = 200
+        self.assertEqual(write_sync.warning, 1.05)
+        logging.basicConfig(level=logging.WARNING)
+        write_sync.start()
+        time.sleep(1.5)
+        write_sync.stop()
+        time.sleep(0.2)
+        logging.basicConfig(level=60)
+
+    def test_sync_small_branches(self):
+        write_sync = self.robot.syncs['write']
+        # resume a not paused thread
+        write_sync.resume()
+        # pause a non running thread
+        write_sync.pause()
+        # start an already started thread
+        write_sync.start()
+        write_sync.start()
 
 
 if __name__ == '__main__':

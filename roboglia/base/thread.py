@@ -172,6 +172,9 @@ class BaseLoop(BaseThread):
       the frequency is 10 Hz the statistics will be claculated after
       10 execution cycles and then reset). If not provided the
       value 0.9 (90%) will be used.
+    - ``throttle``: is a float (small) that is used by the monitoring of
+      execution statistics to adjust the wait time in order to produce
+      the desired processing frequency.
 
     Raises:
         KeyError and ValueError if provided data in the initialization
@@ -182,8 +185,11 @@ class BaseLoop(BaseThread):
         check_key('frequency', init_dict, 'loop', self.name, logger)
         self.__frequency = init_dict['frequency']
         check_type(self.frequency, float, 'loop', self.name, logger)
-        self.__period = 1.0 / self.frequency
+        self.__period = 1.0 / self.__frequency
         self.__warning = init_dict.get('warning', 0.90)
+        check_type(self.__warning, float, 'loop', self.name, logger)
+        self.__throttle = init_dict.get('throttle', 0.02)
+        check_type(self.__throttle, float, 'loop', self.name, logger)
         # to keeep statistics
         self.__exec_counts = 0
         self.__last_count_reset = None
@@ -198,35 +204,60 @@ class BaseLoop(BaseThread):
         """Loop period = 1 / frequency."""
         return self.__period
 
-    def start(self):
-        """Resets the statistics then calls the inherited ``start()``."""
-        self.__exec_counts = 0
-        self.__last_count_reset = time.time()
-        super().start()
+    @property
+    def warning(self):
+        """Control the warning level for the warning message, the **seter**
+        is smart: if the value is larger than 2 it will assume it is a
+        percentage and divied it by 100 and ignore if the number is higher
+        than 110.
+        The over 100 is available for testing purposes.
+        """
+        return self.__warning
+
+    @warning.setter
+    def warning(self, value):
+        if value < 2.0:
+            self.__warning = value
+        elif value <= 110:
+            self.__warning = value / 100.0
 
     def run(self):
+        exec_counts = 0
+        last_count_reset = time.time()
+        factor = 1.0            # fine adjust the rate
         while not self.stopped:
             if not self.paused:
                 start_time = time.time()
                 self.atomic()
                 end_time = time.time()
                 wait_time = self.__period - (end_time - start_time)
+                wait_time *= factor
                 if wait_time > 0:
                     time.sleep(wait_time)
                 # statistics:
-                self.__exec_counts += 1
-                if self.__exec_counts == self.__frequency:
-                    exec_time = time.time() - self.__last_count_reset
-                    actual_frequency = self.__exec_counts / exec_time
-                    if actual_frequency < self.__frequency * self.__warning:
+                exec_counts += 1
+                if exec_counts >= self.__frequency:
+                    exec_time = time.time() - last_count_reset
+                    actual_freq = exec_counts / exec_time
+                    # fine tune the frequency
+                    if actual_freq < self.__frequency:
+                        # will reduce wait time
+                        factor *= (1 - self.__throttle)
+                    else:
+                        # will increase wait time
+                        factor *= (1 + self.__throttle)
+                    if actual_freq < (self.__frequency * self.__warning):
                         logger.warning(
                             f'loop {self.name} running under '
-                            f'warning threshold {actual_frequency:.2f}[Hz] '
-                            f'({actual_frequency/self.__frequency*100:.0f}%')
+                            f'warning threshold {actual_freq:.2f}[Hz] '
+                            f'({actual_freq/self.__frequency*100:.0f}%')
                     # reset counters
-                    self.__exec_counts = 0
-                    self.__last_count_reset = time.time()
+                    exec_counts = 0
+                    last_count_reset = time.time()
             else:
+                # paused; reset the statistics
+                exec_counts = 0
+                last_count_reset = time.time()
                 time.sleep(self.period)
 
     def atomic(self):
