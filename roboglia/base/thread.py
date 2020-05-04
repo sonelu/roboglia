@@ -50,7 +50,7 @@ class BaseThread():
 
     def setup(self):
         """Thread preparation before running. Subclasses should override"""
-        pass
+        raise NotImplementedError
 
     def run(self):
         """ Run method of the thread.
@@ -66,11 +66,11 @@ class BaseThread():
                         break
                     ...
         """
-        pass
+        raise NotImplementedError
 
     def teardown(self):
         """Thread cleanup. Subclasses should override."""
-        pass
+        raise NotImplementedError
 
     @property
     def started(self):
@@ -152,13 +152,57 @@ class BaseLoop(BaseThread):
     as prescribed by the `frequency` parameter. The `run` method takes care
     of checking the flags for `paused` and `stopped` so there is no need
     to do this in the `atomic` method.
+
+    Args:
+        init_dict (dict): The dictionary used to initialize the loop.
+
+    In addition to the keys required by the class :py:class:`BaseThread`
+    the following keys are expected in the dictionary:
+
+    - ``frequency``: the loop frequency in [Hz]
+
+    The following keys are optional and can be omitted. They will be
+    defaulted with the values mentioned bellow:
+
+    - ``warning``: indicates a threshold in range [0..1] indicating when
+      warnings should be logged to the logger in case the execution
+      frequency is bellow the target. A 0.8 value indicates the real
+      execution is less than 0.8 * taget_frequency. The statistic is
+      calculated over a number of runs equal to the frequency (ex. if
+      the frequency is 10 Hz the statistics will be claculated after
+      10 execution cycles and then reset). If not provided the
+      value 0.9 (90%) will be used.
+
+    Raises:
+        KeyError and ValueError if provided data in the initialization
+        dictionary are incorrect or missing.
     """
     def __init__(self, init_dict):
         super().__init__(init_dict)
         check_key('frequency', init_dict, 'loop', self.name, logger)
-        self.frequency = init_dict['frequency']
+        self.__frequency = init_dict['frequency']
         check_type(self.frequency, float, 'loop', self.name, logger)
-        self.period = 1.0 / self.frequency
+        self.__period = 1.0 / self.frequency
+        self.__warning = init_dict.get('warning', 0.90)
+        # to keeep statistics
+        self.__exec_counts = 0
+        self.__last_count_reset = None
+
+    @property
+    def frequency(self):
+        """Loop frequency."""
+        return self.__frequency
+
+    @property
+    def period(self):
+        """Loop period = 1 / frequency."""
+        return self.__period
+
+    def start(self):
+        """Resets the statistics then calls the inherited ``start()``."""
+        self.__exec_counts = 0
+        self.__last_count_reset = time.time()
+        super().start()
 
     def run(self):
         while not self.stopped:
@@ -166,9 +210,22 @@ class BaseLoop(BaseThread):
                 start_time = time.time()
                 self.atomic()
                 end_time = time.time()
-                wait_time = self.period - (end_time - start_time)
+                wait_time = self.__period - (end_time - start_time)
                 if wait_time > 0:
                     time.sleep(wait_time)
+                # statistics:
+                self.__exec_counts += 1
+                if self.__exec_counts == self.__frequency:
+                    exec_time = time.time() - self.__last_count_reset
+                    actual_frequency = self.__exec_counts / exec_time
+                    if actual_frequency < self.__frequency * self.__warning:
+                        logger.warning(
+                            f'loop {self.name} running under '
+                            f'warning threshold {actual_frequency:.2f}[Hz] '
+                            f'({actual_frequency/self.__frequency*100:.0f}%')
+                    # reset counters
+                    self.__exec_counts = 0
+                    self.__last_count_reset = time.time()
             else:
                 time.sleep(self.period)
 
@@ -179,7 +236,7 @@ class BaseLoop(BaseThread):
         that the implementation completes quickly and does not raise any
         exceptions.
         """
-        pass
+        raise NotImplementedError
 
 
 class StepLoop(BaseThread):

@@ -92,17 +92,26 @@ class TestRobot(unittest.TestCase):
 
             joints:
                 - name: pan
-                  class: Joint
+                  class: JointPVL
                   device: d01
                   pos_read: current_pos
                   pos_write: desired_pos
+                  vel_read: current_speed
+                  vel_write: desired_speed
+                  load_read: current_load
+                  load_write: desired_load
                   activate: enable
 
                 - name: tilt
-                  class: Joint
+                  class: JointPVL
                   device: d02
                   pos_read: current_pos
                   pos_write: desired_pos
+                  vel_read: current_speed
+                  vel_write: desired_speed
+                  load_read: current_load
+                  load_write: desired_load
+                  inverse: True
                   activate: enable
 
             groups:
@@ -155,7 +164,7 @@ class TestRobot(unittest.TestCase):
         d01.desired_speed.value = 30
         self.assertAlmostEqual(d01.desired_speed.value, 30.0, delta=0.1)
 
-    def test_mock_robot_joints(self):
+    def test_mock_robot_joints_properties(self):
         pan = self.robot.joints['pan']
         d01 = self.robot.devices['d01']
         self.assertEqual(pan.name, 'pan')
@@ -169,6 +178,48 @@ class TestRobot(unittest.TestCase):
         self.assertFalse(pan.inverse)
         self.assertEqual(pan.offset, 0)
         self.assertEqual(pan.range, (None, None))
+
+    def test_mock_robot_joints_position(self):
+        pan = self.robot.joints['pan']
+        tilt = self.robot.joints['tilt']
+        self.assertAlmostEqual(pan.position,
+            pan.position_read_register.value + pan.offset,
+            places=3)
+        self.assertAlmostEqual(tilt.position,
+            - tilt.position_read_register.value + pan.offset,
+            places=3)
+        pan.position = 10.0
+        tilt.position = 20.0
+        self.assertAlmostEqual(pan.desired_position, 10.0, delta=0.5)
+        self.assertAlmostEqual(tilt.desired_position, 20.0, delta=0.5)
+
+    def test_mock_robot_joints_velocity(self):
+        pan = self.robot.joints['pan']
+        tilt = self.robot.joints['tilt']
+        self.assertAlmostEqual(pan.velocity,
+            pan.velocity_read_register.value,
+            places=3)
+        self.assertAlmostEqual(tilt.velocity,
+            - tilt.velocity_read_register.value,
+            places=3)
+        pan.velocity = 10.0
+        tilt.velocity = 20.0
+        self.assertAlmostEqual(pan.desired_velocity, 10.0, delta=0.5)
+        self.assertAlmostEqual(tilt.desired_velocity, 20.0, delta=0.5)
+
+    def test_mock_robot_joints_load(self):
+        pan = self.robot.joints['pan']
+        tilt = self.robot.joints['tilt']
+        self.assertAlmostEqual(pan.load,
+            pan.load_read_register.value,
+            places=3)
+        self.assertAlmostEqual(tilt.load,
+            - tilt.load_read_register.value,
+            places=3)
+        pan.load = 25.0
+        tilt.load = 50.0
+        self.assertAlmostEqual(pan.desired_load, 25.0, delta=0.5)
+        self.assertAlmostEqual(tilt.desired_load, 50.0, delta=0.5)
 
     def test_mock_robot_devices(self):
         d02 = self.robot.devices['d02']
