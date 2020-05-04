@@ -31,7 +31,10 @@ roboglia.base.BaseLoop
 
    .. autosummary::
    
+      ~BaseLoop.frequency
+      ~BaseLoop.name
       ~BaseLoop.paused
+      ~BaseLoop.period
       ~BaseLoop.running
       ~BaseLoop.started
       ~BaseLoop.stopped

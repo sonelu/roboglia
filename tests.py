@@ -2,6 +2,7 @@ import unittest
 import sys
 import logging
 import yaml
+import time
 
 logging.basicConfig(level=60)           # silent
 logger = logging.getLogger(__name__)     # need for checks
@@ -71,52 +72,7 @@ class TestChecksNegative(unittest.TestCase):
 class TestRobot(unittest.TestCase):
 
     def setUp(self):
-        robot_init = yaml.load("""
-            buses:
-                - name: busA
-                  class: FileBus
-                  port: /tmp/busA.log
-
-            devices:
-                - name: d01
-                  class: BaseDevice
-                  bus: busA
-                  id: 1
-                  model: DUMMY
-
-                - name: d02
-                  class: BaseDevice
-                  bus: busA
-                  id: 2
-                  model: DUMMY
-
-            joints:
-                - name: pan
-                  class: Joint
-                  device: d01
-                  pos_read: current_pos
-                  pos_write: desired_pos
-                  activate: enable
-
-                - name: tilt
-                  class: Joint
-                  device: d02
-                  pos_read: current_pos
-                  pos_write: desired_pos
-                  activate: enable
-
-            groups:
-                - name: devices
-                  devices: [d01, d02]
-
-                - name: joints
-                  joints: [pan, tilt]
-
-                - name: all
-                  groups: [devices, joints]   
-
-        """, Loader=yaml.FullLoader)
-        self.robot = BaseRobot(robot_init)
+        self.robot = BaseRobot.from_yaml('tests/dummy_robot.yml')
         self.robot.start()
 
     def test_mock_robot_members(self):
@@ -124,6 +80,7 @@ class TestRobot(unittest.TestCase):
         self.assertListEqual(list(self.robot.devices.keys()), ['d01', 'd02'])
         self.assertListEqual(list(self.robot.joints.keys()), ['pan', 'tilt'])
         self.assertListEqual(list(self.robot.groups.keys()), ['devices', 'joints', 'all'])
+        self.assertListEqual(list(self.robot.syncs.keys()), ['read', 'write'])
 
     def test_mock_robot_registers(self):  
         d01 = self.robot.devices['d01']
@@ -139,7 +96,7 @@ class TestRobot(unittest.TestCase):
         d01.desired_speed.value = 30
         self.assertAlmostEqual(d01.desired_speed.value, 30.0, delta=0.1)
 
-    def test_mock_robot_joints(self):
+    def test_mock_robot_joints_properties(self):
         pan = self.robot.joints['pan']
         d01 = self.robot.devices['d01']
         self.assertEqual(pan.name, 'pan')
@@ -154,16 +111,112 @@ class TestRobot(unittest.TestCase):
         self.assertEqual(pan.offset, 0)
         self.assertEqual(pan.range, (None, None))
 
+    def test_mock_robot_joints_position(self):
+        pan = self.robot.joints['pan']
+        tilt = self.robot.joints['tilt']
+        self.assertAlmostEqual(pan.position,
+            pan.position_read_register.value + pan.offset,
+            places=3)
+        self.assertAlmostEqual(tilt.position,
+            - tilt.position_read_register.value + pan.offset,
+            places=3)
+        pan.position = 10.0
+        tilt.position = 20.0
+        self.assertAlmostEqual(pan.desired_position, 10.0, delta=0.5)
+        self.assertAlmostEqual(tilt.desired_position, 20.0, delta=0.5)
+
+    def test_mock_robot_joints_velocity(self):
+        pan = self.robot.joints['pan']
+        tilt = self.robot.joints['tilt']
+        self.assertAlmostEqual(pan.velocity,
+            pan.velocity_read_register.value,
+            places=3)
+        self.assertAlmostEqual(tilt.velocity,
+            - tilt.velocity_read_register.value,
+            places=3)
+        pan.velocity = 10.0
+        tilt.velocity = 20.0
+        self.assertAlmostEqual(pan.desired_velocity, 10.0, delta=0.5)
+        self.assertAlmostEqual(tilt.desired_velocity, 20.0, delta=0.5)
+
+    def test_mock_robot_joints_load(self):
+        pan = self.robot.joints['pan']
+        tilt = self.robot.joints['tilt']
+        self.assertAlmostEqual(pan.load,
+            pan.load_read_register.value,
+            places=3)
+        self.assertAlmostEqual(tilt.load,
+            - tilt.load_read_register.value,
+            places=3)
+        pan.load = 25.0
+        tilt.load = 50.0
+        self.assertAlmostEqual(pan.desired_load, 25.0, delta=0.5)
+        self.assertAlmostEqual(tilt.desired_load, 50.0, delta=0.5)
+
+    def test_mock_robot_devices(self):
+        d02 = self.robot.devices['d02']
+        regs = d02.registers
+        self.assertIn('current_pos', regs)
+        self.assertIn('[model]: 42 (42)', str(d02))
+
     def tearDown(self):
         self.robot.stop()
 
 
+class TestBaseLoops(unittest.TestCase):
+
+    def setUp(self):
+        self.robot = BaseRobot.from_yaml('tests/dummy_robot.yml')
+        self.robot.start()
+
+    def test_start_syncs(self):
+        logging.basicConfig(level=logging.WARNING)
+        read_sync = self.robot.syncs['read']
+        read_sync.start()
+        write_sync = self.robot.syncs['write']
+        write_sync.start()
+        time.sleep(0.5)
+        self.assertTrue(read_sync.started)
+        self.assertFalse(read_sync.stopped)
+        self.assertTrue(read_sync.running)
+        self.assertFalse(read_sync.paused)
+        read_sync.stop()
+        write_sync.stop()
+        time.sleep(0.5)
+        self.assertFalse(read_sync.started)
+        self.assertTrue(read_sync.stopped)
+        self.assertFalse(read_sync.running)
+        self.assertFalse(read_sync.paused)
+        logging.basicConfig(level=60)
+
+    def test_pause_syncs(self):
+        logging.basicConfig(level=logging.WARNING)
+        read_sync = self.robot.syncs['read']
+        read_sync.start()
+        time.sleep(0.2)
+        read_sync.pause()
+        time.sleep(0.2)
+        self.assertTrue(read_sync.started)
+        self.assertFalse(read_sync.stopped)
+        self.assertFalse(read_sync.running)
+        self.assertTrue(read_sync.paused)
+        read_sync.resume()
+        time.sleep(0.2)
+        self.assertTrue(read_sync.started)
+        self.assertFalse(read_sync.stopped)
+        self.assertTrue(read_sync.running)
+        self.assertFalse(read_sync.paused)
+        read_sync.stop()
+        time.sleep(0.2)
+        logging.basicConfig(level=60)
+
 
 if __name__ == '__main__':
-    suite = unittest.TestSuite()
     loader = unittest.defaultTestLoader
+    suite = unittest.TestSuite()
+    suite.addTest(loader.loadTestsFromTestCase(TestRobot))
+    suite.addTest(loader.loadTestsFromTestCase(TestBaseLoops))
     suite.addTest(loader.loadTestsFromTestCase(TestFactoryNegative))
     suite.addTest(loader.loadTestsFromTestCase(TestChecksNegative))
-    suite.addTest(loader.loadTestsFromTestCase(TestRobot))
     runner = unittest.TextTestRunner(stream=sys.stdout, verbosity=2)
     runner.run(suite)

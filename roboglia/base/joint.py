@@ -201,7 +201,7 @@ class JointPV(Joint):
                   'joint', self._name, logger,
                   f'device {self.device.name} does not have a register '
                   f'{init_dict["vel_write"]}')
-        self._vel_w = getattr(self.device, init_dict['vel_read'])
+        self._vel_w = getattr(self.device, init_dict['vel_write'])
 
     @property
     def velocity(self):
@@ -215,9 +215,8 @@ class JointPV(Joint):
 
     @velocity.setter
     def velocity(self, value):
-        if self._inverse:
-            value = -value
-        self._vel_w.value = value
+        # desired velocity is absolute only!
+        self._vel_w.value = abs(value)
 
     @property
     def velocity_read_register(self):
@@ -233,10 +232,8 @@ class JointPV(Joint):
     def desired_velocity(self):
         """(read-only) Retrieves the desired velocity from the write
         register."""
-        value = self._vel_w.value
-        if self._inverse:
-            value = - value
-        return value
+        # should be absolute only
+        return self._vel_w.value
 
     def __repr__(self):
         return f'{self.name}: p={self.position:.3f}, v={self.velocity:.3f}'
@@ -268,7 +265,7 @@ class JointPVL(JointPV):
                   'joint', self._name, logger,
                   f'device {self.device.name} does not have a register '
                   f'{init_dict["load_write"]}')
-        self._load_w = getattr(self.device, init_dict['load_read'])
+        self._load_w = getattr(self.device, init_dict['load_write'])
 
     @property
     def load(self):
@@ -282,9 +279,8 @@ class JointPVL(JointPV):
 
     @load.setter
     def load(self, value):
-        if self._inverse:
-            value = -value
-        self._load_w.value = value
+        # desired load is absolute value!
+        self._load_w.value = abs(value)
 
     @property
     def load_read_register(self):
@@ -300,10 +296,8 @@ class JointPVL(JointPV):
     def desired_load(self):
         """(read-only) Retrieves the desired velocity from the write
         register."""
-        value = self._load_w.value
-        if self._inverse:
-            value = - value
-        return value
+        # should be absolute value!
+        return self._load_w.value
 
     def __repr__(self):
         return f'{self.name}: p={self.position:.3f}, ' + \

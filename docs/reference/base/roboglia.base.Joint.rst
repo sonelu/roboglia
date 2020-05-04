@@ -23,8 +23,8 @@ roboglia.base.Joint
 
    .. autosummary::
    
-      ~Joint.activate
       ~Joint.activate_register
+      ~Joint.active
       ~Joint.desired_position
       ~Joint.device
       ~Joint.inverse

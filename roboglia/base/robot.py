@@ -182,8 +182,9 @@ class BaseRobot():
             device.open()
         logger.info(f'Starting syncs...')
         for sync in self._syncs.values():
-            logger.debug(f'\tStarting sync {sync.name}')
-            sync.start()
+            if sync.auto_start:
+                logger.debug(f'\tStarting sync {sync.name}')
+                sync.start()
 
     def stop(self):
         """Stops the robot operation. It will:

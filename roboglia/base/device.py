@@ -88,6 +88,11 @@ class BaseDevice():
         """The device number"""
         return self._dev_id
 
+    @property
+    def bus(self):
+        """The bus where the device is connected to."""
+        return self._bus
+
     def get_model_path(self):
         """Builds the path to the `.device` documents.
 

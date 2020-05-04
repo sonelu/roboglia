@@ -1,0 +1,74 @@
+# robot defintion file for running automated tests
+#
+buses:
+  - name: busA
+    class: ShareableFileBus
+    port: /tmp/busA.log
+
+devices:
+  - name: d01
+    class: BaseDevice
+    bus: busA
+    id: 1
+    model: DUMMY
+
+  - name: d02
+    class: BaseDevice
+    bus: busA
+    id: 2
+    model: DUMMY
+
+joints:
+  - name: pan
+    class: JointPVL
+    device: d01
+    pos_read: current_pos
+    pos_write: desired_pos
+    vel_read: current_speed
+    vel_write: desired_speed
+    load_read: current_load
+    load_write: desired_load
+    activate: enable
+
+  - name: tilt
+    class: JointPVL
+    device: d02
+    pos_read: current_pos
+    pos_write: desired_pos
+    vel_read: current_speed
+    vel_write: desired_speed
+    load_read: current_load
+    load_write: desired_load
+    inverse: True
+    activate: enable
+
+groups:
+  - name: devices
+    devices: [d01, d02]
+
+  - name: joints
+    joints: [pan, tilt]
+
+  - name: all
+    groups: [devices, joints]
+
+syncs:
+  - name: read
+    class: BaseReadSync
+    frequency: 100.0
+    group: devices
+    registers: ['current_pos', 'current_speed', 'current_load']
+    start: False
+    # we specifically want the loops not to start automatically
+    # to control the test and make sure that they are no side
+    # effects on more simple checks
+
+  - name: write
+    class: BaseWriteSync
+    frequency: 100.0
+    group: devices
+    registers: ['desired_pos', 'desired_speed', 'desired_load']
+    start: False
+    # we specifically want the loops not to start automatically
+    # to control the test and make sure that they are no side
+    # effects on more simple checks

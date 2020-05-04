@@ -31,6 +31,7 @@ roboglia.base.StepLoop
 
    .. autosummary::
    
+      ~StepLoop.name
       ~StepLoop.paused
       ~StepLoop.running
       ~StepLoop.started

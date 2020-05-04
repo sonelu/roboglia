@@ -13,205 +13,164 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import threading
-import time
 import logging
+from .thread import BaseLoop
+from ..utils import check_key, check_type, check_options
 
 logger = logging.getLogger(__name__)
 
 
-class BaseThread():
-    """Implements a class that wraps a processing logic that is executed
-    in a separate thread with the ability to pause / resume or fully stop
-    the task.
+class BaseSync(BaseLoop):
+    """Base processing for a sync loop.
 
-    The main processing should be impemented in the `run` method where the
-    subclass should make sure that it checks periodically the status
-    (`paused` or `stopped`) and behave appropriately. The `run` can
-    be flanked by the `setup` and `teardown` mthods where subclasses can
-    impement logic needed before the main processing is started or finished.
-    This becomes very handy for loops that normally prepare the work, then
-    run for an indefinite time, and later are closed when the owner signals.
+    This class is internded to be subclassed to provide specific functionality.
+    It only parses the common elements that a sync loop would need:
+    the devices (provided by a group) and registers (provided by a list).
+    It will check that the provided devices are on the same bus and that
+    the provided registers exist in all devices.
+
+    Args:
+
+        init_dict (dict): The dictionary used to initialize the sync.
+
+    In addition to the keys expected by the :py:class:`BaseLoop` The following
+    keys are exepcted in the dictionary:
+
+    - ``group``: the set with the devices used by sync; normally the robot
+      constructor replaces the name of the group from YAML file with the
+      actual set built earlier in the initialization.
+    - ``registers``: a list of register names (as strings) used by the sync
+
+    Optionally the following parameters can be provided:
+
+    - ``start``: the sync loop should start automatically when the robot
+      starts; defaults to ``True``
+
+    Please note that this class does not actually perform any sync. Use
+    the subclasses :py:class:`BaseReadSync` or :py:class:`BaseWriteSync` that
+    implement read or write syncs.
+    Raises:
+        KeyError: if mandatory parameters are not found
     """
-    def __init__(self, init_dict):
-        self.name = init_dict['name']
-        self._started = threading.Event()
-        self._paused = threading.Event()
-        self._crashed = False
-        self._thread = None
 
-    def setup(self):
-        """Thread preparation before running. Subclasses should override"""
-        pass
-
-    def run(self):
-        """ Run method of the thread.
-        .. note:: In order to be stoppable (resp. pausable), this method has to
-        check the running property - as often as possible to improve
-        responsivness - and terminate when :meth:`should_stop` (resp.
-        :meth:`should_pause`) becomes True.
-            For instance::
-                while <some condition for work>:
-                    if not self.paused:
-                        do_atom_work()
-                    if self.stopped:
-                        break
-                    ...
-        """
-        pass
-
-    def teardown(self):
-        """Thread cleanup. Subclasses should override."""
-        pass
-
-    @property
-    def started(self):
-        """Indicates if the thread was started."""
-        return self._started.is_set()
-
-    @property
-    def stopped(self):
-        """Indicates if the thread was stopped."""
-        return not self._started.is_set()
-
-    @property
-    def running(self):
-        """Indicates if the thread is running."""
-        return self._started.is_set() and not self._paused.is_set()
-
-    @property
-    def paused(self):
-        """Indicates the thread was paused."""
-        return self._started.is_set() and self._paused.is_set()
-
-    def _wrapped_target(self):
-        """Wrapps the execution of the task between the setup() and
-        teardown() and sets / resets the events."""
-        try:
-            self.setup()
-            self._started.set()
-            self._paused.clear()
-            self.run()
-            self._started.clear()
-            self.teardown()
-        except Exception:
-            self._crashed = True
-            self._started.clear()
-            self._paused.clear()
-            raise
-
-    def start(self, wait=True):
-        """Starts the task in it's own thread."""
-        if self.running:
-            self.stop()
-        self._thread = threading.Thread(target=self._wrapped_target)
-        self._thread.daemon = True
-        self._thread.start()
-
-        if wait and (threading.current_thread() != self._thread):
-            self._started.wait()
-            if self._crashed:
-                self._thread.join()
-                mess = f'Setup failed, see {self._thread.name} for details.'
-                logger.critical(mess)
-                raise RuntimeError(mess)
-
-    def stop(self, wait=True):
-        """Sends the stopping signal to the thread. By default waits for
-        the thred to finish."""
-        if self.started:
-            self._started.clear()
-            self._paused.clear()
-            if wait and (threading.current_thread() != self._thread):
-                while self._thread.is_alive():
-                    self._started.clear()
-                    self._thread.join(timeout=1.0)
-
-    def pause(self):
-        """Requests the thread to pause."""
-        if self.running:
-            self._paused.set()
-
-    def resume(self):
-        """Requests the thread to resume."""
-        if self.paused:
-            self._paused.clear()
-
-
-class BaseLoop(BaseThread):
-    """This is a thread that executes in a separate thread, scheduling
-    a certain atomic work (encapsulated in the `atomic` method) periodically
-    as prescribed by the `frequency` parameter. The `run` method takes care
-    of checking the flags for `paused` and `stopped` so there is no need
-    to do this in the `atomic` method.
-    """
     def __init__(self, init_dict):
         super().__init__(init_dict)
-        self.frequency = init_dict['frequency']
-        self.period = 1.0 / self.frequency
+        check_key('group', init_dict, 'sync', self.name, logger)
+        # robot will replace the name of the group with the actual set
+        self.__devices = list(init_dict['group'])
+        self.__bus = self.process_devices()
+        check_options('can_use', dir(self.__bus), 'sync',
+                      self.name, logger,
+                      f'bus {self.__bus.name} must by Shareable '
+                      'to be used in a sync')
+        check_key('registers', init_dict, 'sync', self.name, logger)
+        self.__registers = init_dict['registers']
+        check_type(self.__registers, list, 'sync', self.name, logger)
+        self.__start = init_dict.get('start', 'True')
+        check_options(self.__start, [True, False], 'sync',
+                      self.name, logger)
 
-    def run(self):
-        while not self.stopped:
-            if not self.paused:
-                start_time = time.time()
-                self.atomic()
-                end_time = time.time()
-                wait_time = self.period - (end_time - start_time)
-                if wait_time > 0:
-                    time.sleep(wait_time)
-            else:
-                time.sleep(self.period)
+    @property
+    def auto_start(self):
+        """Shows if the sync should be started automatically when the
+        robot starts.
+        """
+        return self.__start
+
+    @property
+    def bus(self):
+        """The bus this sync works with."""
+        return self.__bus
+
+    @property
+    def devices(self):
+        """The devices used by the sync."""
+        return self.__devices
+
+    @property
+    def registers(self):
+        """The registers used buy the sync."""
+        return self.__registers
+
+    def process_devices(self):
+        """Processes the provided devices.
+
+        The devices are exected as a set in the `init_dict`. This is
+        normally performed by the robot class when reading the robot
+        definition by replacing the name of the group with the actual
+        content of the group.
+        This method checks that all devices are assigned to the same bus
+        otherwise raises an exception. It returns the single instance of the
+        bus that manages all devices.
+        """
+        buses = set([device.bus for device in self.__devices])
+        if len(buses) > 1:
+            mess = f'Devices used for sync {self.name} should be ' + \
+                   f'connected to a single bus.'
+            logger.critical(mess)
+            raise ValueError(mess)
+        # there must be only one!
+        one_bus = buses.pop()
+        return one_bus
+
+    def process_registers(self):
+        """Checks that the supplied registers are avaialable in all
+        devices and sets the ``sync`` attribute to ``True`` if not already
+        set."""
+        for device in self.__devices:
+            for register in self.__registers:
+                mess = f'device {device.name} does not have a ' + \
+                       f'register {register}'
+                check_key(register, device.registers, 'sync', self.name,
+                          logger, mess)
+                # mark the register for sync
+                if not getattr(device, register).sync:
+                    setattr(device, register, True)
+
+
+class BaseReadSync(BaseSync):
+
+    def __init__(self, init_dict):
+        super().__init__(init_dict)
 
     def atomic(self):
-        """This method implements the periodic task that needs to be
-        executed. It does not need to check `paused` or `stopped` as the
-        `run` method does this already and the subclasses should make sure
-        that the implementation completes quickly and does not raise any
-        exceptions.
+        """Implements the read of the registers.
+
+        This is a naive implementation that will simply loop over all
+        devices and registers and ask them to refresh.
         """
-        pass
-
-
-class StepLoop(BaseThread):
-
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
-        self.steps = init_dict['steps']
-        self.loop = init_dict.get('loop', False)
-        self.index = 0
-
-    def setup(self):
-        """Resets the loop from the begining."""
-        self.index = 0
-
-    def run(self):
-        """Wraps the execution between the duration provided and
-        increments index.
-        """
-        while not self.stopped:
-            if not self.paused:
-                start_time = time.time()
-                self.atomic()
-                end_time = time.time()
-                step_duration = self.steps[self.index]['duration']
-                wait_time = step_duration - (end_time - start_time)
-                if wait_time > 0:
-                    time.sleep(wait_time)
-                self.index += 1
-                if self.index == len(self.steps):
-                    if self.loop:
-                        self.index = 0
+        if self.bus.can_use():
+            for device in self.devices:
+                for register in self.registers:
+                    reg = getattr(device, register)
+                    value = self.bus.naked_read(device, reg)
+                    if value is not None:
+                        reg.int_value = value
                     else:
-                        break
-            else:
-                time.sleep(0.001)          # 1ms
+                        logger.warning(f'sync {self.name}: failed to read '
+                                       f'register {register} '
+                                       f'of device {device.name}')
+            self.bus.stop_using()
+        else:
+            logger.error(f'failed to aquire buss {self.bus.name}')
+
+
+class BaseWriteSync(BaseSync):
+
+    def __init__(self, init_dict):
+        super().__init__(init_dict)
 
     def atomic(self):
-        """Executes the step.
+        """Implements the writing of the registers.
 
-        Retrieves the execution method and the parameters from the steps
-        dictionary.
+        This is a naive implementation that will simply loop over all
+        devices and registers and ask them to refresh.
         """
-        method = getattr(self, self.steps[self.index]['execute'])
-        params = self.steps[self.index]['parameters']
-        method(params)
+        if self.bus.can_use():
+            for device in self.devices:
+                for register in self.registers:
+                    reg = getattr(device, register)
+                    self.bus.naked_write(device, reg, reg.int_value)
+            self.bus.stop_using()
+        else:
+            logger.error(f'failed to aquire buss {self.bus.name}')

@@ -29,6 +29,8 @@ roboglia.base.BaseDevice
 
    .. autosummary::
    
+      ~BaseDevice.bus
+      ~BaseDevice.dev_id
       ~BaseDevice.name
       ~BaseDevice.registers
    

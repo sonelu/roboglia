@@ -31,12 +31,13 @@ def register_class(class_obj):
     Raises:
         ValueError: if the parameter passed is not a Class object.
     """
-    if classmethod.__name__ not in __registered_classes:
-        if not isinstance(class_obj, type):
-            mess = f'{class_obj} is not a Class object. ' + \
-                   'You must pass a Class not an instance.'
-            logger.critical(mess)
-            raise ValueError(mess)
+
+    if not isinstance(class_obj, type):
+        mess = f'{class_obj} is not a Class object. ' + \
+                'You must pass a Class not an instance.'
+        logger.critical(mess)
+        raise ValueError(mess)
+    if class_obj.__name__ not in __registered_classes:
         __registered_classes[class_obj.__name__] = class_obj
 
 

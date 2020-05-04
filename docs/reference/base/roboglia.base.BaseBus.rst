@@ -15,7 +15,6 @@ roboglia.base.BaseBus
    
       ~BaseBus.__init__
       ~BaseBus.close
-      ~BaseBus.isOpen
       ~BaseBus.open
       ~BaseBus.read
       ~BaseBus.write
@@ -28,6 +27,7 @@ roboglia.base.BaseBus
 
    .. autosummary::
    
+      ~BaseBus.isOpen
       ~BaseBus.name
       ~BaseBus.port
    

@@ -30,6 +30,7 @@ roboglia.base.BaseThread
 
    .. autosummary::
    
+      ~BaseThread.name
       ~BaseThread.paused
       ~BaseThread.running
       ~BaseThread.started
