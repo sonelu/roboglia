@@ -124,25 +124,26 @@ class DynamixelBus(BaseBus):
                 function = self.__packet_handler.read4ByteTxRx
             else:
                 raise ValueError(f'unexpected size {reg.size} for register '
-                                f'{reg.name} of device {dev.name}')
+                                 f'{reg.name} of device {dev.name}')
             # call the function
             res, cerr, derr = function(self.__port_handler,
-                                    dev.dev_id, reg.address)
-            logger.debug(f'[readXByteTxRx] dev={dev.dev_id} reg={reg.address}: '
-                        f'{res} (cerr={cerr}, derr={derr})')
+                                       dev.dev_id, reg.address)
+            logger.debug(f'[readXByteTxRx] dev={dev.dev_id} '
+                         f'reg={reg.address}: '
+                         f'{res} (cerr={cerr}, derr={derr})')
             # process result
             if cerr != 0:
                 # communication error
                 err_descr = self.__packet_handler.getTxRxResult(cerr)
                 logger.error(f'[bus {self.name}] device {dev.name}, '
-                            f'register {reg.name}: {err_descr}')
+                             f'register {reg.name}: {err_descr}')
                 return None
             else:
                 if derr != 0:
                     # device error
                     err_descr = self.__packet_handler.getRxPacketError(derr)
-                    logger.warning(f'device {dev.name} responded with a return '
-                                f'error: {err_descr}')
+                    logger.warning(f'device {dev.name} responded with a '
+                                   f'return error: {err_descr}')
                 else:
                     return res
 
@@ -165,24 +166,25 @@ class DynamixelBus(BaseBus):
                 function = self.__packet_handler.write4ByteTxRx
             else:
                 raise ValueError(f'unexpected size {reg.size} for register '
-                                f'{reg.name} of device {dev.name}')
+                                 f'{reg.name} of device {dev.name}')
             # execute the function
             cerr, derr = function(self.__port_handler, dev.dev_id,
-                                reg.address, value)
-            logger.debug(f'[writeXByteTxRx] dev={dev.dev_id} reg={reg.address}: '
-                        f'{value} (cerr={cerr}, derr={derr})')
+                                  reg.address, value)
+            logger.debug(f'[writeXByteTxRx] dev={dev.dev_id} '
+                         f'reg={reg.address}: '
+                         f'{value} (cerr={cerr}, derr={derr})')
             # process result
             if cerr != 0:
                 # communication error
                 err_descr = self.__packet_handler.getTxRxResult(cerr)
                 logger.error(f'[bus {self.name}] device {dev.name}, '
-                            f'register {reg.name}: {err_descr}')
+                             f'register {reg.name}: {err_descr}')
             else:
                 if derr != 0:
                     # device error
                     err_descr = self.__packet_handler.getRxPacketError(derr)
-                    logger.warning(f'device {dev.name} responded with a return '
-                                f'error: {err_descr}')
+                    logger.warning(f'device {dev.name} responded with a '
+                                   f'return error: {err_descr}')
 
 
 class ShareableDynamixelBus(DynamixelBus, ShareableBus):

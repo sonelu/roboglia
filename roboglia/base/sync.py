@@ -120,7 +120,7 @@ class BaseSync(BaseLoop):
         set."""
         for device in self.__devices:
             for register in self.__registers:
-                check_key(register, device.registers, 'sync', 
+                check_key(register, device.registers, 'sync',
                           self.name, logger,
                           f'device {device.name} does not have a '
                           f'register {register}')
@@ -139,6 +139,7 @@ class BaseSync(BaseLoop):
                          f'not open')
         else:
             super().start()
+
 
 class BaseReadSync(BaseSync):
 

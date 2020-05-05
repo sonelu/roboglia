@@ -126,7 +126,7 @@ class DynamixelSyncReadLoop(DynamixelSyncLoop):
                     else:
                         register.int_value = self.gsr.getData(
                             device.dev_id, register.address, register.size)
-            
+
 
 class DynamixelSyncWriteLoop(DynamixelSyncLoop):
     """Implements SyncWrite as specified in the frequency parameter.
@@ -163,14 +163,13 @@ class DynamixelSyncWriteLoop(DynamixelSyncLoop):
                 mess = f'failed to setup SyncWrite for loop {self.name} ' + \
                        f'for device {device.name}'
                 logger.error(mess)
-                #raise RuntimeError(mess)
         # execute write
         if self.bus.can_use():
             result = self.gsw.txPacket()
             self.bus.stop_using()       # !! as soon as possible
             error = self.gsw.ph.getTxRxResult(result)
             logger.debug(f'[sync write {self.name}] data: {data.hex()}, '
-                        f'result: {error}')
+                         f'result: {error}')
             if result != 0:
                 logger.error(f'failed to execte SyncWrite {self.name}: '
                              f'cerr={error}')
