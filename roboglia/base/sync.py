@@ -43,7 +43,7 @@ class BaseSync(BaseLoop):
 
     Optionally the following parameters can be provided:
 
-    - ``start``: the sync loop should start automatically when the robot
+    - ``auto``: the sync loop should start automatically when the robot
       starts; defaults to ``True``
 
     Please note that this class does not actually perform any sync. Use
@@ -66,8 +66,8 @@ class BaseSync(BaseLoop):
         check_key('registers', init_dict, 'sync', self.name, logger)
         self.__registers = init_dict['registers']
         check_type(self.__registers, list, 'sync', self.name, logger)
-        self.__start = init_dict.get('start', 'True')
-        check_options(self.__start, [True, False], 'sync',
+        self.__auto_start = init_dict.get('auto', True)
+        check_options(self.__auto_start, [True, False], 'sync',
                       self.name, logger)
         self.process_registers()
 
@@ -76,7 +76,7 @@ class BaseSync(BaseLoop):
         """Shows if the sync should be started automatically when the
         robot starts.
         """
-        return self.__start
+        return self.__auto_start
 
     @property
     def bus(self):

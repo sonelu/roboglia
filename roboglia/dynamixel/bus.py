@@ -161,9 +161,9 @@ class ShareableDynamixelBus(DynamixelBus, ShareableBus):
     """A DynamixelBus that can be used in multithreaded environment.
 
     Includes the functionality of a :py:class:`ShareableBus` in a
-    :py:class:`DynamixelBus`. The :py:method:`write` and :py:method:`read` methods
-    are wrapped around in :py:method:`can_use` and :py:method:`stop_using`
-    to provide the exclusive access.
+    :py:class:`DynamixelBus`. The :py:method:`write` and :py:method:`read`
+    methods are wrapped around in :py:method:`can_use` and
+    :py:method:`stop_using` to provide the exclusive access.
 
     In addition, two methods :py:method:`naked_write` and
     :py:method:`naked_read` are provided so that classes that want sequence

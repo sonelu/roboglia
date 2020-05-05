@@ -39,6 +39,11 @@ class BaseBus():
     - ``name``: the name of the bus
     - ``port``: the port used by the bus
 
+    Optionally the following parameters can be provided:
+
+    - ``auto``: the bus should be opened automatically when the robot
+      starts; defaults to ``True``
+
     Raises:
         KeyError: if ``port`` not supplied
     """
@@ -47,7 +52,7 @@ class BaseBus():
         self.__name = init_dict['name']
         check_key('port', init_dict, 'bus', self.__name, logger)
         self.__port = init_dict['port']
-        self.__auto_open = init_dict.get('open', True)
+        self.__auto_open = init_dict.get('auto', True)
         check_options(self.__auto_open, [True, False], 'bus',
                       self.__name, logger)
 

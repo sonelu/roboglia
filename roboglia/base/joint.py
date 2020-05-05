@@ -51,6 +51,8 @@ class Joint():
       ``None``
     - ``max``: introduces a maximum limit for the joint value; ignored if
       ``None
+    - ``auto``: the jpint should activate automatically when the robot
+      starts; defaults to ``True``
 
     ``min`` and ``max`` are used only when writing values to device. You can
     use both, only one of them or none.
@@ -88,6 +90,9 @@ class Joint():
         self._max = init_dict.get('max', None)
         if self._max:
             check_type(self._max, float, 'joint', self._name, logger)
+        self.__auto_activate = init_dict.get('auto', True)
+        check_options(self.__auto_activate, [True, False], 'joint',
+                      self.name, logger)
 
     @property
     def name(self):
@@ -122,6 +127,12 @@ class Joint():
     @active.setter
     def active(self, value):
         self._activate.value = value
+
+    @property
+    def auto_activate(self):
+        """Indicates if the joint should automatically be activated when
+        the robot starts."""
+        return self.__auto_activate
 
     @property
     def inverse(self):

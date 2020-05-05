@@ -14,7 +14,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from math import log
+import logging
 from ..base import BaseRegister
+
+logger = logging.getLogger(__name__)
 
 
 class DynamixelAXBaudRateRegister(BaseRegister):
@@ -56,8 +59,10 @@ class DynamixelAXBaudRateRegister(BaseRegister):
                       200000: 9, 115200: 16, 57600: 34, 19200: 103,
                       9600: 207}.get(int(value), None)
         if conv_value is None:
-            raise ValueError(f'{value} not supported for AX baud rate')
-        super().value_to_internal(conv_value)
+            logger.error(f'attempt to write a non supported for AX baud '
+                         f'rate: {value}; ignored')
+        else:
+            super().value_to_internal(conv_value)
 
     value = property(value_to_external, value_to_internal)
     """Accessor for the register value. Calls the getter/setter methods
@@ -67,7 +72,7 @@ class DynamixelAXBaudRateRegister(BaseRegister):
 class DynamixelAXComplianceSlopeRegister(BaseRegister):
     """Compliance slope for AX Devices is working in powers of 2 and
     this class performs the conversion between these representations.
-    
+
     .. seealso::
 
         http://emanual.robotis.com/docs/en/dxl/ax/ax-12a/#cw-compliance-slope

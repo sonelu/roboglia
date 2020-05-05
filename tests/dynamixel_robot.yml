@@ -1,0 +1,40 @@
+# robot defintion file for running automated tests
+#
+buses:
+  - name: ttySC1
+    class: DynamixelBus
+    port: /dev/ttySC1
+    baudrate: 1000000
+    rs485: True
+    protocol: 1.0
+
+devices:
+  - name: d01
+    class: DynamixelDevice
+    bus: ttySC1
+    id: 1
+    model: AX-12A
+
+  - name: d02
+    class: DynamixelDevice
+    bus: ttySC1
+    id: 2
+    model: AX-12A
+
+  - name: d03
+    class: DynamixelDevice
+    bus: ttySC1
+    id: 3
+    model: AX-12A
+
+  - name: d04
+    class: DynamixelDevice
+    bus: ttySC1
+    id: 4
+    model: AX-12A
+
+  - name: d99
+    class: DynamixelDevice
+    bus: ttySC1
+    id: 99
+    model: AX-12A

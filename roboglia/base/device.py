@@ -45,6 +45,8 @@ class BaseDevice():
     defaulted with the values mentioned bellow:
 
     - ``path``: a path to the model file; defaulted to `get_model_path`
+    - ``auto``: the device should open automatically when the robot
+      starts; defaults to ``True``
 
     Raises:
         KeyError: if mandatory parameters are not found
@@ -72,7 +74,7 @@ class BaseDevice():
             new_register = reg_class(reg_info)
             self.__dict__[reg_info['name']] = new_register
             self._registers[reg_info['name']] = new_register
-        self.__auto_open = init_dict.get('open', True)
+        self.__auto_open = init_dict.get('auto', True)
         check_options(self.__auto_open, [True, False], 'device',
                       self.name, logger)
 

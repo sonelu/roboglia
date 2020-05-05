@@ -29,6 +29,7 @@ joints:
     load_read: current_load
     load_write: desired_load
     activate: enable
+    auto: False
 
   - name: tilt
     class: JointPVL
@@ -41,6 +42,7 @@ joints:
     load_write: desired_load
     inverse: True
     activate: enable
+    auto: False
 
 groups:
   - name: devices
