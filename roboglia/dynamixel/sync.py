@@ -17,51 +17,23 @@ import logging
 from dynamixel_sdk import GroupSyncWrite, GroupSyncRead
 #    GroupBulkWrite, GroupBulkRead
 
-from ..base import BaseLoop
+from ..base import BaseSync
 
 logger = logging.getLogger(__name__)
 
 
-class DynamixelSyncLoop(BaseLoop):
+class DynamixelSyncLoop(BaseSync):
     """Class with common processing between SyncRead and SyncWrite.
 
     Deals with the initialization of the list of devices and the registers
     and checks if the devices are all on the same bus while the registers
     are continuous.
     """
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
-        self.devices = list(init_dict['group'])
-        # check that all devices are on the same bus
-        self.bus = self.process_devices()
-        self.registers = init_dict['registers']
-        self.start_address, self.all_length = self.process_registers()
-
-    def process_devices(self):
-        """Processes the provided devices.
-
-        The devices are exected as a set in the `init_dict`. This is
-        normally performed by the robot class when reading the robot
-        definition by replacing the name of the group with the actual
-        content of the group.
-        This method checks that all devices are assigned to the same bus
-        otherwise raises an exception. It returns the single instance of the
-        bus that manages all devices.
-        """
-        buses = set([device.bus for device in self.devices])
-        if len(buses) > 1:
-            mess = f'Devices used for SyncLoop {self.name} should be ' + \
-                   f'connected to a single bus.'
-            logger.critical(mess)
-            raise ValueError(mess)
-        return buses.pop()      # there must be only one!
-
     def process_registers(self):
-        """Processes the provided registers.
-
-        The registers are provided as a list of names and they need to be in
-        the correct order while not having any gaps between them.
+        """Calls the inherited method and then checks that the regosters
+        are in order and without gaps.
         """
+        super().process_registers()
         if len(self.registers) == 0:
             mess = f'You have to specify at least one register for ' + \
                    f'sync loop {self.name}.'
@@ -84,7 +56,18 @@ class DynamixelSyncLoop(BaseLoop):
                     logger.critical(mess)
                     raise ValueError(mess)
                 all_length += length
-        return start_address, all_length
+        self.__start_address = start_address
+        self.__all_length = all_length
+
+    @property
+    def start_address(self):
+        """Start of address."""
+        return self.__start_address
+
+    @property
+    def all_length(self):
+        """The length of the address sequence."""
+        return self.__all_length
 
 
 class DynamixelSyncReadLoop(DynamixelSyncLoop):
@@ -105,46 +88,45 @@ class DynamixelSyncReadLoop(DynamixelSyncLoop):
             mess = f'SyncRead only supported for Dynamixel Protocol 2.0.'
             logger.critical(mess)
             raise ValueError(mess)
-        self.group_sync_read = GroupSyncRead(self.bus.port_handler,
-                                             self.bus.packet_handler,
-                                             self.start_address,
-                                             self.all_length)
+        self.gsr = GroupSyncRead(self.bus.port_handler,
+                                 self.bus.packet_handler,
+                                 self.start_address,
+                                 self.all_length)
         for device in self.devices:
-            result = self.group_sync_read.addParam(device.dev_id)
+            result = self.gsr.addParam(device.dev_id)
             if result is not True:
-                mess = f'failed to setup SyncRead for loop {self.name} ' + \
-                       f'for device {device.name}'
-                logger.critical(mess)
-                raise RuntimeError(mess)
+                logger.error(f'failed to setup SyncRead for loop {self.name} '
+                             f'for device {device.name}')
 
     def atomic(self):
         """Executes a SyncRead."""
         # execute read
-        result = self.group_sync_read.txRxPacket()
-        if result != 0:
-            mess = f'failed to execte SyncRead {self.name}, cerr={result}'
-            logger.critical(mess)
-            raise ConnectionError(mess)
-        # retrieve data
-        for device in self.devices:
-            for reg_name in self.registers:
-                register = getattr(device, reg_name)
-            grs = self.group_sync_read      # for line length!
-            result = grs.isAvailable(device.dev_id,
-                                     register.address,
-                                     register.size)
+        if not self.bus.can_use():
+            logger.error(f'sync {self.name} '
+                         f'failed to aquire buss {self.name}')
+        else:
+            result = self.gsr.txRxPacket()
+            self.bus.stop_using()       # !! as soon as possible
             if result != 0:
-                mess = f'failed to retreive data in SyncRead {self.name} ' + \
-                       f'for device {device.name} and register ' + \
-                       f'{register.name}; cerr={result}'
-                logger.critical(mess)
-                raise RuntimeError(mess)
+                error = self.bus.packetHandler.getTxRxResult(result)
+                logger.error(f'SyncRead {self.name}, cerr={error}')
             else:
-                gsr = self.group_sync_read      # line length!
-                register.int_value = gsr.getData(device.dev_id,
-                                                 register.address,
-                                                 register.size)
-
+                # retrieve data
+                for device in self.devices:
+                    for reg_name in self.registers:
+                        register = getattr(device, reg_name)
+                    result = self.gsr.isAvailable(
+                        device.dev_id, register.address, register.size)
+                    if result != 0:
+                        error = self.bus.packet_handler.getTxRxResult(result)
+                        logger.error(f'failed to retreive data in '
+                                     f'SyncRead {self.name} for '
+                                     f'device {device.name} and register '
+                                     f'{register.name}; cerr={error}')
+                    else:
+                        register.int_value = self.gsr.getData(
+                            device.dev_id, register.address, register.size)
+            
 
 class DynamixelSyncWriteLoop(DynamixelSyncLoop):
     """Implements SyncWrite as specified in the frequency parameter.
@@ -156,12 +138,15 @@ class DynamixelSyncWriteLoop(DynamixelSyncLoop):
     Will raise exceptions if the SyncRead cannot be setup or fails to
     execute.
     """
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
-        self.group_sync_write = GroupSyncWrite(self.bus.port_handler,
-                                               self.bus.packet_handler,
-                                               self.start_address,
-                                               self.all_length)
+    def setup(self):
+        """This allocates the ``GroupSyncWrite``. It needs to be here and
+        not in the constructor as this is part of the wrapped execution
+        that is produced by :py:class:`BaseThread` class.
+        """
+        self.gsw = GroupSyncWrite(self.bus.port_handler,
+                                  self.bus.packet_handler,
+                                  self.start_address,
+                                  self.all_length)
 
     def atomic(self):
         """Executes a SyncWrite."""
@@ -173,29 +158,36 @@ class DynamixelSyncWriteLoop(DynamixelSyncLoop):
                 register = getattr(device, reg_name)
                 data += register.int_value.to_bytes(register.size,
                                                     byteorder='little')
-            result = self.group_sync_write.addParam(device.dev_id, data)
+            result = self.gsw.addParam(device.dev_id, data)
             if not result:
                 mess = f'failed to setup SyncWrite for loop {self.name} ' + \
                        f'for device {device.name}'
-                logger.critical(mess)
-                raise RuntimeError(mess)
+                logger.error(mess)
+                #raise RuntimeError(mess)
         # execute write
-        result = self.group_sync_write.txPacket()
-        if result != 0:
-            mess = f'failed to execte SyncWrite {self.name}, cerr={result}'
-            logging.critical(mess)
-            raise ConnectionError(mess)
+        if self.bus.can_use():
+            result = self.gsw.txPacket()
+            self.bus.stop_using()       # !! as soon as possible
+            error = self.gsw.ph.getTxRxResult(result)
+            logger.debug(f'[sync write {self.name}] data: {data.hex()}, '
+                        f'result: {error}')
+            if result != 0:
+                logger.error(f'failed to execte SyncWrite {self.name}: '
+                             f'cerr={error}')
+        else:
+            logger.error(f'sync {self.name} '
+                         f'failed to aquire buss {self.name}')
         # cleanup
-        self.group_sync_write.clearParam()
+        self.gsw.clearParam()
 
 
-class DynamixelBulkReadLoop(BaseLoop):
+class DynamixelBulkReadLoop(BaseSync):
 
     def __init__(self, init_dict):
         pass
 
 
-class DynamixelBulkWriteLoop(BaseLoop):
+class DynamixelBulkWriteLoop(BaseSync):
 
     def __init__(self, init_dict):
         pass

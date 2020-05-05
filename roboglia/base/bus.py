@@ -85,7 +85,7 @@ class BaseBus():
         raise NotImplementedError
 
     @property
-    def isOpen(self):
+    def is_open(self):
         """Returns `True` or `False` if the bus is open. Must be overriden
         by the subclass.
         """
@@ -127,11 +127,12 @@ class FileBus(BaseBus):
 
     def close(self):
         """Closes the file associated with the ``FileBus``."""
-        self.__fp.close()
-        logger.debug(f'FileBus {self.name} closed')
+        if self.is_open:
+            self.__fp.close()
+            logger.debug(f'FileBus {self.name} closed')
 
     @property
-    def isOpen(self):
+    def is_open(self):
         """Returns ``True`` is the file is opened."""
         return False if not self.__fp else not self.__fp.closed
 
@@ -153,7 +154,7 @@ class FileBus(BaseBus):
         you want to inspect the content of the file while the robot
         is running.
         """
-        if not self.isOpen:
+        if not self.is_open:
             logger.error(f'attempt to write to closed bus {self.name}')
         else:
             self.__last[(dev.dev_id, reg.address)] = value
@@ -187,7 +188,7 @@ class FileBus(BaseBus):
         default value. The method will log the read to the file and return
         the value.
         """
-        if not self.isOpen:
+        if not self.is_open:
             logger.error(f'attempt to write to closed bus {self.name}')
             return None
         else:

@@ -120,14 +120,25 @@ class BaseSync(BaseLoop):
         set."""
         for device in self.__devices:
             for register in self.__registers:
-                mess = f'device {device.name} does not have a ' + \
-                       f'register {register}'
-                check_key(register, device.registers, 'sync', self.name,
-                          logger, mess)
+                check_key(register, device.registers, 'sync', 
+                          self.name, logger,
+                          f'device {device.name} does not have a '
+                          f'register {register}')
                 # mark the register for sync
-                if not getattr(device, register).sync:
-                    getattr(device, register).sync = True
+                reg_obj = getattr(device, register)
+                if not reg_obj.sync:
+                    reg_obj.sync = True
+                    logger.debug(f'setting register {register} of device '
+                                 f'{device.name} sync=True')
 
+    def start(self):
+        """Checks that the bus is open before calling the inherited
+        ``start``."""
+        if not self.bus.is_open:
+            logger.error(f'sync {self.name}: attempt to start with a bus '
+                         f'not open')
+        else:
+            super().start()
 
 class BaseReadSync(BaseSync):
 

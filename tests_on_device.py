@@ -26,11 +26,11 @@ class TestDynamixelRobot(unittest.TestCase):
         self.robot.start()
 
     def test_mock_robot_members(self):
-        self.assertListEqual(list(self.robot.buses.keys()), ['ttySC1'])
-        self.assertListEqual(list(self.robot.devices.keys()), ['d01', 'd02', 'd03', 'd04', 'd99'])
+        self.assertListEqual(list(self.robot.buses.keys()), ['ttySC1', 'ttySC0'])
+        self.assertListEqual(list(self.robot.devices.keys()), ['d01', 'd02', 'd03', 'd04'])
+        self.assertListEqual(list(self.robot.groups.keys()), ['head', 'shoulders', 'all_servos'])
         # self.assertListEqual(list(self.robot.joints.keys()), ['pan', 'tilt'])
-        # self.assertListEqual(list(self.robot.groups.keys()), ['devices', 'joints', 'all'])
-        # self.assertListEqual(list(self.robot.syncs.keys()), ['read', 'write'])
+        self.assertListEqual(list(self.robot.syncs.keys()), ['leds'])
 
     def test_mock_robot_registers_simple(self):
         d01 = self.robot.devices['d01']
@@ -72,12 +72,15 @@ class TestDynamixelRobot(unittest.TestCase):
     def test_mock_robot_registers_compliance(self):  
         d01 = self.robot.devices['d01']
         # baud_rate conversions and handling of wrong values
-        self.assertEqual(d01.cw_compliance_slope.value, 5)
+        current = d01.cw_compliance_slope.value
         d01.cw_compliance_slope.value = 3
         self.assertEqual(d01.cw_compliance_slope.value, 3)
         self.assertEqual(d01.cw_compliance_slope.int_value, 8)
-        d01.cw_compliance_slope.value = 3
-
+        d01.cw_compliance_slope.value = 5
+        self.assertEqual(d01.cw_compliance_slope.value, 5)
+        self.assertEqual(d01.cw_compliance_slope.int_value, 32)
+        # reset to default
+        d01.cw_compliance_slope.value = current
 
     # def test_mock_robot_joints_properties(self):
     #     pan = self.robot.joints['pan']
@@ -154,79 +157,70 @@ class TestDynamixelLoops(unittest.TestCase):
 
     def test_start_syncs(self):
         logging.basicConfig(level=logging.WARNING)
-        read_sync = self.robot.syncs['read']
-        read_sync.start()
-        write_sync = self.robot.syncs['write']
-        write_sync.start()
-        time.sleep(1.5)         # we need more than 1s to check statistics
-        self.assertTrue(read_sync.started)
-        self.assertFalse(read_sync.stopped)
-        self.assertTrue(read_sync.running)
-        self.assertFalse(read_sync.paused)
-        read_sync.stop()
-        write_sync.stop()
+        syncwrite = self.robot.syncs['leds']
+        # check devices registers are flagged for sync
+        self.assertTrue(self.robot.devices['d03'].led.sync)
+        self.assertTrue(self.robot.devices['d03'].led.sync)
+        syncwrite.start()
         time.sleep(0.5)
-        self.assertFalse(read_sync.started)
-        self.assertTrue(read_sync.stopped)
-        self.assertFalse(read_sync.running)
-        self.assertFalse(read_sync.paused)
-        logging.basicConfig(level=60)
 
-    def test_pause_syncs(self):
-        logging.basicConfig(level=logging.WARNING)
-        read_sync = self.robot.syncs['read']
-        read_sync.start()
-        time.sleep(0.2)
-        read_sync.pause()
-        time.sleep(0.2)
-        self.assertTrue(read_sync.started)
-        self.assertFalse(read_sync.stopped)
-        self.assertFalse(read_sync.running)
-        self.assertTrue(read_sync.paused)
-        read_sync.resume()
-        time.sleep(0.2)
-        self.assertTrue(read_sync.started)
-        self.assertFalse(read_sync.stopped)
-        self.assertTrue(read_sync.running)
-        self.assertFalse(read_sync.paused)
-        read_sync.stop()
-        time.sleep(0.2)
-        logging.basicConfig(level=60)
+    # def test_pause_syncs(self):
+    #     logging.basicConfig(level=logging.WARNING)
+    #     read_sync = self.robot.syncs['read']
+    #     read_sync.start()
+    #     time.sleep(0.2)
+    #     read_sync.pause()
+    #     time.sleep(0.2)
+    #     self.assertTrue(read_sync.started)
+    #     self.assertFalse(read_sync.stopped)
+    #     self.assertFalse(read_sync.running)
+    #     self.assertTrue(read_sync.paused)
+    #     read_sync.resume()
+    #     time.sleep(0.2)
+    #     self.assertTrue(read_sync.started)
+    #     self.assertFalse(read_sync.stopped)
+    #     self.assertTrue(read_sync.running)
+    #     self.assertFalse(read_sync.paused)
+    #     read_sync.stop()
+    #     time.sleep(0.2)
+    #     logging.basicConfig(level=60)
 
-    def test_sync_underrun(self):
-        write_sync = self.robot.syncs['write']
-        # check warning < 2
-        write_sync.warning = 1.05
-        self.assertEqual(write_sync.warning, 1.05)
-        # warning < 110
-        write_sync.warning = 105
-        self.assertEqual(write_sync.warning, 1.05)
-        # warning > 110
-        write_sync.warning = 200
-        self.assertEqual(write_sync.warning, 1.05)
-        logging.basicConfig(level=logging.WARNING)
-        write_sync.start()
-        time.sleep(1.5)
-        write_sync.stop()
-        time.sleep(0.2)
-        logging.basicConfig(level=60)
+    # def test_sync_underrun(self):
+    #     write_sync = self.robot.syncs['write']
+    #     # check warning < 2
+    #     write_sync.warning = 1.05
+    #     self.assertEqual(write_sync.warning, 1.05)
+    #     # warning < 110
+    #     write_sync.warning = 105
+    #     self.assertEqual(write_sync.warning, 1.05)
+    #     # warning > 110
+    #     write_sync.warning = 200
+    #     self.assertEqual(write_sync.warning, 1.05)
+    #     logging.basicConfig(level=logging.WARNING)
+    #     write_sync.start()
+    #     time.sleep(1.5)
+    #     write_sync.stop()
+    #     time.sleep(0.2)
+    #     logging.basicConfig(level=60)
 
-    def test_sync_small_branches(self):
-        write_sync = self.robot.syncs['write']
-        # resume a not paused thread
-        write_sync.resume()
-        # pause a non running thread
-        write_sync.pause()
-        # start an already started thread
-        write_sync.start()
-        write_sync.start()
+    # def test_sync_small_branches(self):
+    #     write_sync = self.robot.syncs['write']
+    #     # resume a not paused thread
+    #     write_sync.resume()
+    #     # pause a non running thread
+    #     write_sync.pause()
+    #     # start an already started thread
+    #     write_sync.start()
+    #     write_sync.start()
 
+    def tearDown(self):
+        self.robot.stop()
 
 if __name__ == '__main__':
     loader = unittest.defaultTestLoader
     suite = unittest.TestSuite()
     suite.addTest(loader.loadTestsFromTestCase(TestDynamixelRobot))
-    # suite.addTest(loader.loadTestsFromTestCase(TestDynamixelLoops))
+    suite.addTest(loader.loadTestsFromTestCase(TestDynamixelLoops))
     # suite.addTest(loader.loadTestsFromTestCase(TestFactoryNegative))
     # suite.addTest(loader.loadTestsFromTestCase(TestChecksNegative))
     runner = unittest.TextTestRunner(stream=sys.stdout, verbosity=2)

@@ -179,31 +179,31 @@ class BaseRobot():
         logger.info(f'Opening buses...')
         for bus in self.buses.values():
             if bus.auto_open:
-                logger.debug(f'--> Opening bus {bus.name}')
+                logger.debug(f'--> Opening bus: {bus.name}')
                 bus.open()
             else:
-                logger.debug(f'--> Opening bus {bus.name} - skipped')
+                logger.debug(f'--> Opening bus: {bus.name} - skipped')
         logger.info(f'Opening devices...')
         for device in self.devices.values():
             if device.auto_open:
-                logger.debug(f'--> Opening device {device.name}')
+                logger.debug(f'--> Opening device: {device.name}')
                 device.open()
             else:
-                logger.debug(f'--> Opening device {device.name} - skipped')
+                logger.debug(f'--> Opening device: {device.name} - skipped')
         logger.info(f'Activating joints...')
         for joint in self.joints.values():
             if joint.auto_activate:
-                logger.debug(f'--> Activating joint {joint.name}')
+                logger.debug(f'--> Activating joint: {joint.name}')
                 joint.active = True
             else:
-                logger.debug(f'--> Activating joint {joint.name} - skipped')
+                logger.debug(f'--> Activating joint: {joint.name} - skipped')
         logger.info(f'Starting syncs...')
         for sync in self.syncs.values():
             if sync.auto_start:
-                logger.debug(f'--> Starting sync {sync.name}')
+                logger.debug(f'--> Starting sync: {sync.name}')
                 sync.start()
             else:
-                logger.debug(f'--> Starting sync {sync.name} - skipped')
+                logger.debug(f'--> Starting sync: {sync.name} - skipped')
         logger.info('***** Robot started ******************')
 
     def stop(self):
@@ -217,16 +217,16 @@ class BaseRobot():
         logger.info('***** Stopping robot *****************')
         logger.info(f'Stopping syncs...')
         for sync in self.syncs.values():
-            logger.debug(f'--> Stopping sync {sync.name}')
+            logger.debug(f'--> Stopping sync: {sync.name}')
             sync.stop()
         for joint in self.joints.values():
-            logger.debug(f'--> Deactivating joint {joint.name}')
+            logger.debug(f'--> Deactivating joint: {joint.name}')
         logger.info(f'Closing devices...')
         for device in self.devices.values():
-            logger.debug(f'--> Closing device {device.name}')
+            logger.debug(f'--> Closing device: {device.name}')
             device.close()
         logger.info(f'Closing buses...')
         for bus in self.buses.values():
-            logger.debug(f'--> Closing bus {bus.name}')
+            logger.debug(f'--> Closing bus: {bus.name}')
             bus.close()
         logger.info('***** Robot stopped ******************')
