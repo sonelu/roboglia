@@ -17,7 +17,7 @@ import os
 import yaml
 import logging
 
-from ..utils import get_registered_class, check_key
+from ..utils import get_registered_class, check_key, check_options
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +72,9 @@ class BaseDevice():
             new_register = reg_class(reg_info)
             self.__dict__[reg_info['name']] = new_register
             self._registers[reg_info['name']] = new_register
+        self.__auto_open = init_dict.get('open', True)
+        check_options(self.__auto_open, [True, False], 'device',
+                      self.name, logger)
 
     @property
     def name(self):
@@ -92,6 +95,12 @@ class BaseDevice():
     def bus(self):
         """The bus where the device is connected to."""
         return self._bus
+
+    @property
+    def auto_open(self):
+        """Indicates that the device's :py:method:`open` is supposed to be
+        called by the robot's :py:method:`Robot.start` method."""
+        return self.__auto_open
 
     def get_model_path(self):
         """Builds the path to the `.device` documents.

@@ -27,11 +27,13 @@ class BaseRobot():
     A robot has at minimum a ``Bus`` and a ``Device``.
     """
     def __init__(self, init_dict):
+        logger.info('***** Initializing robot *************')
         self.__init_buses(init_dict)
         self.__init_devices(init_dict)
         self.__init_joints(init_dict)
         self.__init_groups(init_dict)
         self.__init_syncs(init_dict)
+        logger.info('***** Initialization complete ********')
 
     @classmethod
     def from_yaml(cls, file_name):
@@ -42,7 +44,7 @@ class BaseRobot():
 
     def __init_buses(self, init_dict):
         """Called by ``__init__`` to parse and instantiate buses."""
-        self._buses = {}
+        self.__buses = {}
         logger.info(f'Initializing buses...')
         check_key('buses', init_dict, 'robot', '', logger)
         for index, bus_info in enumerate(init_dict['buses']):
@@ -52,7 +54,7 @@ class BaseRobot():
             check_key('class', bus_info, 'bus', bus_info['name'], logger)
             bus_class = get_registered_class(bus_info['class'])
             new_bus = bus_class(bus_info)
-            self._buses[bus_info['name']] = new_bus
+            self.__buses[bus_info['name']] = new_bus
             logger.debug(f'\tbus {bus_info["name"]} added')
 
     def __init_devices(self, init_dict):
@@ -63,11 +65,12 @@ class BaseRobot():
         for index, dev_info in enumerate(init_dict['devices']):
             check_key('name', dev_info, 'device', index, logger)
             check_key('bus', dev_info, 'device', dev_info['name'], logger)
-            check_key(dev_info['bus'], self._buses, 'device', dev_info['name'],
+            check_key(dev_info['bus'], self.__buses,
+                      'device', dev_info['name'],
                       logger, f'bus {dev_info["bus"]} does not exist')
             check_key('class', dev_info, 'device', dev_info['name'], logger)
             # convert the parent to object reference
-            dev_bus = self._buses[dev_info['bus']]
+            dev_bus = self.__buses[dev_info['bus']]
             dev_info['bus'] = dev_bus
             dev_class = get_registered_class(dev_info['class'])
             new_dev = dev_class(dev_info)
@@ -142,7 +145,7 @@ class BaseRobot():
     @property
     def buses(self):
         """(read-only) the buses of the robot as a dict."""
-        return self._buses
+        return self.__buses
 
     @property
     def devices(self):
@@ -172,19 +175,29 @@ class BaseRobot():
         * call the ``start()`` method on all syncs
 
         """
+        logger.info('***** Starting robot *****************')
         logger.info(f'Opening buses...')
-        for bus in self._buses.values():
-            logger.debug(f'\tOpening bus {bus.name}')
-            bus.open()
+        for bus in self.__buses.values():
+            if bus.auto_open:
+                logger.debug(f'--> Opening bus {bus.name}')
+                bus.open()
+            else:
+                logger.debug(f'--> Opening bus {bus.name} - skipped')
         logger.info(f'Opening devices...')
         for device in self._devices.values():
-            logger.debug(f'\tOpening device {device.name}')
-            device.open()
+            if device.auto_open:
+                logger.debug(f'--> Opening device {device.name}')
+                device.open()
+            else:
+                logger.debug(f'--> Opening device {device.name} - skipped')
         logger.info(f'Starting syncs...')
         for sync in self._syncs.values():
             if sync.auto_start:
-                logger.debug(f'\tStarting sync {sync.name}')
+                logger.debug(f'--> Starting sync {sync.name}')
                 sync.start()
+            else:
+                logger.debug(f'--> Starting sync {sync.name} - skipped')
+        logger.info('***** Robot started ******************')
 
     def stop(self):
         """Stops the robot operation. It will:
@@ -194,15 +207,17 @@ class BaseRobot():
         * call the ``close()`` method on all buses
 
         """
+        logger.info('***** Stopping robot *****************')
         logger.info(f'Stopping syncs...')
         for sync in self._syncs.values():
-            logger.debug(f'\tStopping sync {sync.name}')
+            logger.debug(f'--> Stopping sync {sync.name}')
             sync.stop()
         logger.info(f'Closing devices...')
         for device in self._devices.values():
-            logger.debug(f'\tClosing device {device.name}')
+            logger.debug(f'--> Closing device {device.name}')
             device.close()
         logger.info(f'Closing buses...')
-        for bus in self._buses.values():
-            logger.debug(f'\tClosing bus {bus.name}')
+        for bus in self.__buses.values():
+            logger.debug(f'--> Closing bus {bus.name}')
             bus.close()
+        logger.info('***** Robot stopped ******************')

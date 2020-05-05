@@ -16,7 +16,7 @@
 import logging
 import threading
 
-from ..utils import check_key, check_type
+from ..utils import check_key, check_type, check_options
 
 
 logger = logging.getLogger(__name__)
@@ -44,19 +44,28 @@ class BaseBus():
     """
     def __init__(self, init_dict):
         # alredy checked by robot
-        self._name = init_dict['name']
-        check_key('port', init_dict, 'bus', self._name, logger)
-        self._port = init_dict['port']
+        self.__name = init_dict['name']
+        check_key('port', init_dict, 'bus', self.__name, logger)
+        self.__port = init_dict['port']
+        self.__auto_open = init_dict.get('open', True)
+        check_options(self.__auto_open, [True, False], 'bus',
+                      self.__name, logger)
 
     @property
     def name(self):
         """(read-only) the bus name."""
-        return self._name
+        return self.__name
 
     @property
     def port(self):
         """(read-only) the bus port."""
-        return self._port
+        return self.__port
+
+    @property
+    def auto_open(self):
+        """Indicates if the bus should be opened by the robot when
+        initializing."""
+        return self.__auto_open
 
     def open(self):
         """Opens the actual physical bus. Must be overriden by the
@@ -104,17 +113,17 @@ class FileBus(BaseBus):
         super().__init__(init_dict)
         self.__fp = None
         self.__last = {}
-        logger.debug(f'FileBus {self._name} initialized')
+        logger.debug(f'FileBus {self.name} initialized')
 
     def open(self):
         """Opens the file associated with the ``FileBus``."""
-        self.__fp = open(self._port, 'w')
-        logger.debug(f'FileBus {self._name} opened')
+        self.__fp = open(self.port, 'w')
+        logger.debug(f'FileBus {self.name} opened')
 
     def close(self):
         """Closes the file associated with the ``FileBus``."""
         self.__fp.close()
-        logger.debug(f'FileBus {self._name} closed')
+        logger.debug(f'FileBus {self.name} closed')
 
     @property
     def isOpen(self):
@@ -151,7 +160,7 @@ class FileBus(BaseBus):
             except Exception:
                 logger.error(f'error executing write and flush to file '
                              f'for bus: {self.name}')
-            logger.debug(f'FileBus {self._name} {text}')
+            logger.debug(f'FileBus {self.name} {text}')
 
     def read(self, dev, reg):
         """Reads the value from the buffer of FileBus and logs it.
@@ -188,7 +197,7 @@ class FileBus(BaseBus):
             except Exception:
                 logger.error(f'error executing write and flush to file '
                              f'for bus: {self.name}')
-            logger.debug(f'FileBus {self._name} {text}')
+            logger.debug(f'FileBus {self.name} {text}')
             return val
 
     def __str__(self):
