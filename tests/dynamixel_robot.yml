@@ -1,0 +1,72 @@
+# robot defintion file for running automated tests
+#
+buses:
+  - name: ttySC1
+    class: ShareableDynamixelBus
+    port: /dev/ttySC1
+    baudrate: 1000000
+    rs485: True
+    protocol: 1.0
+
+  - name: ttySC0
+    class: ShareableDynamixelBus
+    port: /dev/ttySC0
+    baudrate: 1000000
+    rs485: True
+    protocol: 1.0
+    auto: False
+
+devices:
+  - name: d01
+    class: DynamixelDevice
+    bus: ttySC1
+    id: 1
+    model: AX-12A
+    auto: False
+
+  - name: d02
+    class: DynamixelDevice
+    bus: ttySC1
+    id: 2
+    model: AX-12A
+
+  - name: d03
+    class: DynamixelDevice
+    bus: ttySC1
+    id: 3
+    model: AX-12A
+
+  - name: d04
+    class: DynamixelDevice
+    bus: ttySC1
+    id: 4
+    model: AX-12A
+
+  # - name: d99
+  #   class: DynamixelDevice
+  #   bus: ttySC1
+  #   id: 99
+  #   model: AX-12A
+
+groups:
+
+  - name: head
+    devices: [d01, d02]
+
+  - name: shoulders
+    devices: [d03, d04]
+
+  - name: all_servos
+    groups: [head, shoulders]
+
+syncs:
+
+  - name: leds
+    class: DynamixelSyncWriteLoop
+    group: shoulders
+    frequency: 10.0
+    registers: [led]
+    auto: False
+
+
+

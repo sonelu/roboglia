@@ -43,7 +43,7 @@ class BaseSync(BaseLoop):
 
     Optionally the following parameters can be provided:
 
-    - ``start``: the sync loop should start automatically when the robot
+    - ``auto``: the sync loop should start automatically when the robot
       starts; defaults to ``True``
 
     Please note that this class does not actually perform any sync. Use
@@ -66,8 +66,8 @@ class BaseSync(BaseLoop):
         check_key('registers', init_dict, 'sync', self.name, logger)
         self.__registers = init_dict['registers']
         check_type(self.__registers, list, 'sync', self.name, logger)
-        self.__start = init_dict.get('start', 'True')
-        check_options(self.__start, [True, False], 'sync',
+        self.__auto_start = init_dict.get('auto', True)
+        check_options(self.__auto_start, [True, False], 'sync',
                       self.name, logger)
         self.process_registers()
 
@@ -76,7 +76,7 @@ class BaseSync(BaseLoop):
         """Shows if the sync should be started automatically when the
         robot starts.
         """
-        return self.__start
+        return self.__auto_start
 
     @property
     def bus(self):
@@ -120,13 +120,25 @@ class BaseSync(BaseLoop):
         set."""
         for device in self.__devices:
             for register in self.__registers:
-                mess = f'device {device.name} does not have a ' + \
-                       f'register {register}'
-                check_key(register, device.registers, 'sync', self.name,
-                          logger, mess)
+                check_key(register, device.registers, 'sync',
+                          self.name, logger,
+                          f'device {device.name} does not have a '
+                          f'register {register}')
                 # mark the register for sync
-                if not getattr(device, register).sync:
-                    getattr(device, register).sync = True
+                reg_obj = getattr(device, register)
+                if not reg_obj.sync:
+                    reg_obj.sync = True
+                    logger.debug(f'setting register {register} of device '
+                                 f'{device.name} sync=True')
+
+    def start(self):
+        """Checks that the bus is open before calling the inherited
+        ``start``."""
+        if not self.bus.is_open:
+            logger.error(f'sync {self.name}: attempt to start with a bus '
+                         f'not open')
+        else:
+            super().start()
 
 
 class BaseReadSync(BaseSync):

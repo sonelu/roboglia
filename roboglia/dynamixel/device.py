@@ -33,7 +33,9 @@ class DynamixelDevice(BaseDevice):
         return Path(__file__).parent / 'devices/'
 
     def open(self):
-        """Reads all registers of the device in direct mode.
+        """Reads all registers of the device if not synced.
         """
         for reg in self.registers.values():
-            reg.int_value = self.read_register(reg)
+            # only registers that are not flagged for sync replication
+            if not reg.sync:
+                reg.int_value = self.read_register(reg)
