@@ -120,14 +120,14 @@ class DynamixelXLBaudRateRegister(BaseRegister):
     def value_to_external(self):
         """Converts from the internal codes to external baud rate."""
         return {7: 4500000, 6: 4000000, 5: 3000000, 4: 2000000,
-                3: 1000000, 2: 115200, 1: 57600, 
+                3: 1000000, 2: 115200, 1: 57600,
                 0: 9600}.get(super().value_to_external(), 0)
 
     def value_to_internal(self, value):
         """Converts valid baud rates to internal codes."""
-        conv_value = {4500000: 7, 4000000: 6, 3000000: 5, 2000000:4,
-                1000000: 3, 115200: 2, 57600: 1, 
-                0: 9600}.get(int(value), None)
+        conv_value = {4500000: 7, 4000000: 6, 3000000: 5, 2000000: 4,
+                      1000000: 3, 115200: 2, 57600: 1,
+                      0: 9600}.get(int(value), None)
 
         if conv_value is None:
             logger.error(f'attempt to write a non supported for XL baud '

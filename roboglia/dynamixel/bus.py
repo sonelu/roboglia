@@ -103,7 +103,8 @@ class DynamixelBus(BaseBus):
         if not self.is_open:
             logger.error('ping invoked with a bus not opened')
         else:
-            _, cerr, derr = self.__packet_handler.ping(self.__port_handler, dxl_id)
+            _, cerr, derr = self.__packet_handler.ping(self.__port_handler,
+                                                       dxl_id)
             if cerr == 0 and derr == 0:
                 return True
             else:
