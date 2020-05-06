@@ -29,7 +29,7 @@ before_install:
 
 
 install:
-  - python setup.py install
+  - pip install .[all]
 
 script:
   - coverage run tests.py
