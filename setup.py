@@ -41,15 +41,24 @@ manually as needed.
 """
 install_requires = ['pyyaml']
 
+dyn_pkg = 'dynamixel_sdk@git+https://github.com/ROBOTIS-GIT/DynamixelSDK.git#egg=dynamixel_sdk&subdirectory=python'
+extras = {
+    "spi": ['spidev'],
+    "i2c": ['smbus2'],
+    "dynamixel": [dyn_pkg],
+    "all": ['spidev','smbus2',dyn_pkg]
+}
+
 if sys.version_info < (3, 0):
     print("python version 2 is not supported")
     sys.exit(1)
+
 
 setup(name='roboglia',
       version=version(),
       packages=find_packages(),
       install_requires=install_requires,
-      extras_require={},
+      extras_require=extras,
       entry_points={},
       package_data={'roboglia': ['base/devices/*.yml',
                                  'dynamixel/devices/*.yml',
