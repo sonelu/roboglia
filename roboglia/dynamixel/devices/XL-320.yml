@@ -1,0 +1,274 @@
+# Dynamixel XL-320 servo
+# http://emanual.robotis.com/docs/en/dxl/x/xl320/#control-table
+#
+registers:
+  - name: model_number
+    address: 0
+    size: 2
+    default: 350
+
+  - name: firmware
+    address: 2
+    max: 254
+
+#  ID register will be skipped as we have the id in the device and
+#  we will not support updates of this register in roboglia
+
+  - name: baud_rate 
+    class: DynamixelXLBaudRateRegister
+    address: 4
+    access: RW
+    default: 3
+    max: 207
+
+  - name: return_delay_time
+    class: RegisterWithConversion
+    address: 5
+    access: RW
+    default: 250
+    max: 254
+    factor: 0.5
+
+  - name: cw_angle_limit_deg
+    class: RegisterWithConversion
+    address: 6
+    size: 2
+    max: 1023
+    access: RW
+    factor: 3.41
+    offset: 512
+
+  - name: cw_angle_limit_rad
+    class: RegisterWithConversion
+    address: 6
+    size: 2
+    max: 1023
+    access: RW
+    factor: 195.3786081396107
+    offset: 512
+
+  - name: ccw_angle_limit_deg
+    class: RegisterWithConversion
+    address: 8
+    size: 2
+    max: 1023
+    access: RW
+    factor: 3.41
+    offset: 512
+    default: 1023
+
+  - name: ccw_angle_limit_rad
+    class: RegisterWithConversion
+    address: 8
+    size: 2
+    max: 1023
+    access: RW
+    factor: 195.3786081396107
+    offset: 512
+
+  - name: control_mode
+    address: 11
+    access|: RW
+    min: 1
+    max: 2
+    default: 2
+
+  - name: temperature_limit
+    address: 12
+    access|: RW
+    default: 65
+    max: 150
+
+  - name: min_voltage_limit
+    class: RegisterWithConversion
+    address: 13
+    access: RW
+    min: 50
+    max: 250
+    factor: 10.0
+    default: 60
+
+  - name: max_voltage_limit
+    class: RegisterWithConversion
+    address: 14
+    access: RW
+    min: 50
+    max: 250
+    factor: 10.0
+    default: 90
+
+  - name: max_torque
+    class: RegisterWithConversion
+    address: 15
+    size: 2
+    access: RW
+    max: 1023
+    factor: 10.23
+    default: 1023
+
+  - name: status_return_level
+    address: 17
+    access: RW
+    max: 2
+    default: 2
+
+  - name: shutdown
+    address: 18
+    access: RW
+    max: 7
+    default: 3
+
+  - name: torque_enable
+    class: BoolRegister
+    address: 24
+    access: RW
+
+  - name: led
+    address: 25
+    access: RW
+    max: 7
+
+  - name: d_gain
+    class: RegisterWithConversion
+    address: 27
+    access: RW
+    max: 254
+    factor: 250.0
+
+  - name: i_gain
+    class: RegisterWithConversion
+    address: 28
+    access: RW
+    max: 254
+    factor: 2.048
+
+  - name: p_gain
+    class: RegisterWithConversion
+    address: 29
+    access: RW
+    max: 254
+    default: 32
+    factor: 8.0
+
+  - name: goal_position_deg
+    class: RegisterWithConversion
+    address: 30
+    size: 2
+    access: RW
+    max: 1023
+    factor: 3.41
+    offset: 512
+
+  - name: goal_position_rad
+    class: RegisterWithConversion
+    address: 30
+    size: 2
+    access: RW
+    max: 1023
+    factor: 195.3786081396107
+    offset: 512
+
+    # in rot per minute
+  - name: moving_speed_rpm
+    class: RegisterWithConversion
+    address: 32
+    size: 2
+    access: RW
+    max: 1023
+    factor: 8.973684210526316
+
+    # in rad per second
+  - name: moving_speed_rps
+    class: RegisterWithConversion
+    address: 32
+    size: 2
+    access: RW
+    max: 1023
+    factor: 0.939722013047473  
+
+  - name: torque_limit
+    class: RegisterWithConversion
+    address: 35
+    size: 2
+    access: RW
+    max: 1023
+    factor: 10.23
+
+  - name: present_position_deg
+    class: RegisterWithConversion
+    address: 37
+    size: 2
+    access: R
+    max: 1023
+    factor: 3.41
+    offset: 512
+
+  - name: present_position_rad
+    class: RegisterWithConversion
+    address: 37
+    size: 2
+    access: R
+    max: 1023
+    factor: 195.3786081396107
+    offset: 512
+
+    # in rot per min
+  - name: present_speed_rpm
+    class: RegisterWithThreshold
+    address: 39
+    size: 2
+    access: R
+    max: 2047
+    factor: 8.973684210526316
+    threshold: 1024
+
+    # in rad per sec
+  - name: present_speed_rps
+    class: RegisterWithThreshold
+    address: 39
+    size: 2
+    access: R
+    max: 2047
+    factor: 0.939722013047473
+    threshold: 1024
+
+  - name: present_load
+    class: RegisterWithThreshold
+    address: 41
+    size: 2
+    access: R
+    max: 2047
+    factor: 10.23
+    threshold: 1024
+
+  - name: present_voltage
+    class: RegisterWithConversion
+    address: 45
+    access: R
+    factor: 10.0
+
+  - name: present_temperature
+    address: 46
+    access: R
+
+  - name: registered_instruction
+    class: BoolRegister
+    address: 47
+    access: R
+
+  - name: moving
+    class: BoolRegister
+    address: 49
+    access: R
+
+  - name: hardware_error
+    address: 50
+    access: R
+
+  - name: punch
+    address: 51
+    size: 2
+    access: RW
+    min: 0
+    max: 1023
+    default: 32

@@ -80,6 +80,7 @@ class DynamixelBus(BaseBus):
             self.__port_handler.ser.rs485_mode = rs485.RS485Settings()
             logger.info(f'bus {self.name} set in rs485 mode')
         self.__packet_handler = dynamixel_sdk.PacketHandler(self.__protocol)
+        logger.info(f'bus {self.name} opened')
 
     def close(self):
         """Closes the actual physical bus. Must be overriden by the
@@ -89,6 +90,7 @@ class DynamixelBus(BaseBus):
             self.__packet_handler = None
             self.__port_handler.closePort()
             self.__port_handler = None
+            logger.info(f'bus {self.name} closed')
 
     @property
     def is_open(self):
@@ -98,11 +100,20 @@ class DynamixelBus(BaseBus):
         return self.__port_handler is not None
 
     def ping(self, dxl_id):
-        _, cerr, derr = self.__packet_handler.ping(self.__port_handler, dxl_id)
-        if cerr == 0 and derr == 0:
-            return True
+        if not self.is_open:
+            logger.error('ping invoked with a bus not opened')
         else:
-            return False
+            _, cerr, derr = self.__packet_handler.ping(self.__port_handler, dxl_id)
+            if cerr == 0 and derr == 0:
+                return True
+            else:
+                return False
+
+    def scan(self, range=range(254)):
+        if not self.is_open:
+            logger.error('scan invoked with a bus not opened')
+        else:
+            return [dxl_id for dxl_id in range if self.ping(dxl_id)]
 
     def read(self, dev, reg):
         """Depending on the size of the register is calls the corresponding
