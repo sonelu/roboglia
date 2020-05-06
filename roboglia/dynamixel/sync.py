@@ -88,6 +88,9 @@ class DynamixelSyncReadLoop(DynamixelSyncLoop):
             mess = f'SyncRead only supported for Dynamixel Protocol 2.0.'
             logger.critical(mess)
             raise ValueError(mess)
+
+    def setup(self):
+        """Prepares to start the loop."""
         self.gsr = GroupSyncRead(self.bus.port_handler,
                                  self.bus.packet_handler,
                                  self.start_address,

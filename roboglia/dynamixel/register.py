@@ -93,3 +93,48 @@ class DynamixelAXComplianceSlopeRegister(BaseRegister):
     value = property(value_to_external, value_to_internal)
     """Accessor for the register value. Calls the getter/setter methods
     to perform the conversions."""
+
+
+class DynamixelXLBaudRateRegister(BaseRegister):
+    """Implements a representation of a baud rate register for XL servos.
+
+    Defaults `min` to 0 and `max` to 7 and implements the mapping
+    between the internal number and the real baud rates.
+
+    For XL Dynamixels the baud rate codes are:
+
+    +------+-----------+
+    | Code | Baud rate |
+    +======+===========+
+    | 3    |    1000000|
+    | 2    |     115200|
+    | 1    |      57600|
+    | 0    |       9600|
+    +------+-----------+
+    """
+    def __init__(self, init_dict):
+        init_dict['min'] = 0
+        init_dict['max'] = 7
+        super().__init__(init_dict)
+
+    def value_to_external(self):
+        """Converts from the internal codes to external baud rate."""
+        return {7: 4500000, 6: 4000000, 5: 3000000, 4: 2000000,
+                3: 1000000, 2: 115200, 1: 57600,
+                0: 9600}.get(super().value_to_external(), 0)
+
+    def value_to_internal(self, value):
+        """Converts valid baud rates to internal codes."""
+        conv_value = {4500000: 7, 4000000: 6, 3000000: 5, 2000000: 4,
+                      1000000: 3, 115200: 2, 57600: 1,
+                      0: 9600}.get(int(value), None)
+
+        if conv_value is None:
+            logger.error(f'attempt to write a non supported for XL baud '
+                         f'rate: {value}; ignored')
+        else:
+            super().value_to_internal(conv_value)
+
+    value = property(value_to_external, value_to_internal)
+    """Accessor for the register value. Calls the getter/setter methods
+    to perform the conversions."""
