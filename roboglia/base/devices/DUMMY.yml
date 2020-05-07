@@ -45,7 +45,7 @@ registers:
     max: 1023
     factor: 10.24
 
-  - name: enable
+  - name: enable_device
     class: BoolRegister
     address: 60
     access: RW
@@ -75,6 +75,18 @@ registers:
     address: 90
     size: 2
     access: R
+    max: 2047
+    factor: 10.24
+    threshold: 1024
+    default: 1536
+
+    # not really often in practice as RW
+    # here for testing
+  - name: writtable_current_load
+    class: RegisterWithThreshold
+    address: 95
+    size: 2
+    access: RW
     max: 2047
     factor: 10.24
     threshold: 1024

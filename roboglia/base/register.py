@@ -95,9 +95,12 @@ class BaseRegister():
         # trim according to min and max for the register
         if self.access != 'R':
             self.int_value = max(self.min, min(self.max, value))
-            if not self.sync:
+            if not self.sync:       # pragma: no branch
                 # direct sync
                 self.write()
+        else:
+            logging.warning(f'attempted to write in RO register {self.name} '
+                            f'of device {self.device.name}')
 
     value = property(value_to_external, value_to_internal)
 
@@ -119,7 +122,7 @@ class BaseRegister():
         # is not None
         # a value of None indicates that there was an issue with readind
         # the data from the device
-        if value is not None:
+        if value is not None:       # pragma: no branch
             self.int_value = value
 
     def __str__(self):

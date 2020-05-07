@@ -53,27 +53,27 @@ class BaseDevice():
     """
     def __init__(self, init_dict):
         # these are already checked by robot
-        self._name = init_dict['name']
-        self._bus = init_dict['bus']
-        check_key('id', init_dict, 'device', self._name, logger)
-        check_key('model', init_dict, 'device', self._name, logger)
-        self._dev_id = init_dict['id']
-        self._model = init_dict['model']
+        self.__name = init_dict['name']
+        self.__bus = init_dict['bus']
+        check_key('id', init_dict, 'device', self.__name, logger)
+        check_key('model', init_dict, 'device', self.__name, logger)
+        self.__dev_id = init_dict['id']
+        self.__model = init_dict['model']
         # registers
         model_path = init_dict.get('path', self.get_model_path())
-        model_file = os.path.join(model_path, self._model + '.yml')
+        model_file = os.path.join(model_path, self.__model + '.yml')
         with open(model_file, 'r') as f:
             model_ini = yaml.load(f, Loader=yaml.FullLoader)
-        self._registers = {}
+        self.__registers = {}
         for index, reg_info in enumerate(model_ini['registers']):
-            check_key('name', reg_info, self._model + ' register',
+            check_key('name', reg_info, self.__model + ' register',
                       index, logger)
             reg_class_name = reg_info.get('class', self.default_register())
             reg_class = get_registered_class(reg_class_name)
             reg_info['device'] = self
             new_register = reg_class(reg_info)
             self.__dict__[reg_info['name']] = new_register
-            self._registers[reg_info['name']] = new_register
+            self.__registers[reg_info['name']] = new_register
         self.__auto_open = init_dict.get('auto', True)
         check_options(self.__auto_open, [True, False], 'device',
                       self.name, logger)
@@ -81,22 +81,22 @@ class BaseDevice():
     @property
     def name(self):
         """Device name."""
-        return self._name
+        return self.__name
 
     @property
     def registers(self):
         """Device registers as dict."""
-        return self._registers
+        return self.__registers
 
     @property
     def dev_id(self):
         """The device number"""
-        return self._dev_id
+        return self.__dev_id
 
     @property
     def bus(self):
         """The bus where the device is connected to."""
-        return self._bus
+        return self.__bus
 
     @property
     def auto_open(self):
@@ -131,26 +131,27 @@ class BaseDevice():
         More complex devices should overwrite the method to provide
         specific functionality.
         """
-        return self._bus.read(self, register)
+        return self.bus.read(self, register)
 
     def write_register(self, register, value):
         """Implements the write of a register using the associated bus.
         More complex devices should overwrite the method to provide
         specific functionality.
         """
-        self._bus.write(self, register, value)
+        self.bus.write(self, register, value)
 
     def open(self):
-        """Performs initialization of the device."""
-        pass
+        """Performs initialization of the device by reading all registers."""
+        for register in self.registers.values():
+            self.read_register(register)
 
     def close(self):
         """Perform device closure."""
         pass
 
     def __str__(self):
-        result = f'Device: {self._name}, ID: {self._dev_id} ' + \
-                 f'on bus: {self._bus.name}:\n'
-        for reg in self._registers.values():
+        result = f'Device: {self.name}, ID: {self.dev_id} ' + \
+                 f'on bus: {self.bus.name}:\n'
+        for reg in self.registers.values():
             result += f'\t{reg}\n'
         return result

@@ -13,9 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import logging
+import random
+
 import dynamixel_sdk
 from serial import rs485
-import logging
+
 from ..base import BaseBus, ShareableBus
 from ..utils import check_key, check_type, check_options
 
@@ -68,6 +71,11 @@ class DynamixelBus(BaseBus):
     def protocol(self):
         """Protocol supported by the bus."""
         return self.__protocol
+
+    @property
+    def baudrate(self):
+        """Bus baudrate."""
+        return self.__baudrate
 
     def open(self):
         """Opens the actual physical bus. Must be overriden by the
@@ -265,3 +273,88 @@ class ShareableDynamixelBus(DynamixelBus, ShareableBus):
         Simply calls the :py:method:DynamixelBus.`read` method.
         """
         return super().read(dev, reg)
+
+
+class MockPacketHandler():
+
+    def __init__(self, protocol, robot, err=0.25):
+        self.__robot = robot
+        self.__err = err
+        self.__protocol = protocol
+        self.__ph = dynamixel_sdk.PacketHandler(protocol)
+
+    def getTxRxResult(self, err):
+        return self.__ph.getTxRxResult(err)
+
+    def __common_writeTxRx(self, ph, dev_id, address, value):
+        if random.random() < self.__err:
+            return -3001, 0
+        else:
+            for dev in self.__robot.devices.values():
+                if dev.dev_id == dev_id:
+                    break
+            for reg in dev.registers.values():
+                if reg.address == address:
+                    break
+            reg.int_value = value
+            return 0, 0
+
+    def write1ByteTxRx(self, ph, dev_id, address, value):
+        return self.__common_writeTxRx(ph, dev_id, address, value)
+
+    def write2ByteTxRx(self, ph, dev_id, address, value):
+        return self.__common_writeTxRx(ph, dev_id, address, value)
+
+    def write4ByteTxRx(self, ph, dev_id, address, value):
+        return self.__common_writeTxRx(ph, dev_id, address, value)
+
+    def __common_readTxRx(self, ph, dev_id, address):
+        if random.random() < self.__err:
+            return 0, -3001, 0
+        else:
+            for dev in self.__robot.devices.values():
+                if dev.dev_id == dev_id:
+                    break
+            for reg in dev.registers.values():
+                if reg.address == address:
+                    break
+
+            return reg.int_value, 0, 0
+
+    def read1ByteTxRx(self, ph, dev_id, address):
+        return self.__common_readTxRx(ph, dev_id, address)
+
+    def read2ByteTxRx(self, ph, dev_id, address):
+        return self.__common_readTxRx(ph, dev_id, address)
+
+    def read4ByteTxRx(self, ph, dev_id, address):
+        return self.__common_readTxRx(ph, dev_id, address)
+
+
+class MockDynamixelBus(ShareableDynamixelBus):
+
+    def __init__(self, init_dict):
+        super().__init__(init_dict)
+
+    def open(self):
+        """Opens the actual physical bus. Must be overriden by the
+        subclass.
+        """
+        self._DynamixelBus__port_handler = 'just something'
+        # self.port_handler.openPort()
+        # self.port_handler.setBaudRate(self.baudrate)
+        # if self.__rs485:
+        #     self.__port_handler.rs485_mode = rs485.RS485Settings()
+        #     logger.info(f'bus {self.name} set in rs485 mode')
+        self._DynamixelBus__packet_handler = MockPacketHandler(self.protocol,
+                                                               self.robot)
+        logger.info(f'bus {self.name} opened')
+
+    def close(self):
+        """Closes the actual physical bus. Must be overriden by the
+        subclass.
+        """
+        if self.is_open:
+            self._DynamixelBus__packet_handler = None
+            self._DynamixelBus__port_handler = None
+            logger.info(f'bus {self.name} closed')

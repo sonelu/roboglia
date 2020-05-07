@@ -68,14 +68,14 @@ registers:
 
   - name: control_mode
     address: 11
-    access|: RW
+    access: RW
     min: 1
     max: 2
     default: 2
 
   - name: temperature_limit
     address: 12
-    access|: RW
+    access: RW
     default: 65
     max: 150
 

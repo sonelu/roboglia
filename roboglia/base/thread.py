@@ -190,6 +190,8 @@ class BaseLoop(BaseThread):
         check_type(self.__warning, float, 'loop', self.name, logger)
         self.__throttle = init_dict.get('throttle', 0.02)
         check_type(self.__throttle, float, 'loop', self.name, logger)
+        self.__review = init_dict.get('review', 1.00)
+        check_type(self.__review, float, 'loop', self.name, logger)
         # to keeep statistics
         self.__exec_counts = 0
         self.__last_count_reset = None
@@ -214,6 +216,12 @@ class BaseLoop(BaseThread):
         """
         return self.__warning
 
+    @property
+    def review(self):
+        """Indicates the amount of time in seconds before the thread will
+        review the actual frequency against the target and take action."""
+        return self.__review
+
     @warning.setter
     def warning(self, value):
         if value < 2.0:
@@ -236,7 +244,7 @@ class BaseLoop(BaseThread):
                     time.sleep(wait_time)
                 # statistics:
                 exec_counts += 1
-                if exec_counts >= self.__frequency:
+                if exec_counts >= self.__frequency * self.__review:
                     exec_time = time.time() - last_count_reset
                     actual_freq = exec_counts / exec_time
                     # fine tune the frequency
@@ -268,48 +276,3 @@ class BaseLoop(BaseThread):
         exceptions.
         """
         raise NotImplementedError
-
-
-class StepLoop(BaseThread):
-
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
-        self.steps = init_dict['steps']
-        self.loop = init_dict.get('loop', False)
-        self.index = 0
-
-    def setup(self):
-        """Resets the loop from the begining."""
-        self.index = 0
-
-    def run(self):
-        """Wraps the execution between the duration provided and
-        increments index.
-        """
-        while not self.stopped:
-            if not self.paused:
-                start_time = time.time()
-                self.atomic()
-                end_time = time.time()
-                step_duration = self.steps[self.index]['duration']
-                wait_time = step_duration - (end_time - start_time)
-                if wait_time > 0:
-                    time.sleep(wait_time)
-                self.index += 1
-                if self.index == len(self.steps):
-                    if self.loop:
-                        self.index = 0
-                    else:
-                        break
-            else:
-                time.sleep(0.001)          # 1ms
-
-    def atomic(self):
-        """Executes the step.
-
-        Retrieves the execution method and the parameters from the steps
-        dictionary.
-        """
-        method = getattr(self, self.steps[self.index]['execute'])
-        params = self.steps[self.index]['parameters']
-        method(params)

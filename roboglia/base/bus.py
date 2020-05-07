@@ -50,6 +50,7 @@ class BaseBus():
     def __init__(self, init_dict):
         # alredy checked by robot
         self.__name = init_dict['name']
+        self.__robot = init_dict['robot']
         check_key('port', init_dict, 'bus', self.__name, logger)
         self.__port = init_dict['port']
         self.__auto_open = init_dict.get('auto', True)
@@ -60,6 +61,11 @@ class BaseBus():
     def name(self):
         """(read-only) the bus name."""
         return self.__name
+
+    @property
+    def robot(self):
+        """The robot that owns the bus."""
+        return self.__robot
 
     @property
     def port(self):
@@ -89,7 +95,7 @@ class BaseBus():
         """Returns `True` or `False` if the bus is open. Must be overriden
         by the subclass.
         """
-        return False
+        raise NotImplementedError
 
     def read(self, dev, reg):
         """Reads one standrd information from the bus. Must be overwriden.
@@ -189,7 +195,7 @@ class FileBus(BaseBus):
         the value.
         """
         if not self.is_open:
-            logger.error(f'attempt to write to closed bus {self.name}')
+            logger.error(f'attempt to read from a closed bus {self.name}')
             return None
         else:
             if (dev.dev_id, reg.address) not in self.__last:

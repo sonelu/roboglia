@@ -5,6 +5,11 @@ buses:
     class: ShareableFileBus
     port: /tmp/busA.log
 
+  - name: busB
+    class: ShareableFileBus
+    port: /tmp/busB.log
+    auto: False
+
 devices:
   - name: d01
     class: BaseDevice
@@ -17,6 +22,20 @@ devices:
     bus: busA
     id: 2
     model: DUMMY
+    auto: False
+
+    # this is not in syncs
+  - name: d03
+    class: BaseDevice
+    bus: busA
+    id: 3
+    model: DUMMY
+
+  - name: d04
+    class: BaseDevice
+    bus: busB
+    id: 4
+    model: DUMMY
 
 joints:
   - name: pan
@@ -28,8 +47,9 @@ joints:
     vel_write: desired_speed
     load_read: current_load
     load_write: desired_load
-    activate: enable
-    auto: False
+    activate: enable_device
+    min: -30.0
+    max: 30.0
 
   - name: tilt
     class: JointPVL
@@ -41,7 +61,8 @@ joints:
     load_read: current_load
     load_write: desired_load
     inverse: True
-    activate: enable
+    activate: enable_device
+    offset: 45.0
     auto: False
 
 groups:
@@ -60,7 +81,6 @@ syncs:
     frequency: 100.0
     group: devices
     registers: ['current_pos', 'current_speed', 'current_load']
-    start: False
     # we specifically want the loops not to start automatically
     # to control the test and make sure that they are no side
     # effects on more simple checks
@@ -70,7 +90,9 @@ syncs:
     frequency: 100.0
     group: devices
     registers: ['desired_pos', 'desired_speed', 'desired_load']
-    start: False
+    # to speed up testing
+    review: 0.2
+    auto: False
     # we specifically want the loops not to start automatically
     # to control the test and make sure that they are no side
     # effects on more simple checks
