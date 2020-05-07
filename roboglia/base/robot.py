@@ -50,7 +50,7 @@ class BaseRobot():
         for index, bus_info in enumerate(init_dict['buses']):
             check_key('name', bus_info, 'bus', index, logger)
             # add the robot as the parent of the bus
-            bus_info['parent'] = self
+            bus_info['robot'] = self
             check_key('class', bus_info, 'bus', bus_info['name'], logger)
             bus_class = get_registered_class(bus_info['class'])
             new_bus = bus_class(bus_info)

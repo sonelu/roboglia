@@ -19,7 +19,6 @@ from .joint import JointPVL                     # noqa: 401
 
 from .thread import BaseThread                  # noqa: 401
 from .thread import BaseLoop                    # noqa: 401
-from .thread import StepLoop                    # noqa: 401
 
 from .sync import BaseSync                      # noqa: 401
 from .sync import BaseReadSync                  # noqa: 401
