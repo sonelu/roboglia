@@ -80,6 +80,7 @@ jobs:
     - pip install .[all] --user
     script: skip
     deploy:
+      skip_cleanup: true
       provider: pypi
       user: __token__
       password:
@@ -91,4 +92,6 @@ jobs:
 
 script:
 - coverage run -m pytest -v tests.py
+- coverage xml
+- coverage report
 - flake8 roboglia --statistics --count
