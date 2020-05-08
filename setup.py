@@ -41,12 +41,11 @@ manually as needed.
 """
 install_requires = ['pyyaml']
 
-dyn_pkg = 'dynamixel_sdk@git+https://github.com/ROBOTIS-GIT/DynamixelSDK.git#egg=dynamixel_sdk&subdirectory=python'
 extras = {
     "spi": ['spidev'],
     "i2c": ['smbus2'],
-    "dynamixel": [dyn_pkg],
-    "all": ['spidev','smbus2',dyn_pkg]
+    "dynamixel": ['dynamixel-sdk'],
+    "all": ['spidev','smbus2','dynamixel-sdk']
 }
 
 if sys.version_info < (3, 0):
@@ -70,7 +69,11 @@ setup(name='roboglia',
       author_email='alex.sonea@gmail.com',
       description='Robotics Framework unsing Dynamixel SDK, I2C, SPI',
       long_description=open('README.md', encoding='utf-8').read(),
+      long_description_content_type='text/markdown',
       url='https://github.com/sonelu/roboglia',
+      project_urls = {
+          'Documentation': 'https://roboglia.readthedocs.io/en/latest/'
+      },
       license='GNU GENERAL PUBLIC LICENSE Version 3',
       classifiers=[
           "Programming Language :: Python :: 3",
