@@ -92,4 +92,6 @@ jobs:
 
 script:
 - coverage run -m pytest -v tests.py
+- coverage xml
+- coverage report
 - flake8 roboglia --statistics --count
