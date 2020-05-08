@@ -41,8 +41,10 @@ roboglia.base.BaseReadSync
       ~BaseReadSync.paused
       ~BaseReadSync.period
       ~BaseReadSync.registers
+      ~BaseReadSync.review
       ~BaseReadSync.running
       ~BaseReadSync.started
       ~BaseReadSync.stopped
+      ~BaseReadSync.warning
    
    

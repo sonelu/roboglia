@@ -29,6 +29,7 @@ roboglia.dynamixel.DynamixelDevice
 
    .. autosummary::
    
+      ~DynamixelDevice.auto_open
       ~DynamixelDevice.bus
       ~DynamixelDevice.dev_id
       ~DynamixelDevice.name

@@ -25,6 +25,7 @@ roboglia.base.JointPVL
    
       ~JointPVL.activate_register
       ~JointPVL.active
+      ~JointPVL.auto_activate
       ~JointPVL.desired_load
       ~JointPVL.desired_position
       ~JointPVL.desired_velocity

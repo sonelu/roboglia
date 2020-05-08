@@ -33,12 +33,20 @@ roboglia.dynamixel.DynamixelSyncReadLoop
 
    .. autosummary::
    
+      ~DynamixelSyncReadLoop.all_length
+      ~DynamixelSyncReadLoop.auto_start
+      ~DynamixelSyncReadLoop.bus
+      ~DynamixelSyncReadLoop.devices
       ~DynamixelSyncReadLoop.frequency
       ~DynamixelSyncReadLoop.name
       ~DynamixelSyncReadLoop.paused
       ~DynamixelSyncReadLoop.period
+      ~DynamixelSyncReadLoop.registers
+      ~DynamixelSyncReadLoop.review
       ~DynamixelSyncReadLoop.running
+      ~DynamixelSyncReadLoop.start_address
       ~DynamixelSyncReadLoop.started
       ~DynamixelSyncReadLoop.stopped
+      ~DynamixelSyncReadLoop.warning
    
    

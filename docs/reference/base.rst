@@ -22,6 +22,8 @@ The following classes from ``base`` module are provided for representing various
 
    BaseBus
    FileBus
+   ShareableBus
+   ShareableFileBus
 
 *Registers*
 
@@ -50,7 +52,6 @@ The following classes from ``base`` module are provided for representing various
 
    BaseThread
    BaseLoop
-   StepLoop
    BaseSync
    BaseReadSync
    BaseWriteSync

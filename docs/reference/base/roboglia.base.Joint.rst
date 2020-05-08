@@ -25,6 +25,7 @@ roboglia.base.Joint
    
       ~Joint.activate_register
       ~Joint.active
+      ~Joint.auto_activate
       ~Joint.desired_position
       ~Joint.device
       ~Joint.inverse

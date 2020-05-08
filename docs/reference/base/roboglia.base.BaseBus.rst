@@ -27,8 +27,10 @@ roboglia.base.BaseBus
 
    .. autosummary::
    
-      ~BaseBus.isOpen
+      ~BaseBus.auto_open
+      ~BaseBus.is_open
       ~BaseBus.name
       ~BaseBus.port
+      ~BaseBus.robot
    
    

@@ -16,6 +16,8 @@ roboglia.dynamixel.DynamixelBulkWriteLoop
       ~DynamixelBulkWriteLoop.__init__
       ~DynamixelBulkWriteLoop.atomic
       ~DynamixelBulkWriteLoop.pause
+      ~DynamixelBulkWriteLoop.process_devices
+      ~DynamixelBulkWriteLoop.process_registers
       ~DynamixelBulkWriteLoop.resume
       ~DynamixelBulkWriteLoop.run
       ~DynamixelBulkWriteLoop.setup
@@ -31,12 +33,18 @@ roboglia.dynamixel.DynamixelBulkWriteLoop
 
    .. autosummary::
    
+      ~DynamixelBulkWriteLoop.auto_start
+      ~DynamixelBulkWriteLoop.bus
+      ~DynamixelBulkWriteLoop.devices
       ~DynamixelBulkWriteLoop.frequency
       ~DynamixelBulkWriteLoop.name
       ~DynamixelBulkWriteLoop.paused
       ~DynamixelBulkWriteLoop.period
+      ~DynamixelBulkWriteLoop.registers
+      ~DynamixelBulkWriteLoop.review
       ~DynamixelBulkWriteLoop.running
       ~DynamixelBulkWriteLoop.started
       ~DynamixelBulkWriteLoop.stopped
+      ~DynamixelBulkWriteLoop.warning
    
    

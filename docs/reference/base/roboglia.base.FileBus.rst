@@ -27,8 +27,10 @@ roboglia.base.FileBus
 
    .. autosummary::
    
-      ~FileBus.isOpen
+      ~FileBus.auto_open
+      ~FileBus.is_open
       ~FileBus.name
       ~FileBus.port
+      ~FileBus.robot
    
    
