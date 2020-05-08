@@ -5,20 +5,7 @@ env:
     # Directory of setup.py
     - SETUP_DIR=$TRAVIS_BUILD_DIR/.
 
-matrix:
-  # Don't wait for allowed failures
-  fast_finish: true
 
-  include:
-
-    - python: 3.6
-      os: linux
-      language: python
-
-    - python: 3.6
-      os: linux
-      arch: arm64
-      language: python
 
 before_install:
   - python --version
@@ -32,9 +19,47 @@ before_install:
 install:
   - pip install .[all]
 
-script:
-  - coverage run -m pytest -v tests.py
-  - flake8 roboglia --statistics --count
+jobs:
+  # Don't wait for allowed failures
+  fast_finish: true
 
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  include:
+
+    - stage: test
+      python: 3.7
+      os: linux
+      language: python
+      script:
+        - coverage run -m pytest -v tests.py
+        - flake8 roboglia --statistics --count
+      after_success:
+        - bash <(curl -s https://codecov.io/bash)
+
+    - # still test
+      python: 3.7
+      os: linux
+      dist: bionic
+      language: python
+      script:
+        - coverage run -m pytest -v tests.py
+        - flake8 roboglia --statistics --count
+      after_success:
+        - bash <(curl -s https://codecov.io/bash)
+
+    - # still test
+      python: 3.7
+      os: linux
+      arch: arm64
+      language: python
+      script:
+        - coverage run -m pytest -v tests.py
+        - flake8 roboglia --statistics --count
+      after_success:
+        - bash <(curl -s https://codecov.io/bash)
+
+    - stage: deploy
+      python: 3.7
+      os: linux
+      language: python
+      script:
+        - echo "here we will deploy to PyPi"
