@@ -136,21 +136,21 @@ class TestMockRobot:
         assert read_sync.warning == 0.9
         assert read_sync.review == 1.0      # default
 
-    def test_sync_with_closed_bus(self, mock_robot, caplog):
-        write_sync = mock_robot.syncs['write']
-        assert write_sync.stopped
-        bus = write_sync.bus
-        if bus.is_open:
-            bus.close()
-        assert not bus.is_open
-        caplog.clear()
-        write_sync.start()
-        assert len(caplog.records) == 1
-        assert 'attempt to start with a bus not open' in caplog.text
-        assert write_sync.stopped
-        # now set things back
-        bus.open()
-        assert bus.is_open
+    # def test_sync_with_closed_bus(self, mock_robot, caplog):
+    #     write_sync = mock_robot.syncs['write']
+    #     assert write_sync.stopped
+    #     bus = write_sync.bus
+    #     if bus.is_open:
+    #         bus.close()
+    #     assert not bus.is_open
+    #     caplog.clear()
+    #     write_sync.start()
+    #     assert len(caplog.records) == 1
+    #     assert 'attempt to start with a bus not open' in caplog.text
+    #     assert write_sync.stopped
+    #     # now set things back
+    #     bus.open()
+    #     assert bus.is_open
 
     # def test_thread_crash(self, mock_robot):
     #     read_sync = mock_robot.syncs['read']

@@ -1,7 +1,9 @@
 language: generic
+
 env:
   global:
   - SETUP_DIR=$TRAVIS_BUILD_DIR/.
+
 before_install:
 - python --version
 - pip install -U pip
@@ -9,39 +11,64 @@ before_install:
 - pip install coverage
 - pip install codecov
 - pip install pytest
+
 install:
 - pip install .[all]
+
 jobs:
   fast_finish: true
   include:
-  - stage: test
-    python: 3.7
+
+  - stage: AMD64
+    python: 3.6
     os: linux
+    dist: xenial
     language: python
-    script:
-    - coverage run -m pytest -v tests.py
-    - flake8 roboglia --statistics --count
     after_success:
     - bash <(curl -s https://codecov.io/bash)
+
+  - python: 3.6
+    os: linux
+    dist: bionic
+    language: python
+
+  - python: 3.7
+    os: linux
+    dist: xenial
+    language: python
+
   - python: 3.7
     os: linux
     dist: bionic
     language: python
-    script:
-    - coverage run -m pytest -v tests.py
-    - flake8 roboglia --statistics --count
-    after_success:
-    - bash <(curl -s https://codecov.io/bash)
+
+  - stage: ARM64
+    python: 3.6
+    os: linux
+    arch: arm64
+    dist: xenial
+    language: python
+
+  - python: 3.6
+    os: linux
+    arch: arm64
+    dist: bionic
+    language: python
+
   - python: 3.7
     os: linux
     arch: arm64
+    dist: xenial
     language: python
-    script:
-    - coverage run -m pytest -v tests.py
-    - flake8 roboglia --statistics --count
-    after_success:
-    - bash <(curl -s https://codecov.io/bash)
-  - stage: deploy
+
+  - python: 3.7
+    os: linux
+    arch: arm64
+    dist: bionic
+    language: python
+
+  - stage: Deploy
+    python: 3.6
     before_install: skip
     install: skip
     script: skip
@@ -54,3 +81,7 @@ jobs:
         tags: true
         condition: $TRAVIS_TAG =~ ^v[0-9]*
       distributions: "sdist bdist_wheel"
+
+script:
+- coverage run -m pytest -v tests.py
+- flake8 roboglia --statistics --count
