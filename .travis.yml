@@ -2,6 +2,11 @@ language: generic
 env:
   global:
   - SETUP_DIR=$TRAVIS_BUILD_DIR/.
+python:
+  - 3.6
+  - 3.7
+  - 3.8
+
 before_install:
 - python --version
 - pip install -U pip
@@ -15,32 +20,21 @@ jobs:
   fast_finish: true
   include:
   - stage: test
-    python: 3.7
     os: linux
     language: python
-    script:
-    - coverage run -m pytest -v tests.py
-    - flake8 roboglia --statistics --count
-    after_success:
-    - bash <(curl -s https://codecov.io/bash)
-  - python: 3.7
+  -  # still test
     os: linux
     dist: bionic
     language: python
-    script:
-    - coverage run -m pytest -v tests.py
-    - flake8 roboglia --statistics --count
-    after_success:
-    - bash <(curl -s https://codecov.io/bash)
-  - python: 3.7
+  - # still test
     os: linux
     arch: arm64
     language: python
-    script:
-    - coverage run -m pytest -v tests.py
-    - flake8 roboglia --statistics --count
-    after_success:
-    - bash <(curl -s https://codecov.io/bash)
+  - # still test
+    os: linux
+    dist: bionic
+    arch: arm64
+    language: python
   - stage: deploy
     before_install: skip
     install: skip
@@ -54,3 +48,9 @@ jobs:
         tags: true
         condition: $TRAVIS_TAG =~ ^v[0-9]*
       distributions: "sdist bdist_wheel"
+
+script:
+  - coverage run -m pytest -v tests.py
+  - flake8 roboglia --statistics --count
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
