@@ -80,6 +80,7 @@ jobs:
     - pip install .[all] --user
     script: skip
     deploy:
+      skip_cleanup: true
       provider: pypi
       user: __token__
       password:
