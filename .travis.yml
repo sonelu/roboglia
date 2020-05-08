@@ -1,40 +1,56 @@
 language: generic
-
 env:
   global:
-    # Directory of setup.py
-    - SETUP_DIR=$TRAVIS_BUILD_DIR/.
-
-matrix:
-  # Don't wait for allowed failures
-  fast_finish: true
-
-  include:
-
-    - python: 3.6
-      os: linux
-      language: python
-
-    - python: 3.6
-      os: linux
-      arch: arm64
-      language: python
-
+  - SETUP_DIR=$TRAVIS_BUILD_DIR/.
 before_install:
-  - python --version
-  - pip install -U pip
-  - pip install flake8
-  - pip install coverage
-  - pip install codecov
-  - pip install pytest
-
-
+- python --version
+- pip install -U pip
+- pip install flake8
+- pip install coverage
+- pip install codecov
+- pip install pytest
 install:
-  - pip install .[all]
-
-script:
-  - coverage run -m pytest -v tests.py
-  - flake8 roboglia --statistics --count
-
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
+- pip install .[all]
+jobs:
+  fast_finish: true
+  include:
+  - stage: test
+    python: 3.7
+    os: linux
+    language: python
+    script:
+    - coverage run -m pytest -v tests.py
+    - flake8 roboglia --statistics --count
+    after_success:
+    - bash <(curl -s https://codecov.io/bash)
+  - python: 3.7
+    os: linux
+    dist: bionic
+    language: python
+    script:
+    - coverage run -m pytest -v tests.py
+    - flake8 roboglia --statistics --count
+    after_success:
+    - bash <(curl -s https://codecov.io/bash)
+  - python: 3.7
+    os: linux
+    arch: arm64
+    language: python
+    script:
+    - coverage run -m pytest -v tests.py
+    - flake8 roboglia --statistics --count
+    after_success:
+    - bash <(curl -s https://codecov.io/bash)
+  - stage: deploy
+    before_install: skip
+    install: skip
+    script: skip
+    deploy:
+      provider: pypi
+      user: __token__
+      password:
+        secure: lWsCeSxHrsWBIip86Y/ZRpKQ1nXwIR+qSgky2njs+dxIhioTu4BC/gwVuHCfq77m4tJWhh5mHl0mbRd+fqj3T6L8QDuDE12sN4OOWPWzxnGqST6q9i/5e7EnwTEa62Ux4iPd6pv+kDt0rdUKDpB7De3PaJ2oVsHEnYBj6zdaTAqdDWD46ZQZAfdSpAQH7hgMhRsD8PO7ah8tIoKpjrdveqmf8S2txph90fExx81yCP8JPjFXBvPuge9wubY+Vg7Zf+uF1ARfftwopW7jKjD5jmJPE2q13A2dzGUSeyK0ht+FkB22EgLnBUDSBLxM+jEEb6XGmtLDon35iMQgxe7cEK8dtCz3kfHvfClf8givf3Qc8QzKHX+Vdczmo5iykXxfMpAmmbpV5DhM4yi5VZB6ZSQsHRpi6NsTykGqLoPPfCzEBunlmGuyfQM8J/7MO8O12HMsFqUO6RRlmu06AQAULYnyly3jYgif+tksiUNqaMdssVs26RRkeGkMK/oCgQTzjlxKqSCk2TOb0dcnWKX54GlorTM2moduRJ82labpfxNNam3yYPpQmOA4jjTW1/fq/fdWCBxfigXGelYe041xkA9QMWrJrKZSMvnxbm/13lzf+Z8L2yo62tXkdKTpiA39k3eWsr63T3ViR9bE1jYE423yhU4/lk7NQKQUUMV5Ulc=
+      on:
+        tags: true
+        condition: $TRAVIS_TAG =~ ^v[0-9]*
+      distributions: "sdist bdist_wheel"
