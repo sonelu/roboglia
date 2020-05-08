@@ -50,8 +50,7 @@ extras = {
 }
 
 if sys.version_info < (3, 0):
-    print("python version 2 is not supported")
-    sys.exit(1)
+    print("Waning: Python version 2 is not supported...")
 
 
 setup(name='roboglia',
