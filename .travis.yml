@@ -6,14 +6,14 @@ env:
 
 before_install:
 - python --version
-- pip install -U pip
-- pip install flake8
-- pip install coverage
-- pip install codecov
-- pip install pytest
+- pip install -U pip --user
+- pip install flake8 --user
+- pip install coverage --user
+- pip install codecov --user
+- pip install pytest --user
 
 install:
-- pip install .[all]
+- pip install .[all] --user
 
 jobs:
   fast_finish: true
@@ -31,16 +31,19 @@ jobs:
     os: linux
     dist: bionic
     language: python
+    if: branch = master
 
   - python: 3.7
     os: linux
     dist: xenial
     language: python
+    if: branch = master
 
   - python: 3.7
     os: linux
     dist: bionic
     language: python
+    if: branch = master
 
   - stage: ARM64
     python: 3.6
@@ -48,30 +51,31 @@ jobs:
     arch: arm64
     dist: xenial
     language: python
+    if: branch = master
 
   - python: 3.6
     os: linux
     arch: arm64
     dist: bionic
     language: python
+    if: branch = master
 
   - python: 3.7
     os: linux
     arch: arm64
     dist: xenial
     language: python
+    if: branch = master
 
   - python: 3.7
     os: linux
     arch: arm64
     dist: bionic
     language: python
+    if: branch = master
 
   - stage: Deploy
     python: 3.6
-    before_install: skip
-    install: skip
-    script: skip
     deploy:
       provider: pypi
       user: __token__
