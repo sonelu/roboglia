@@ -31,16 +31,19 @@ jobs:
     os: linux
     dist: bionic
     language: python
+    if: branch = master
 
   - python: 3.7
     os: linux
     dist: xenial
     language: python
+    if: branch = master
 
   - python: 3.7
     os: linux
     dist: bionic
     language: python
+    if: branch = master
 
   - stage: ARM64
     python: 3.6
@@ -48,29 +51,33 @@ jobs:
     arch: arm64
     dist: xenial
     language: python
+    if: branch = master
 
   - python: 3.6
     os: linux
     arch: arm64
     dist: bionic
     language: python
+    if: branch = master
 
   - python: 3.7
     os: linux
     arch: arm64
     dist: xenial
     language: python
+    if: branch = master
 
   - python: 3.7
     os: linux
     arch: arm64
     dist: bionic
     language: python
+    if: branch = master
 
   - stage: Deploy
-    python: 3.6
     before_install: skip
-    install: skip
+    install:
+    - pip install .[all] --user
     script: skip
     deploy:
       provider: pypi

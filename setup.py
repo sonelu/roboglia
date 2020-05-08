@@ -69,7 +69,7 @@ setup(name='roboglia',
       author='Alex Sonea',
       author_email='alex.sonea@gmail.com',
       description='Robotics Framework unsing Dynamixel SDK, I2C, SPI',
-      long_description=open('README.md', encoding='utf-8').read(),
+      long_description=open('README.md').read(),
       url='https://github.com/sonelu/roboglia',
       license='GNU GENERAL PUBLIC LICENSE Version 3',
       classifiers=[
