@@ -14,6 +14,9 @@ devices.
    :toctree: dynamixel
 
    DynamixelBus
+   ShareableDynamixelBus
+   MockPacketHandler
+   MockDynamixelBus
 
 *Devices*
 
@@ -31,6 +34,7 @@ devices.
 
    DynamixelAXBaudRateRegister
    DynamixelAXComplianceSlopeRegister
+   DynamixelXLBaudRateRegister
 
 *Syncs*
 

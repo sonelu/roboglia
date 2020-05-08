@@ -41,8 +41,10 @@ roboglia.base.BaseSync
       ~BaseSync.paused
       ~BaseSync.period
       ~BaseSync.registers
+      ~BaseSync.review
       ~BaseSync.running
       ~BaseSync.started
       ~BaseSync.stopped
+      ~BaseSync.warning
    
    

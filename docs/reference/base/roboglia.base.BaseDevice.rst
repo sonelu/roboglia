@@ -29,6 +29,7 @@ roboglia.base.BaseDevice
 
    .. autosummary::
    
+      ~BaseDevice.auto_open
       ~BaseDevice.bus
       ~BaseDevice.dev_id
       ~BaseDevice.name

@@ -41,8 +41,10 @@ roboglia.base.BaseWriteSync
       ~BaseWriteSync.paused
       ~BaseWriteSync.period
       ~BaseWriteSync.registers
+      ~BaseWriteSync.review
       ~BaseWriteSync.running
       ~BaseWriteSync.started
       ~BaseWriteSync.stopped
+      ~BaseWriteSync.warning
    
    

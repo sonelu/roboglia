@@ -15,10 +15,10 @@ roboglia.dynamixel.DynamixelBus
    
       ~DynamixelBus.__init__
       ~DynamixelBus.close
-      ~DynamixelBus.isOpen
       ~DynamixelBus.open
       ~DynamixelBus.ping
       ~DynamixelBus.read
+      ~DynamixelBus.scan
       ~DynamixelBus.write
    
    
@@ -29,7 +29,14 @@ roboglia.dynamixel.DynamixelBus
 
    .. autosummary::
    
+      ~DynamixelBus.auto_open
+      ~DynamixelBus.baudrate
+      ~DynamixelBus.is_open
       ~DynamixelBus.name
+      ~DynamixelBus.packet_handler
       ~DynamixelBus.port
+      ~DynamixelBus.port_handler
+      ~DynamixelBus.protocol
+      ~DynamixelBus.robot
    
    

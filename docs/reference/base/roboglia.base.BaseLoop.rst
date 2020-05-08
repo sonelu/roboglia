@@ -35,8 +35,10 @@ roboglia.base.BaseLoop
       ~BaseLoop.name
       ~BaseLoop.paused
       ~BaseLoop.period
+      ~BaseLoop.review
       ~BaseLoop.running
       ~BaseLoop.started
       ~BaseLoop.stopped
+      ~BaseLoop.warning
    
    

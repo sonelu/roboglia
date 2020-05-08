@@ -55,8 +55,8 @@ jobs:
     - pip install twine
     - pip install --upgrade setuptools wheel
     script:
-    - python setup.py install
-    - python -m twine upload dist/*.egg -u "${PYPI_USERNAME}" -p "${PYPI_PASSWORD}"
+    - python setup.py sdist bdist_wheel
+    - python -m twine upload dist/ -u "${PYPI_USERNAME}" -p "${PYPI_PASSWORD}"
     
 script:
 - coverage run -m pytest -v tests.py

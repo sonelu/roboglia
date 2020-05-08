@@ -6,4 +6,5 @@ API Reference
 
    base
    dynamixel
+   move
    utils
