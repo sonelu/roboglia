@@ -32,7 +32,7 @@
    {% if methods %}
    {% for item in methods %}
 
-   .. automethod:: ~{{ name }}.{{ item }}
+   .. method:: ~{{ name }}.{{ item }}
    {%- endfor %}
    {% endif %}
    {% endblock %}

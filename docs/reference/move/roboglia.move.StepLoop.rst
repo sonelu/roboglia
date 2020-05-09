@@ -43,22 +43,22 @@ roboglia.move.StepLoop
    
    
 
-   .. automethod:: ~StepLoop.__init__
+   .. method:: ~StepLoop.__init__
 
-   .. automethod:: ~StepLoop.atomic
+   .. method:: ~StepLoop.atomic
 
-   .. automethod:: ~StepLoop.pause
+   .. method:: ~StepLoop.pause
 
-   .. automethod:: ~StepLoop.resume
+   .. method:: ~StepLoop.resume
 
-   .. automethod:: ~StepLoop.run
+   .. method:: ~StepLoop.run
 
-   .. automethod:: ~StepLoop.setup
+   .. method:: ~StepLoop.setup
 
-   .. automethod:: ~StepLoop.start
+   .. method:: ~StepLoop.start
 
-   .. automethod:: ~StepLoop.stop
+   .. method:: ~StepLoop.stop
 
-   .. automethod:: ~StepLoop.teardown
+   .. method:: ~StepLoop.teardown
    
    
