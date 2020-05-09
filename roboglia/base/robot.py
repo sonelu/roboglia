@@ -51,15 +51,16 @@ class BaseRobot():
         self.__buses = {}
         logger.info(f'Initializing buses...')
         check_key('buses', init_dict, 'robot', '', logger)
-        for index, bus_info in enumerate(init_dict['buses']):
-            check_key('name', bus_info, 'bus', index, logger)
+        for bus_name, bus_info in init_dict['buses'].items():
+            # add the name in the dict
+            bus_info['name'] = bus_name
             # add the robot as the parent of the bus
             bus_info['robot'] = self
             check_key('class', bus_info, 'bus', bus_info['name'], logger)
             bus_class = get_registered_class(bus_info['class'])
             new_bus = bus_class(bus_info)
-            self.__buses[bus_info['name']] = new_bus
-            logger.debug(f'\tbus {bus_info["name"]} added')
+            self.__buses[bus_name] = new_bus
+            logger.debug(f'\tbus {bus_name} added')
 
     def __init_devices(self, init_dict):
         """Called by ``__init__`` to parse and instantiate devices."""

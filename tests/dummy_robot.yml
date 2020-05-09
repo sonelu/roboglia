@@ -2,11 +2,11 @@
 #
 dummy:
   buses:
-    - name: busA
+    busA:
       class: ShareableFileBus
       port: /tmp/busA.log
 
-    - name: busB
+    busB:
       class: ShareableFileBus
       port: /tmp/busB.log
       auto: False

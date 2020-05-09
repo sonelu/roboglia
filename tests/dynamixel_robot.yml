@@ -2,7 +2,7 @@
 #
 dynamixel:
   buses:
-    - name: ttys1
+    ttys1:
       class: MockDynamixelBus
       port: /dev/ttys1
       baudrate: 19200
