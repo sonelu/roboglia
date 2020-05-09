@@ -30,9 +30,9 @@
    {% block ext_methods %}
 
    {% if methods %}
-   .. automethod::
    {% for item in methods %}
-      ~{{ name }}.{{ item }}
+
+   .. automethod:: ~{{ name }}.{{ item }}
    {%- endfor %}
    {% endif %}
    {% endblock %}
