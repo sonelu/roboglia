@@ -10,7 +10,7 @@ dynamixel:
       auto: True
 
   devices:
-    - name: d11
+    d11:
       class: DynamixelDevice
       bus: ttys1
       id: 11

@@ -67,8 +67,9 @@ class BaseRobot():
         self.__devices = {}
         logger.info(f'Initializing devices...')
         check_key('devices', init_dict, 'robot', '', logger)
-        for index, dev_info in enumerate(init_dict['devices']):
-            check_key('name', dev_info, 'device', index, logger)
+        for dev_name, dev_info in init_dict['devices'].items():
+            # add the name in the dev_info
+            dev_info['name'] = dev_name
             check_key('bus', dev_info, 'device', dev_info['name'], logger)
             check_key(dev_info['bus'], self.buses,
                       'device', dev_info['name'],
@@ -79,8 +80,8 @@ class BaseRobot():
             dev_info['bus'] = dev_bus
             dev_class = get_registered_class(dev_info['class'])
             new_dev = dev_class(dev_info)
-            self.__devices[dev_info['name']] = new_dev
-            logger.debug(f'\tdevice {dev_info["name"]} added')
+            self.__devices[dev_name] = new_dev
+            logger.debug(f'\tdevice {dev_name} added')
 
     def __init_joints(self, init_dict):
         """Called by ``__init__`` to parse and instantiate joints."""

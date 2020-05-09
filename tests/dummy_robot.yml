@@ -12,13 +12,13 @@ dummy:
       auto: False
 
   devices:
-    - name: d01
+    d01:
       class: BaseDevice
       bus: busA
       id: 1
       model: DUMMY
 
-    - name: d02
+    d02:
       class: BaseDevice
       bus: busA
       id: 2
@@ -26,13 +26,13 @@ dummy:
       auto: False
 
       # this is not in syncs
-    - name: d03
+    d03:
       class: BaseDevice
       bus: busA
       id: 3
       model: DUMMY
 
-    - name: d04
+    d04:
       class: BaseDevice
       bus: busB
       id: 4
