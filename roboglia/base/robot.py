@@ -149,7 +149,7 @@ class BaseRobot():
             logger.debug(f'\tsync {sync_name} added')
 
     @property
-    def name (self):
+    def name(self):
         """(read-only) The name of the robot."""
         return self.__name
 
