@@ -6,8 +6,7 @@ roboglia.base.BaseThread
 .. autoclass:: BaseThread
 
    
-   .. automethod:: __init__
-
+   
    
    .. rubric:: Methods
 
@@ -35,5 +34,22 @@ roboglia.base.BaseThread
       ~BaseThread.running
       ~BaseThread.started
       ~BaseThread.stopped
+   
+   
+
+   
+
+   
+   .. rubric:: Methods in detail
+
+   
+   .. automethod:: __init__
+   .. automethod:: pause
+   .. automethod:: resume
+   .. automethod:: run
+   .. automethod:: setup
+   .. automethod:: start
+   .. automethod:: stop
+   .. automethod:: teardown
    
    

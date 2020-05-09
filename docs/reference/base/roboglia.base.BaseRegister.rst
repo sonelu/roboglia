@@ -6,8 +6,7 @@ roboglia.base.BaseRegister
 .. autoclass:: BaseRegister
 
    
-   .. automethod:: __init__
-
+   
    
    .. rubric:: Methods
 
@@ -28,5 +27,19 @@ roboglia.base.BaseRegister
    .. autosummary::
    
       ~BaseRegister.value
+   
+   
+
+   
+
+   
+   .. rubric:: Methods in detail
+
+   
+   .. automethod:: __init__
+   .. automethod:: read
+   .. automethod:: value_to_external
+   .. automethod:: value_to_internal
+   .. automethod:: write
    
    

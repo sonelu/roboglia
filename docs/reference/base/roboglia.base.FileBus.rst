@@ -6,8 +6,7 @@ roboglia.base.FileBus
 .. autoclass:: FileBus
 
    
-   .. automethod:: __init__
-
+   
    
    .. rubric:: Methods
 
@@ -32,5 +31,19 @@ roboglia.base.FileBus
       ~FileBus.name
       ~FileBus.port
       ~FileBus.robot
+   
+   
+
+   
+
+   
+   .. rubric:: Methods in detail
+
+   
+   .. automethod:: __init__
+   .. automethod:: close
+   .. automethod:: open
+   .. automethod:: read
+   .. automethod:: write
    
    

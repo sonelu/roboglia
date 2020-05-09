@@ -30,9 +30,10 @@
    {% block ext_methods %}
 
    {% if methods %}
-   {% for item in methods %}
+   .. rubric:: Methods in detail
 
-   .. method:: ~{{ name }}.{{ item }}
+   {% for item in methods %}
+   .. automethod:: {{ item }}
    {%- endfor %}
    {% endif %}
    {% endblock %}

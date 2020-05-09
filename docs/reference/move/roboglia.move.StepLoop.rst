@@ -41,24 +41,17 @@ roboglia.move.StepLoop
    
 
    
+   .. rubric:: Methods in detail
+
    
-
-   .. method:: ~StepLoop.__init__
-
-   .. method:: ~StepLoop.atomic
-
-   .. method:: ~StepLoop.pause
-
-   .. method:: ~StepLoop.resume
-
-   .. method:: ~StepLoop.run
-
-   .. method:: ~StepLoop.setup
-
-   .. method:: ~StepLoop.start
-
-   .. method:: ~StepLoop.stop
-
-   .. method:: ~StepLoop.teardown
+   .. automethod:: __init__
+   .. automethod:: atomic
+   .. automethod:: pause
+   .. automethod:: resume
+   .. automethod:: run
+   .. automethod:: setup
+   .. automethod:: start
+   .. automethod:: stop
+   .. automethod:: teardown
    
    

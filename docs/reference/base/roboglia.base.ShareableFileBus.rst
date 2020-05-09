@@ -6,8 +6,7 @@ roboglia.base.ShareableFileBus
 .. autoclass:: ShareableFileBus
 
    
-   .. automethod:: __init__
-
+   
    
    .. rubric:: Methods
 
@@ -36,5 +35,23 @@ roboglia.base.ShareableFileBus
       ~ShareableFileBus.name
       ~ShareableFileBus.port
       ~ShareableFileBus.robot
+   
+   
+
+   
+
+   
+   .. rubric:: Methods in detail
+
+   
+   .. automethod:: __init__
+   .. automethod:: can_use
+   .. automethod:: close
+   .. automethod:: naked_read
+   .. automethod:: naked_write
+   .. automethod:: open
+   .. automethod:: read
+   .. automethod:: stop_using
+   .. automethod:: write
    
    

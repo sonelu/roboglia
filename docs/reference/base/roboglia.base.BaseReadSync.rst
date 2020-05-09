@@ -6,8 +6,7 @@ roboglia.base.BaseReadSync
 .. autoclass:: BaseReadSync
 
    
-   .. automethod:: __init__
-
+   
    
    .. rubric:: Methods
 
@@ -46,5 +45,25 @@ roboglia.base.BaseReadSync
       ~BaseReadSync.started
       ~BaseReadSync.stopped
       ~BaseReadSync.warning
+   
+   
+
+   
+
+   
+   .. rubric:: Methods in detail
+
+   
+   .. automethod:: __init__
+   .. automethod:: atomic
+   .. automethod:: pause
+   .. automethod:: process_devices
+   .. automethod:: process_registers
+   .. automethod:: resume
+   .. automethod:: run
+   .. automethod:: setup
+   .. automethod:: start
+   .. automethod:: stop
+   .. automethod:: teardown
    
    

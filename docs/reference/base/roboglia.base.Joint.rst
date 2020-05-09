@@ -6,8 +6,7 @@ roboglia.base.Joint
 .. autoclass:: Joint
 
    
-   .. automethod:: __init__
-
+   
    
    .. rubric:: Methods
 
@@ -35,5 +34,15 @@ roboglia.base.Joint
       ~Joint.position_read_register
       ~Joint.position_write_register
       ~Joint.range
+   
+   
+
+   
+
+   
+   .. rubric:: Methods in detail
+
+   
+   .. automethod:: __init__
    
    

@@ -6,8 +6,7 @@ roboglia.dynamixel.DynamixelDevice
 .. autoclass:: DynamixelDevice
 
    
-   .. automethod:: __init__
-
+   
    
    .. rubric:: Methods
 
@@ -34,5 +33,21 @@ roboglia.dynamixel.DynamixelDevice
       ~DynamixelDevice.dev_id
       ~DynamixelDevice.name
       ~DynamixelDevice.registers
+   
+   
+
+   
+
+   
+   .. rubric:: Methods in detail
+
+   
+   .. automethod:: __init__
+   .. automethod:: close
+   .. automethod:: default_register
+   .. automethod:: get_model_path
+   .. automethod:: open
+   .. automethod:: read_register
+   .. automethod:: write_register
    
    
