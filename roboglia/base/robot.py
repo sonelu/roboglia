@@ -28,11 +28,15 @@ class BaseRobot():
     """
     def __init__(self, init_dict):
         logger.info('***** Initializing robot *************')
-        self.__init_buses(init_dict)
-        self.__init_devices(init_dict)
-        self.__init_joints(init_dict)
-        self.__init_groups(init_dict)
-        self.__init_syncs(init_dict)
+        if len(init_dict) > 1:
+            logger.warning(f'Only the first robot will be considered.')
+        self.__name = list(init_dict)[0]
+        components = init_dict[self.__name]
+        self.__init_buses(components)
+        self.__init_devices(components)
+        self.__init_joints(components)
+        self.__init_groups(components)
+        self.__init_syncs(components)
         logger.info('***** Initialization complete ********')
 
     @classmethod
@@ -143,28 +147,33 @@ class BaseRobot():
             logger.debug(f'\tsync {sync_info["name"]} added')
 
     @property
+    def name (self):
+        """(read-only) The name of the robot."""
+        return self.__name
+
+    @property
     def buses(self):
-        """(read-only) the buses of the robot as a dict."""
+        """(read-only) The buses of the robot as a dict."""
         return self.__buses
 
     @property
     def devices(self):
-        """(read-only) the devices of the robot as a dict."""
+        """(read-only) The devices of the robot as a dict."""
         return self.__devices
 
     @property
     def joints(self):
-        """(read-only) the joints of the robot as a dict."""
+        """(read-only) The joints of the robot as a dict."""
         return self.__joints
 
     @property
     def groups(self):
-        """(read-only) the groups of the robot as a dict."""
+        """(read-only) The groups of the robot as a dict."""
         return self.__groups
 
     @property
     def syncs(self):
-        """(read-ony) the syncs of the robot as a dict."""
+        """(read-only) The syncs of the robot as a dict."""
         return self.__syncs
 
     def start(self):

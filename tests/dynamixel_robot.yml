@@ -1,17 +1,18 @@
 # robot defintion file for running automated tests
 #
-buses:
-  - name: ttys1
-    class: MockDynamixelBus
-    port: /dev/ttys1
-    baudrate: 19200
-    protocol: 2.0
-    auto: True
+dynamixel:
+  buses:
+    - name: ttys1
+      class: MockDynamixelBus
+      port: /dev/ttys1
+      baudrate: 19200
+      protocol: 2.0
+      auto: True
 
-devices:
-  - name: d11
-    class: DynamixelDevice
-    bus: ttys1
-    id: 11
-    model: XL-320
-    auto: True
+  devices:
+    - name: d11
+      class: DynamixelDevice
+      bus: ttys1
+      id: 11
+      model: XL-320
+      auto: True
