@@ -50,7 +50,7 @@ class BaseRobot():
         """Called by ``__init__`` to parse and instantiate buses."""
         self.__buses = {}
         logger.info(f'Initializing buses...')
-        check_key('buses', init_dict, 'robot', '', logger)
+        check_key('buses', init_dict, 'robot', self.name, logger)
         for bus_name, bus_info in init_dict['buses'].items():
             # add the name in the dict
             bus_info['name'] = bus_name
@@ -87,8 +87,9 @@ class BaseRobot():
         """Called by ``__init__`` to parse and instantiate joints."""
         self.__joints = {}
         logger.info(f'Initializing joints...')
-        for index, joint_info in enumerate(init_dict.get('joints', [])):
-            check_key('name', joint_info, 'joint', index, logger)
+        for joint_name, joint_info in init_dict.get('joints', {}).items():
+            # add the name in the joint_info
+            joint_info['name'] = joint_name
             check_key('device', joint_info, 'joint',
                       joint_info['name'], logger)
             check_key(joint_info['device'], self.devices, 'joint',
@@ -101,8 +102,8 @@ class BaseRobot():
             joint_info['device'] = device
             joint_class = get_registered_class(joint_info['class'])
             new_joint = joint_class(joint_info)
-            self.__joints[joint_info['name']] = new_joint
-            logger.debug(f'\tjoint {joint_info["name"]} added')
+            self.__joints[joint_name] = new_joint
+            logger.debug(f'\tjoint {joint_name} added')
 
     def __init_groups(self, init_dict):
         """Called by ``__init__`` to parse and instantiate groups."""

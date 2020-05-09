@@ -39,7 +39,7 @@ dummy:
       model: DUMMY
 
   joints:
-    - name: pan
+    pan:
       class: JointPVL
       device: d01
       pos_read: current_pos
@@ -52,7 +52,7 @@ dummy:
       min: -30.0
       max: 30.0
 
-    - name: tilt
+    tilt:
       class: JointPVL
       device: d02
       pos_read: current_pos
