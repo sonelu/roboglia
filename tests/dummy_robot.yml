@@ -67,17 +67,17 @@ dummy:
       auto: False
 
   groups:
-    - name: devices
+    devices:
       devices: [d01, d02]
 
-    - name: joints
+    joints:
       joints: [pan, tilt]
 
-    - name: all
+    all:
       groups: [devices, joints]
 
   syncs:
-    - name: read
+    read:
       class: BaseReadSync
       frequency: 100.0
       group: devices
@@ -86,7 +86,7 @@ dummy:
       # to control the test and make sure that they are no side
       # effects on more simple checks
 
-    - name: write
+    write:
       class: BaseWriteSync
       frequency: 100.0
       group: devices
