@@ -2,17 +2,17 @@
 # should only use registers from base package
 #
 registers:
-  - name: model
+  model:
     address: 0
     size: 2
     default: 42
 
-  - name: revision
+  revision:
     address: 10
     max: 254
     default: 16
 
-  - name: delay
+  delay:
     class: RegisterWithConversion
     address: 20
     access: RW
@@ -20,7 +20,7 @@ registers:
     max: 254
     factor: 0.5
 
-  - name: desired_pos
+  desired_pos:
     class: RegisterWithConversion
     address: 30
     size: 2
@@ -29,7 +29,7 @@ registers:
     factor: 3.41
     offset: 512
 
-  - name: desired_speed
+  desired_speed:
     class: RegisterWithConversion
     address: 40
     size: 2
@@ -37,7 +37,7 @@ registers:
     max: 1023
     factor: 8.973684210526316
 
-  - name: desired_load
+  desired_load:
     class: RegisterWithConversion
     address: 50
     size: 2
@@ -45,12 +45,12 @@ registers:
     max: 1023
     factor: 10.24
 
-  - name: enable_device
+  enable_device:
     class: BoolRegister
     address: 60
     access: RW
 
-  - name: current_pos
+  current_pos:
     class: RegisterWithConversion
     address: 70
     size: 2
@@ -60,7 +60,7 @@ registers:
     offset: 512
     default: 512
 
-  - name: current_speed
+  current_speed:
     class: RegisterWithThreshold
     address: 80
     size: 2
@@ -70,7 +70,7 @@ registers:
     threshold: 1024
     default: 512
 
-  - name: current_load
+  current_load:
     class: RegisterWithThreshold
     address: 90
     size: 2
@@ -82,7 +82,7 @@ registers:
 
     # not really often in practice as RW
     # here for testing
-  - name: writtable_current_load
+  writtable_current_load:
     class: RegisterWithThreshold
     address: 95
     size: 2

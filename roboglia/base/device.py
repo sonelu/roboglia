@@ -65,9 +65,9 @@ class BaseDevice():
         with open(model_file, 'r') as f:
             model_ini = yaml.load(f, Loader=yaml.FullLoader)
         self.__registers = {}
-        for index, reg_info in enumerate(model_ini['registers']):
-            check_key('name', reg_info, self.__model + ' register',
-                      index, logger)
+        for reg_name, reg_info in model_ini['registers'].items():
+            # add name to the dictionary
+            reg_info['name'] = reg_name
             reg_class_name = reg_info.get('class', self.default_register())
             reg_class = get_registered_class(reg_class_name)
             reg_info['device'] = self
