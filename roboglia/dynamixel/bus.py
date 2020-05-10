@@ -375,6 +375,13 @@ class MockPacketHandler():
             data = [random.randint(0, 255), 0]
             return data, 0, 0
 
+    def ping(self, ph, dxl_id):
+
+        for device in self.__robot.devices.values():
+            if device.dev_id == dxl_id:
+                return device.model_number, 0, 0
+        return 0, -3001, 0
+
 
 class MockDynamixelBus(ShareableDynamixelBus):
 

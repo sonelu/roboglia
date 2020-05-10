@@ -399,3 +399,18 @@ class TestDynamixelRobot:
         time.sleep(0.5)
         robot.stop()
 
+    def test_dynamixel_scan(self, mock_robot_init):
+        robot = BaseRobot(mock_robot_init)
+        robot.start()
+        ids = robot.buses['ttys1'].scan()
+        assert 11 in ids
+        assert 12 in ids
+        robot.stop()
+
+    def test_dynamixel_ping(self, mock_robot_init):
+        robot = BaseRobot(mock_robot_init)
+        robot.start()
+        assert robot.buses['ttys1'].ping(11) == True
+        robot.stop()
+       
+
