@@ -62,10 +62,26 @@ class DynamixelBus(BaseBus):
         """The Dynamixel port handler for this bus."""
         return self.__port_handler
 
+    @port_handler.setter
+    def port_handler(self, ph):
+        if ph == 'MockBus' or ph is None:
+            self.__port_handler = ph
+        else:
+            raise ValueError('you can use the setter only with MockBus for '
+                             'testing purposes...')
+
     @property
     def packet_handler(self):
         """The Dynamixel packet handler for this bus."""
         return self.__packet_handler
+
+    @packet_handler.setter
+    def packet_handler(self, pkh):
+        if isinstance(pkh, MockPacketHandler) or pkh is None:
+            self.__packet_handler = pkh
+        else:
+            raise ValueError('you can use the setter only with '
+                             'MockPacketHandler for testing purpoises...')
 
     @property
     def protocol(self):
@@ -277,14 +293,18 @@ class ShareableDynamixelBus(DynamixelBus, ShareableBus):
 
 class MockPacketHandler():
 
-    def __init__(self, protocol, robot, err=0.25):
+    def __init__(self, protocol, robot, err=0.05):
         self.__robot = robot
         self.__err = err
         self.__protocol = protocol
-        self.__ph = dynamixel_sdk.PacketHandler(protocol)
+        self.__sync_data_length = None
+
+    def getProtocolVersion(self):
+        return self.__protocol
 
     def getTxRxResult(self, err):
-        return self.__ph.getTxRxResult(err)
+        ph = dynamixel_sdk.PacketHandler(self.__protocol)
+        return ph.getTxRxResult(err)
 
     def __common_writeTxRx(self, ph, dev_id, address, value):
         if random.random() < self.__err:
@@ -330,6 +350,31 @@ class MockPacketHandler():
     def read4ByteTxRx(self, ph, dev_id, address):
         return self.__common_readTxRx(ph, dev_id, address)
 
+    def syncWriteTxOnly(self, port, start_address, data_length,
+                        param, param_length):
+        """We return randomly an error or success."""
+        if random.random() < self.__err:
+            return -3001
+        else:
+            return 0
+
+    def syncReadTx(self, port, start_address, data_length, param,
+                   param_length):
+        """We return randomly an error or success."""
+        if random.random() < self.__err:
+            return -3001
+        else:
+            self.__sync_data_length = data_length
+            return 0
+
+    def readRx(self, port, dxl_id, length):
+        """Used by syncread"""
+        if random.random() < self.__err:
+            return -3001
+        else:
+            data = [random.randint(0, 255), 0]
+            return data, 0, 0
+
 
 class MockDynamixelBus(ShareableDynamixelBus):
 
@@ -340,14 +385,14 @@ class MockDynamixelBus(ShareableDynamixelBus):
         """Opens the actual physical bus. Must be overriden by the
         subclass.
         """
-        self._DynamixelBus__port_handler = 'just something'
+        self.port_handler = 'MockBus'
         # self.port_handler.openPort()
         # self.port_handler.setBaudRate(self.baudrate)
         # if self.__rs485:
         #     self.__port_handler.rs485_mode = rs485.RS485Settings()
         #     logger.info(f'bus {self.name} set in rs485 mode')
-        self._DynamixelBus__packet_handler = MockPacketHandler(self.protocol,
-                                                               self.robot)
+        self.packet_handler = MockPacketHandler(self.protocol,
+                                                self.robot)
         logger.info(f'bus {self.name} opened')
 
     def close(self):
@@ -355,6 +400,6 @@ class MockDynamixelBus(ShareableDynamixelBus):
         subclass.
         """
         if self.is_open:
-            self._DynamixelBus__packet_handler = None
-            self._DynamixelBus__port_handler = None
+            self.packet_handler = None
+            self.port_handler = None
             logger.info(f'bus {self.name} closed')

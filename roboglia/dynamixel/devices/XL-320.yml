@@ -101,7 +101,7 @@ registers:
     factor: 10.0
     default: 90
 
-  -max_torque:
+  max_torque:
     class: RegisterWithConversion
     address: 15
     size: 2

@@ -384,3 +384,18 @@ class TestDynamixelRobot:
         dev.present_position_deg.sync = True
         dev.open()
         robot.stop()
+
+    def test_dynamixel_writesync(self, mock_robot_init):
+        robot = BaseRobot(mock_robot_init)
+        robot.start()
+        robot.syncs['goal'].start()
+        time.sleep(0.5)
+        robot.stop()
+
+    def test_dynamixel_readsync(self, mock_robot_init):
+        robot = BaseRobot(mock_robot_init)
+        robot.start()
+        robot.syncs['actual'].start()
+        time.sleep(0.5)
+        robot.stop()
+
