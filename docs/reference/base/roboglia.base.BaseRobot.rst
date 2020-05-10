@@ -6,8 +6,7 @@ roboglia.base.BaseRobot
 .. autoclass:: BaseRobot
 
    
-   .. automethod:: __init__
-
+   
    
    .. rubric:: Methods
 
@@ -31,5 +30,18 @@ roboglia.base.BaseRobot
       ~BaseRobot.groups
       ~BaseRobot.joints
       ~BaseRobot.syncs
+   
+   
+
+   
+
+   
+   .. rubric:: Methods in detail
+
+   
+   .. automethod:: __init__
+   .. automethod:: from_yaml
+   .. automethod:: start
+   .. automethod:: stop
    
    

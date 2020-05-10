@@ -6,8 +6,7 @@ roboglia.dynamixel.MockDynamixelBus
 .. autoclass:: MockDynamixelBus
 
    
-   .. automethod:: __init__
-
+   
    
    .. rubric:: Methods
 
@@ -42,5 +41,25 @@ roboglia.dynamixel.MockDynamixelBus
       ~MockDynamixelBus.port_handler
       ~MockDynamixelBus.protocol
       ~MockDynamixelBus.robot
+   
+   
+
+   
+
+   
+   .. rubric:: Methods in detail
+
+   
+   .. automethod:: __init__
+   .. automethod:: can_use
+   .. automethod:: close
+   .. automethod:: naked_read
+   .. automethod:: naked_write
+   .. automethod:: open
+   .. automethod:: ping
+   .. automethod:: read
+   .. automethod:: scan
+   .. automethod:: stop_using
+   .. automethod:: write
    
    

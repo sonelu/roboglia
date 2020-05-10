@@ -4,15 +4,19 @@
 
 .. automodule:: roboglia.base
 
-Classes in ``roboglia`` can be categorized in two groups in relation to their position to the main robot class:
+Classes in ``roboglia`` can be categorized in two groups in relation to their
+position to the main robot class:
 
-* **Downstream** classes: are classes that are located between the robot class and the physical devices.
+* **Downstream** classes: are classes that are located between the robot class 
+  and the physical devices.
 
-* **Upstream** classes are classes that expose the robot capabilities in a uniform way like 'joints', 'sensors', 'moves', etc.
+* **Upstream** classes are classes that expose the robot capabilities in a 
+  uniform way like 'joints', 'sensors', 'moves', etc.
    
 **Downstream**
 
-The following classes from ``base`` module are provided for representing various structural elements of a robot.
+The following classes from ``base`` module are provided for representing
+various structural elements of a robot.
 
 *Buses*
 

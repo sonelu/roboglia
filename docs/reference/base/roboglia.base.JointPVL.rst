@@ -6,8 +6,7 @@ roboglia.base.JointPVL
 .. autoclass:: JointPVL
 
    
-   .. automethod:: __init__
-
+   
    
    .. rubric:: Methods
 
@@ -43,5 +42,15 @@ roboglia.base.JointPVL
       ~JointPVL.velocity
       ~JointPVL.velocity_read_register
       ~JointPVL.velocity_write_register
+   
+   
+
+   
+
+   
+   .. rubric:: Methods in detail
+
+   
+   .. automethod:: __init__
    
    

@@ -6,8 +6,7 @@ roboglia.dynamixel.DynamixelSyncReadLoop
 .. autoclass:: DynamixelSyncReadLoop
 
    
-   .. automethod:: __init__
-
+   
    
    .. rubric:: Methods
 
@@ -48,5 +47,25 @@ roboglia.dynamixel.DynamixelSyncReadLoop
       ~DynamixelSyncReadLoop.started
       ~DynamixelSyncReadLoop.stopped
       ~DynamixelSyncReadLoop.warning
+   
+   
+
+   
+
+   
+   .. rubric:: Methods in detail
+
+   
+   .. automethod:: __init__
+   .. automethod:: atomic
+   .. automethod:: pause
+   .. automethod:: process_devices
+   .. automethod:: process_registers
+   .. automethod:: resume
+   .. automethod:: run
+   .. automethod:: setup
+   .. automethod:: start
+   .. automethod:: stop
+   .. automethod:: teardown
    
    

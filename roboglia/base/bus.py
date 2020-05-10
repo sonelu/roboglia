@@ -115,10 +115,10 @@ class FileBus(BaseBus):
 
     Args:
         init_dict (dict): the initialization dictionary. Same parameters
-            required as for :py:class:BaseBus.
+            required as for :py:class:`BaseBus`.
 
     Raises:
-        same as :py:class:BaseBus
+        same as :py:class:`BaseBus`.
     """
     def __init__(self, init_dict):
         super().__init__(init_dict)
@@ -175,7 +175,7 @@ class FileBus(BaseBus):
             logger.debug(f'FileBus {self.name} {text}')
 
     def read(self, dev, reg):
-        """Reads the value from the buffer of FileBus and logs it.
+        """Reads the value from the buffer of ``FileBus`` and logs it.
 
         Args:
             dev (obj): the device being read

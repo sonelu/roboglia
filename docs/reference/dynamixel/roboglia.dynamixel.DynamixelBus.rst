@@ -6,8 +6,7 @@ roboglia.dynamixel.DynamixelBus
 .. autoclass:: DynamixelBus
 
    
-   .. automethod:: __init__
-
+   
    
    .. rubric:: Methods
 
@@ -38,5 +37,21 @@ roboglia.dynamixel.DynamixelBus
       ~DynamixelBus.port_handler
       ~DynamixelBus.protocol
       ~DynamixelBus.robot
+   
+   
+
+   
+
+   
+   .. rubric:: Methods in detail
+
+   
+   .. automethod:: __init__
+   .. automethod:: close
+   .. automethod:: open
+   .. automethod:: ping
+   .. automethod:: read
+   .. automethod:: scan
+   .. automethod:: write
    
    

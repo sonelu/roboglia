@@ -6,8 +6,7 @@ roboglia.base.BaseBus
 .. autoclass:: BaseBus
 
    
-   .. automethod:: __init__
-
+   
    
    .. rubric:: Methods
 
@@ -32,5 +31,19 @@ roboglia.base.BaseBus
       ~BaseBus.name
       ~BaseBus.port
       ~BaseBus.robot
+   
+   
+
+   
+
+   
+   .. rubric:: Methods in detail
+
+   
+   .. automethod:: __init__
+   .. automethod:: close
+   .. automethod:: open
+   .. automethod:: read
+   .. automethod:: write
    
    

@@ -6,8 +6,7 @@ roboglia.base.BaseLoop
 .. autoclass:: BaseLoop
 
    
-   .. automethod:: __init__
-
+   
    
    .. rubric:: Methods
 
@@ -40,5 +39,23 @@ roboglia.base.BaseLoop
       ~BaseLoop.started
       ~BaseLoop.stopped
       ~BaseLoop.warning
+   
+   
+
+   
+
+   
+   .. rubric:: Methods in detail
+
+   
+   .. automethod:: __init__
+   .. automethod:: atomic
+   .. automethod:: pause
+   .. automethod:: resume
+   .. automethod:: run
+   .. automethod:: setup
+   .. automethod:: start
+   .. automethod:: stop
+   .. automethod:: teardown
    
    
