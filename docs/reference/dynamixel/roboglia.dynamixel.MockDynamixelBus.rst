@@ -15,7 +15,6 @@ roboglia.dynamixel.MockDynamixelBus
       ~MockDynamixelBus.__init__
       ~MockDynamixelBus.can_use
       ~MockDynamixelBus.close
-      ~MockDynamixelBus.from_dict
       ~MockDynamixelBus.naked_read
       ~MockDynamixelBus.naked_write
       ~MockDynamixelBus.open
@@ -54,7 +53,6 @@ roboglia.dynamixel.MockDynamixelBus
    .. automethod:: __init__
    .. automethod:: can_use
    .. automethod:: close
-   .. automethod:: from_dict
    .. automethod:: naked_read
    .. automethod:: naked_write
    .. automethod:: open

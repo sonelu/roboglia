@@ -6,6 +6,5 @@ API Reference
 
    base
    dynamixel
-   i2c
    move
    utils

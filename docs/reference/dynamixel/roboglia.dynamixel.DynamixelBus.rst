@@ -14,7 +14,6 @@ roboglia.dynamixel.DynamixelBus
    
       ~DynamixelBus.__init__
       ~DynamixelBus.close
-      ~DynamixelBus.from_dict
       ~DynamixelBus.open
       ~DynamixelBus.ping
       ~DynamixelBus.read
@@ -49,7 +48,6 @@ roboglia.dynamixel.DynamixelBus
    
    .. automethod:: __init__
    .. automethod:: close
-   .. automethod:: from_dict
    .. automethod:: open
    .. automethod:: ping
    .. automethod:: read
