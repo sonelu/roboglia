@@ -1,4 +1,4 @@
-# robot definition file for running automated tests
+# robot defintion file for running automated tests
 #
 dynamixel:
   buses:

@@ -231,7 +231,7 @@ class TestMockRobot:
             assert str(register.address) in str_repr
             assert str(register.int_value) in str_repr
 
-    def test_bus_acquire(self, mock_robot, caplog):
+    def test_bus_aquire(self, mock_robot, caplog):
         dev = mock_robot.devices['d01']
         bus = mock_robot.buses['busA']
         # stop syncs to avoid interference (additional messages)
@@ -242,12 +242,12 @@ class TestMockRobot:
         caplog.clear()
         bus.read(dev, dev.current_pos)
         assert len(caplog.records) == 1
-        assert 'failed to acquire bus busA' in caplog.text
+        assert 'failed to aquire bus busA' in caplog.text
         # write
         caplog.clear()
         bus.write(dev, dev.current_pos, 10)
         assert len(caplog.records) == 1
-        assert 'failed to acquire bus busA' in caplog.text
+        assert 'failed to aquire bus busA' in caplog.text
         # release bus
         bus.stop_using()
         mock_robot.stop()
