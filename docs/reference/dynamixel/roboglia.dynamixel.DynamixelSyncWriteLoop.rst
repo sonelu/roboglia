@@ -32,7 +32,6 @@ roboglia.dynamixel.DynamixelSyncWriteLoop
 
    .. autosummary::
    
-      ~DynamixelSyncWriteLoop.all_length
       ~DynamixelSyncWriteLoop.auto_start
       ~DynamixelSyncWriteLoop.bus
       ~DynamixelSyncWriteLoop.devices
@@ -43,7 +42,6 @@ roboglia.dynamixel.DynamixelSyncWriteLoop
       ~DynamixelSyncWriteLoop.registers
       ~DynamixelSyncWriteLoop.review
       ~DynamixelSyncWriteLoop.running
-      ~DynamixelSyncWriteLoop.start_address
       ~DynamixelSyncWriteLoop.started
       ~DynamixelSyncWriteLoop.stopped
       ~DynamixelSyncWriteLoop.warning
