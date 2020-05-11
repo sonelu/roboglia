@@ -273,7 +273,7 @@ class TestUtilsFactory:
         unregister_class('Test')
         assert 'Test' not in registered_classes()
 
-    def test_get_registered_class_not_avaialable(self):
+    def test_get_registered_class_not_available(self):
         mess = 'not registered with the factory'
         with pytest.raises(KeyError) as excinfo:
             get_registered_class('dummy')
@@ -516,7 +516,7 @@ class TestDynamixelRobot:
         robot.stop()
 
 
-    def test_dynamixel_bus_aquire(self, mock_robot_init, caplog):
+    def test_dynamixel_bus_acquire(self, mock_robot_init, caplog):
         robot = BaseRobot(mock_robot_init)
         robot.start()
         dev = robot.devices['d11']
@@ -526,12 +526,12 @@ class TestDynamixelRobot:
         caplog.clear()
         bus.read(dev, dev.return_delay_time)
         assert len(caplog.records) == 1
-        assert 'failed to aquire bus ttys1' in caplog.text
+        assert 'failed to acquire bus ttys1' in caplog.text
         # write
         caplog.clear()
         bus.write(dev, dev.return_delay_time, 10)
         assert len(caplog.records) == 1
-        assert 'failed to aquire bus ttys1' in caplog.text
+        assert 'failed to acquire bus ttys1' in caplog.text
         # release bus
         bus.stop_using()
         robot.stop()
