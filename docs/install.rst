@@ -90,10 +90,10 @@ If you plan to use I2C devices in your robot, then you need to install
 
     pip install roboglia[i2c]
 
+.. warning:: Not all platforms have support for smbus2.
+
 For more details about the package and up to date information and installation 
 instructions visit the `smbus2 Github`_ page.
-
-.. warning:: Not all platforms have support for smbus2.
 
 If you plan to use SPI devices in your robot, then you need to install 
 ``spidev``::
@@ -118,7 +118,7 @@ To simplify things, if you need all communication packages, there is an option
 ``all`` that will install all the **extra** dependencies::
 
     pip install roboglia[all]
-
+    
 .. note:: This option will be kept in line with future developments and, if 
     new hardware dependencies will be added, will be updated to include them. 
     So you can be assured that this installation option will install all extra 
