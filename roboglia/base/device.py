@@ -26,7 +26,7 @@ class BaseDevice():
     """A base virtual class for all devices.
 
     A BaseDevice is a surrogate representation of an actual device,
-    characterised by a number of internal registers that can be read or
+    characterized by a number of internal registers that can be read or
     written to by the means of a coomunication bus.
     Any device is based on a `model` that identifies the `.device` file
     describing the structure of the device (the registers).
@@ -34,7 +34,7 @@ class BaseDevice():
     Args:
         init_dict (dict): The dictionary used to initialize the joint.
 
-    The following keys are exepcted in the dictionary:
+    The following keys are expected in the dictionary:
 
     - ``name``: the name of the joint
     - ``bus``: the bus object where the device is attached to
@@ -126,7 +126,7 @@ class BaseDevice():
 
     def default_register(self):
         """Default register for the device in case is not explicitly
-        provided in the device defition file.
+        provided in the device definition file.
         Subclasses of `BaseDevice` can overide the method to derive their
         own class.
         """
