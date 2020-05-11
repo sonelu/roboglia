@@ -18,6 +18,7 @@ roboglia.base.BaseDevice
       ~BaseDevice.get_model_path
       ~BaseDevice.open
       ~BaseDevice.read_register
+      ~BaseDevice.register_by_address
       ~BaseDevice.write_register
    
    
@@ -48,6 +49,7 @@ roboglia.base.BaseDevice
    .. automethod:: get_model_path
    .. automethod:: open
    .. automethod:: read_register
+   .. automethod:: register_by_address
    .. automethod:: write_register
    
    

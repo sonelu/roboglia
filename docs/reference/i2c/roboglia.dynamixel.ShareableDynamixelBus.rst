@@ -15,7 +15,6 @@ roboglia.dynamixel.ShareableDynamixelBus
       ~ShareableDynamixelBus.__init__
       ~ShareableDynamixelBus.can_use
       ~ShareableDynamixelBus.close
-      ~ShareableDynamixelBus.from_dict
       ~ShareableDynamixelBus.naked_read
       ~ShareableDynamixelBus.naked_write
       ~ShareableDynamixelBus.open
@@ -54,7 +53,6 @@ roboglia.dynamixel.ShareableDynamixelBus
    .. automethod:: __init__
    .. automethod:: can_use
    .. automethod:: close
-   .. automethod:: from_dict
    .. automethod:: naked_read
    .. automethod:: naked_write
    .. automethod:: open

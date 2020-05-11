@@ -4,7 +4,7 @@
 
 .. automodule:: roboglia.dynamixel
 
-This module contains classes that are specific for interation with dynamixel
+This module contains classes that are specific for interaction with I2C
 devices.
 
 *Buses*
