@@ -251,14 +251,14 @@ class ShareableDynamixelBus(DynamixelBus, ShareableBus):
 
     def write(self, dev, reg, value):
         """Write to file in a sharead environment.
-        If the method fails to aquire the lock it will log as an error
+        If the method fails to acquire the lock it will log as an error
         but will not raise an Exception.
         """
         if self.can_use():
             super().write(dev, reg, value)
             self.stop_using()
         else:
-            logger.error(f'failed to aquire bus {self.name}')
+            logger.error(f'failed to acquire bus {self.name}')
 
     def naked_write(self, dev, reg, value):
         """Provided for efficient sequence write.
@@ -268,12 +268,12 @@ class ShareableDynamixelBus(DynamixelBus, ShareableBus):
 
     def read(self, dev, reg):
         """Read from file in a sharead environment.
-        If the method fails to aquire the lock it will log as an error
+        If the method fails to acquire the lock it will log as an error
         but will not raise an Exception. Will return None in this case.
 
         Returns:
             (int) the value from file or None is failing to read or
-            aquire the lock.
+            acquire the lock.
 
         """
         if self.can_use():
@@ -281,7 +281,7 @@ class ShareableDynamixelBus(DynamixelBus, ShareableBus):
             self.stop_using()
             return value
         else:
-            logger.error(f'failed to aquire bus {self.name}')
+            logger.error(f'failed to acquire bus {self.name}')
             return None
 
     def naked_read(self, dev, reg):
