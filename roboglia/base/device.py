@@ -88,6 +88,12 @@ class BaseDevice():
         """Device registers as dict."""
         return self.__registers
 
+    def register_by_address(self, address):
+        for register in self.registers.values():
+            if register.address == address:
+                return register
+        return None
+
     @property
     def dev_id(self):
         """The device number"""

@@ -38,24 +38,28 @@ class DynamixelDevice(BaseDevice):
         # return os.path.join(os.path.dirname(__file__), 'devices')
         return Path(__file__).parent / 'devices/'
 
-    def register_low_endian(self, register):
-        """Given the register's ``int_value`` produces a list of bytes
-        in little endian format as required by the SyncWrite and BulkWrite.
+    def register_low_endian(self, value, size):
+        """Converts a value into a list of bytes in little endian order.
+
+        Args:
+            value (int): the value of the register
+            size (int): the size of the register
+
+        Returns:
+            (list) List of bytes of len ``size`` with bytes ordered lowest
+                first.
         """
-        v = register.int_value
-        if register.size == 1:
-            return [v]
-        elif register.size == 2:
-            return [DXL_LOBYTE(v), DXL_HIBYTE(v)]
-        elif register.size == 4:
-            lw = DXL_LOWORD(v)
-            hw = DXL_HIWORD(v)
+        if size == 1:
+            return [value]
+        elif size == 2:
+            return [DXL_LOBYTE(value), DXL_HIBYTE(value)]
+        elif size == 4:
+            lw = DXL_LOWORD(value)
+            hw = DXL_HIWORD(value)
             return [DXL_LOBYTE(lw), DXL_HIBYTE(lw),
                     DXL_LOBYTE(hw), DXL_HIBYTE(hw)]
         else:
-            logger.error(f'Unexpected register size: {register.size} for '
-                         f'register {register.name} of device '
-                         f'{register.device.name}')
+            logger.error(f'Unexpected register size: {size}')
             return None
 
     def open(self):

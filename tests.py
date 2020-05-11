@@ -231,6 +231,26 @@ class TestMockRobot:
             assert str(register.address) in str_repr
             assert str(register.int_value) in str_repr
 
+    def test_bus_aquire(self, mock_robot, caplog):
+        dev = mock_robot.devices['d01']
+        bus = mock_robot.buses['busA']
+        # stop syncs to avoid interference (additional messages)
+        for sync in mock_robot.syncs.values():
+            sync.stop()
+        bus.can_use()      # lock the bus
+        # read
+        caplog.clear()
+        bus.read(dev, dev.current_pos)
+        assert len(caplog.records) == 1
+        assert 'failed to aquire bus busA' in caplog.text
+        # write
+        caplog.clear()
+        bus.write(dev, dev.current_pos, 10)
+        assert len(caplog.records) == 1
+        assert 'failed to aquire bus busA' in caplog.text
+        # release bus
+        bus.stop_using()
+        mock_robot.stop()
 
 class TestUtilsFactory:
 
@@ -325,8 +345,11 @@ class TestDynamixelRobot:
         robot = BaseRobot(mock_robot_init)
         robot.start()
         dev = robot.devices['d11']
-        dev.temperature_limit.value = 85
-        assert dev.temperature_limit.value == 85
+        for _ in range(100):           # so that we also hit some comm errors
+            dev.temperature_limit.value = 85
+            assert dev.temperature_limit.value == 85
+            dev.cw_angle_limit_deg.value = 10
+            assert (dev.cw_angle_limit_deg.value - 10) < 0.2
         robot.stop()
 
     def test_dynamixel__AXBaudRateRegister(self, dummy_device, caplog):
@@ -385,19 +408,51 @@ class TestDynamixelRobot:
         dev.open()
         robot.stop()
 
-    def test_dynamixel_writesync(self, mock_robot_init):
+    def test_dynamixel_syncwrite(self, mock_robot_init):
         robot = BaseRobot(mock_robot_init)
         robot.start()
-        robot.syncs['goal'].start()
-        time.sleep(0.5)
+        robot.syncs['syncwrite'].start()
+        time.sleep(1)
         robot.stop()
 
-    def test_dynamixel_readsync(self, mock_robot_init):
+    def test_dynamixel_syncread(self, mock_robot_init):
         robot = BaseRobot(mock_robot_init)
         robot.start()
-        robot.syncs['actual'].start()
-        time.sleep(0.5)
+        robot.syncs['syncread'].start()
+        time.sleep(1)
         robot.stop()
+
+    def test_dynamixel_bulkwrite(self, mock_robot_init):
+        robot = BaseRobot(mock_robot_init)
+        robot.start()
+        robot.syncs['bulkwrite'].start()
+        time.sleep(1)
+        robot.stop()
+
+    def test_dynamixel_bulkread(self, mock_robot_init):
+        robot = BaseRobot(mock_robot_init)
+        robot.start()
+        robot.syncs['bulkread'].start()
+        time.sleep(1)
+        robot.stop()
+
+    def test_protocol1_syncread(self, mock_robot_init):
+        mock_robot_init['dynamixel']['buses']['ttys1']['protocol'] = 1.0
+        # we remove the bulkwrite so that the error will refer to syncread
+        del mock_robot_init['dynamixel']['syncs']['bulkwrite']
+        with pytest.raises(ValueError) as excinfo:
+            _ = BaseRobot(mock_robot_init)
+        assert 'SyncRead only supported for Dynamixel Protocol 2.0' \
+            in str(excinfo.value)
+
+    def test_protocol1_bulkwrite(self, mock_robot_init):
+        mock_robot_init['dynamixel']['buses']['ttys1']['protocol'] = 1.0
+        # we remove the bulkwrite so that the error will refer to syncread
+        del mock_robot_init['dynamixel']['syncs']['syncread']
+        with pytest.raises(ValueError) as excinfo:
+            _ = BaseRobot(mock_robot_init)
+        assert 'BulkWrite only supported for Dynamixel Protocol 2.0' \
+            in str(excinfo.value)
 
     def test_dynamixel_scan(self, mock_robot_init):
         robot = BaseRobot(mock_robot_init)
@@ -412,5 +467,71 @@ class TestDynamixelRobot:
         robot.start()
         assert robot.buses['ttys1'].ping(11) == True
         robot.stop()
-       
 
+    def test_dynamixel_bus_set_port_handler(self, mock_robot_init):
+        robot = BaseRobot(mock_robot_init)
+        mess = 'you can use the setter only with MockBus'
+        with pytest.raises(ValueError) as excinfo:
+            robot.buses['ttys1'].port_handler = 'dummy'
+        assert mess in str(excinfo.value)
+        robot.stop()
+    
+    def test_dynamixel_bus_set_packet_handler(self, mock_robot_init):
+        robot = BaseRobot(mock_robot_init)
+        mess = 'you can use the setter only with MockPacketHandler'
+        with pytest.raises(ValueError) as excinfo:
+            robot.buses['ttys1'].packet_handler = 'dummy'
+        assert mess in str(excinfo.value)
+        robot.stop()
+
+    def test_dynamixel_bus_baudrate(self, mock_robot_init):
+        robot = BaseRobot(mock_robot_init)
+        assert robot.buses['ttys1'].baudrate == 19200
+        robot.stop()
+
+    def test_dynamixel_bus_closed(self, mock_robot_init, caplog):
+        robot = BaseRobot(mock_robot_init)
+        bus = robot.buses['ttys1']
+        # ping
+        caplog.clear()
+        bus.ping(11)
+        assert len(caplog.records) == 1
+        assert 'ping invoked with a bus not opened' in caplog.text
+        # scan
+        caplog.clear()
+        bus.scan(range(10))
+        assert len(caplog.records) == 1
+        assert 'scan invoked with a bus not opened' in caplog.text
+        # read
+        dev = robot.devices['d11']
+        caplog.clear()
+        bus.read(dev, dev.return_delay_time)
+        assert len(caplog.records) == 1
+        assert 'attempt to use closed bus ttys1' in caplog.text
+        # write
+        caplog.clear()
+        bus.write(dev, dev.return_delay_time, 10)
+        assert len(caplog.records) == 1
+        assert 'attempt to use closed bus ttys1' in caplog.text
+        robot.stop()
+
+
+    def test_dynamixel_bus_aquire(self, mock_robot_init, caplog):
+        robot = BaseRobot(mock_robot_init)
+        robot.start()
+        dev = robot.devices['d11']
+        bus = robot.buses['ttys1']
+        bus.can_use()      # lock the bus
+        # read
+        caplog.clear()
+        bus.read(dev, dev.return_delay_time)
+        assert len(caplog.records) == 1
+        assert 'failed to aquire bus ttys1' in caplog.text
+        # write
+        caplog.clear()
+        bus.write(dev, dev.return_delay_time, 10)
+        assert len(caplog.records) == 1
+        assert 'failed to aquire bus ttys1' in caplog.text
+        # release bus
+        bus.stop_using()
+        robot.stop()

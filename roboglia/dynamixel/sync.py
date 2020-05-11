@@ -58,7 +58,8 @@ class DynamixelSyncWriteLoop(BaseSync):
                 register = getattr(device, reg_name)
                 result = sync_write.addParam(
                     device.dev_id,
-                    device.register_low_endian(register))
+                    device.register_low_endian(register.int_value,
+                                               register.size))
                 if not result:
                     logger.error(f'failed to setup SyncWrite for loop '
                                  f'{self.name} for device {device.name}')
@@ -171,8 +172,9 @@ class DynamixelBulkWriteLoop(BaseSync):
         that is produced by :py:class:`BaseThread` class.
         """
         self.gbws = []
-        self.gbws.append(
-            GroupBulkWrite(self.bus.port_handler, self.bus.packet_handler))
+        for _ in self.registers:
+            self.gbws.append(GroupBulkWrite(self.bus.port_handler,
+                                            self.bus.packet_handler))
 
     def atomic(self):
         """Executes a SyncWrite."""
@@ -181,10 +183,12 @@ class DynamixelBulkWriteLoop(BaseSync):
             # prepares the call
             for device in self.devices:
                 # prepare the buffer data
-                register = getattr(self.devices, reg_name)
+                register = getattr(device, reg_name)
+                data = device.register_low_endian(register.int_value,
+                                                  register.size)
                 result = gbw.addParam(device.dev_id, register.address,
                                       register.size,
-                                      device.register_low_endian(register))
+                                      data)
                 if not result:
                     logger.error(f'failed to setup BulkWrite for loop '
                                  f'{self.name} for device {device.name}')
@@ -243,21 +247,18 @@ class DynamixelBulkReadLoop(BaseSync):
                 result = gbr.txRxPacket()
                 self.bus.stop_using()       # !! as soon as possible
                 if result != 0:
-                    error = self.bus.packetHandler.getTxRxResult(result)
+                    error =gbr.ph.getTxRxResult(result)
                     logger.error(f'BulkRead {self.name}, cerr={error}')
                 else:
                     # retrieve data
                     for device in self.devices:
                         register = getattr(device, reg_name)
-                        result = gbr.isAvailable(
-                            device.dev_id, register.address, register.size)
-                        if result != 0:
-                            ph = self.bus.packet_handler
-                            error = ph.getTxRxResult(result)
-                            logger.error(f'failed to retreive data in '
+                        if not gbr.isAvailable(
+                            device.dev_id, register.address, register.size):
+                            logger.error(f'failed to retrieve data in '
                                          f'BulkRead {self.name} for '
                                          f'device {device.name} and register '
-                                         f'{register.name}; cerr={error}')
+                                         f'{register.name}')
                         else:
                             register.int_value = gbr.getData(device.dev_id,
                                                              register.address,

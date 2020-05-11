@@ -333,7 +333,7 @@ class ShareableFileBus(FileBus, ShareableBus):
             self.stop_using()
             return value
         else:
-            logger.error(f'failed to aquire buss {self.name}')
+            logger.error(f'failed to aquire bus {self.name}')
             return None
 
     def naked_read(self, dev, reg):

@@ -281,7 +281,7 @@ class ShareableDynamixelBus(DynamixelBus, ShareableBus):
             self.stop_using()
             return value
         else:
-            logger.error(f'failed to aquire buss {self.name}')
+            logger.error(f'failed to aquire bus {self.name}')
             return None
 
     def naked_read(self, dev, reg):
@@ -293,7 +293,7 @@ class ShareableDynamixelBus(DynamixelBus, ShareableBus):
 
 class MockPacketHandler():
 
-    def __init__(self, protocol, robot, err=0.05):
+    def __init__(self, protocol, robot, err=0.1):
         self.__robot = robot
         self.__err = err
         self.__protocol = protocol
@@ -306,6 +306,10 @@ class MockPacketHandler():
         ph = dynamixel_sdk.PacketHandler(self.__protocol)
         return ph.getTxRxResult(err)
 
+    def getRxPacketError(self, err):
+        ph = dynamixel_sdk.PacketHandler(self.__protocol)
+        return ph.getRxPacketError(err)
+
     def __common_writeTxRx(self, ph, dev_id, address, value):
         if random.random() < self.__err:
             return -3001, 0
@@ -317,7 +321,10 @@ class MockPacketHandler():
                 if reg.address == address:
                     break
             reg.int_value = value
-            return 0, 0
+            if random.random() < self.__err:
+                return 0, 4         # overheat
+            else:
+                return 0, 0
 
     def write1ByteTxRx(self, ph, dev_id, address, value):
         return self.__common_writeTxRx(ph, dev_id, address, value)
@@ -338,8 +345,10 @@ class MockPacketHandler():
             for reg in dev.registers.values():
                 if reg.address == address:
                     break
-
-            return reg.int_value, 0, 0
+            if random.random() < self.__err:
+                return reg.int_value, 0, 4      # overheat
+            else:
+                return reg.int_value, 0, 0
 
     def read1ByteTxRx(self, ph, dev_id, address):
         return self.__common_readTxRx(ph, dev_id, address)
@@ -365,15 +374,57 @@ class MockPacketHandler():
             return -3001
         else:
             self.__sync_data_length = data_length
+            self.__param = param
+            self.__start_address = start_address
+            self.__index = 0
+            self.__mode = 'sync'
             return 0
 
     def readRx(self, port, dxl_id, length):
-        """Used by syncread"""
+        """Used by SyncRead and BulkRead"""
+        if random.random() < self.__err:
+            return 0, -3001, 0
+
+        # we're not going to check the device and register as we
+        # expect both to be avaialable since we checked them when
+        # we setup the sync
+        else:
+            if self.__mode == 'sync':
+                device = self.__robot.device_by_id(self.__param[self.__index])
+                register = device.register_by_address(self.__start_address)
+
+            elif self.__mode == 'bulk':
+                idx = self.__index * 5
+                dev_id = self.__param[idx]
+                device = self.__robot.device_by_id(dev_id)
+                assert dev_id == dxl_id
+                address = self.__param[idx + 1] + self.__param[idx +2] * 256
+                register = device.register_by_address(address)
+                assert register.size == length
+
+            value = register.int_value + random.randint(-10, 10)
+            value = max(register.min, min(register.max, value))
+            self.__index += 1
+            return device.register_low_endian(value, register.size), 0, 0
+
+    def bulkWriteTxOnly(self, port, param, param_length):
+        """We return randomly an error or success."""
         if random.random() < self.__err:
             return -3001
         else:
-            data = [random.randint(0, 255), 0]
-            return data, 0, 0
+            return 0
+
+    def bulkReadTx(self, port, param, param_length):
+        """We return randomly an error or success."""
+        if random.random() < self.__err:
+            return -3001
+        else:
+            # self.__sync_data_length = data_length
+            self.__param = param
+            # self.__start_address = start_address
+            self.__index = 0
+            self.__mode = 'bulk'
+            return 0
 
     def ping(self, ph, dxl_id):
 
