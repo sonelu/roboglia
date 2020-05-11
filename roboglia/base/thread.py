@@ -27,20 +27,16 @@ class BaseThread():
     in a separate thread with the ability to pause / resume or fully stop
     the task.
 
-    The main processing should be implemented in the :py:meth:`~run` method
-    where the subclass should make sure that it checks periodically the status
-    (``paused`` or ``stopped``) and behave appropriately. The :py:meth:`~run`
-    can be flanked by the :py:meth:`~setup` and :py:meth:`~teardown` methods
-    where subclasses can implement logic needed before the main processing
-    is started or finished. This becomes very handy for loops that normally
-    prepare the work, then run for an indefinite time, and later are closed
-    when the owner signals.
-
-    Args:
-        init_dict (dict): a dictionary with the parameters for initialization
+    The main processing should be impemented in the `run` method where the
+    subclass should make sure that it checks periodically the status
+    (`paused` or `stopped`) and behave appropriately. The `run` can
+    be flanked by the `setup` and `teardown` mthods where subclasses can
+    impement logic needed before the main processing is started or finished.
+    This becomes very handy for loops that normally prepare the work, then
+    run for an indefinite time, and later are closed when the owner signals.
     """
     def __init__(self, init_dict):
-        # name should have been checked by the robot
+        # name shoukld have been checkd by the robot
         self.__name = init_dict['name']
         self.__started = threading.Event()
         self.__paused = threading.Event()
@@ -53,33 +49,27 @@ class BaseThread():
         return self.__name
 
     def setup(self):
-        """Thread preparation before running, subclasses should override"""
+        """Thread preparation before running. Subclasses should override"""
         pass
 
     def run(self):
-        """ Run method of the thread, subclasses should override.
-
-        .. note::
-
-            In order to be stoppable (resp. pausable), this method has to
-            check the running property - as often as possible to improve
-            responsiveness - and terminate when :py:attr:`~stopped` (resp.
-            :py:attr:`~paused`) becomes True.
-
+        """ Run method of the thread.
+        .. note:: In order to be stoppable (resp. pausable), this method has to
+        check the running property - as often as possible to improve
+        responsivness - and terminate when :meth:`should_stop` (resp.
+        :meth:`should_pause`) becomes True.
             For instance::
-
-                while not self.stopped:
+                while <some condition for work>:
                     if not self.paused:
                         do_atom_work()
-                    else:
-                        time.sleep(<some time>)
+                    if self.stopped:
+                        break
                     ...
-
         """
         raise NotImplementedError
 
     def teardown(self):
-        """Thread cleanup, subclasses should override."""
+        """Thread cleanup. Subclasses should override."""
         pass
 
     @property
@@ -103,7 +93,7 @@ class BaseThread():
         return self.__started.is_set() and self.__paused.is_set()
 
     def _wrapped_target(self):
-        """Wraps the execution of the task between the setup() and
+        """Wrapps the execution of the task between the setup() and
         teardown() and sets / resets the events."""
         try:
             self.setup()
@@ -119,37 +109,11 @@ class BaseThread():
             raise
 
     def start(self, wait=True):
-        """Starts the task in it's own thread.
-
-        If the thread is already running, it will first attempt to stop it,
-        then restart it.
-
-        The starting of a thread is performed by wrapping the following chain
-        of activities into a private function that is then used as a target
-        for ``threading.Thread``. This chain of activities consists in:
-
-        - calls :py:meth:`~setup`
-        - marks the task as ``started`` and clears the ``paused`` flag
-        - calls :py:meth:`~run`; this is supposed to perform all the work and
-          subclasses should override this method with the desired processing.
-          Check the instructions from method :py:meth:`~run` for details
-          about how a responsive function should be written.
-        - when :py:meth:`~run` completes this method will clear the ``started``
-          flag
-        - it will call :py:meth:`~teardown` to perform the cleanup at the end
-          of processing
-
-        Args:
-            wait (bool): specifies if the main thread waits for the worker
-                thread to start before continuing. If set to ``False`` the
-                main thread will return immediately.
-
-        """
+        """Starts the task in it's own thread."""
         if self.running:
             self.stop()
         self.__thread = threading.Thread(target=self._wrapped_target)
         self.__thread.daemon = True
-        self.__thread.name = self.name
         self.__thread.start()
 
         if wait and (threading.current_thread() != self.__thread):
@@ -162,7 +126,7 @@ class BaseThread():
 
     def stop(self, wait=True):
         """Sends the stopping signal to the thread. By default waits for
-        the thread to finish."""
+        the thred to finish."""
         if self.started:
             self.__started.clear()
             self.__paused.clear()
@@ -203,9 +167,9 @@ class BaseLoop(BaseThread):
     - ``warning``: indicates a threshold in range [0..1] indicating when
       warnings should be logged to the logger in case the execution
       frequency is bellow the target. A 0.8 value indicates the real
-      execution is less than 0.8 * target_frequency. The statistic is
+      execution is less than 0.8 * taget_frequency. The statistic is
       calculated over a number of runs equal to the frequency (ex. if
-      the frequency is 10 Hz the statistics will be calculated after
+      the frequency is 10 Hz the statistics will be claculated after
       10 execution cycles and then reset). If not provided the
       value 0.9 (90%) will be used.
     - ``throttle``: is a float (small) that is used by the monitoring of
@@ -228,7 +192,7 @@ class BaseLoop(BaseThread):
         check_type(self.__throttle, float, 'loop', self.name, logger)
         self.__review = init_dict.get('review', 1.00)
         check_type(self.__review, float, 'loop', self.name, logger)
-        # to keep statistics
+        # to keeep statistics
         self.__exec_counts = 0
         self.__last_count_reset = None
 
@@ -244,7 +208,7 @@ class BaseLoop(BaseThread):
 
     @property
     def warning(self):
-        """Control the warning level for the warning message, the **setter**
+        """Control the warning level for the warning message, the **seter**
         is smart: if the value is larger than 2 it will assume it is a
         percentage and divied it by 100 and ignore if the number is higher
         than 110.
@@ -266,10 +230,6 @@ class BaseLoop(BaseThread):
             self.__warning = value / 100.0
 
     def run(self):
-        """Runs the loop as long as the thread is not flagged for stopping.
-        Checks also the pause event and suspends the main processing (sits
-        idle) while this is active, while still looping.
-        """
         exec_counts = 0
         last_count_reset = time.time()
         factor = 1.0            # fine adjust the rate

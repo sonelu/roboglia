@@ -9,7 +9,6 @@ from .device import DynamixelDevice
 from .bus import DynamixelBus
 from .bus import ShareableDynamixelBus
 from .bus import MockDynamixelBus
-from .bus import MockPacketHandler                  # noqa F401
 
 from .sync import DynamixelSyncReadLoop
 from .sync import DynamixelSyncWriteLoop
