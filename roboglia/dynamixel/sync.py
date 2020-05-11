@@ -247,19 +247,20 @@ class DynamixelBulkReadLoop(BaseSync):
                 result = gbr.txRxPacket()
                 self.bus.stop_using()       # !! as soon as possible
                 if result != 0:
-                    error =gbr.ph.getTxRxResult(result)
+                    error = gbr.ph.getTxRxResult(result)
                     logger.error(f'BulkRead {self.name}, cerr={error}')
                 else:
                     # retrieve data
                     for device in self.devices:
                         register = getattr(device, reg_name)
-                        if not gbr.isAvailable(
-                            device.dev_id, register.address, register.size):
+                        if not gbr.isAvailable(device.dev_id,
+                                               register.address,
+                                               register.size):
                             logger.error(f'failed to retrieve data in '
                                          f'BulkRead {self.name} for '
-                                         f'device {device.name} and register '
-                                         f'{register.name}')
-                        else:
-                            register.int_value = gbr.getData(device.dev_id,
-                                                             register.address,
-                                                             register.size)
+                                         f'device {device.name} and '
+                                         f'register {register.name}')
+                    else:
+                        register.int_value = gbr.getData(device.dev_id,
+                                                         register.address,
+                                                         register.size)

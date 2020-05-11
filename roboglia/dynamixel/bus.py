@@ -398,7 +398,7 @@ class MockPacketHandler():
                 dev_id = self.__param[idx]
                 device = self.__robot.device_by_id(dev_id)
                 assert dev_id == dxl_id
-                address = self.__param[idx + 1] + self.__param[idx +2] * 256
+                address = self.__param[idx + 1] + self.__param[idx + 2] * 256
                 register = device.register_by_address(address)
                 assert register.size == length
 
