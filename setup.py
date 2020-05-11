@@ -72,7 +72,10 @@ setup(name='roboglia',
       long_description_content_type='text/markdown',
       url='https://github.com/sonelu/roboglia',
       project_urls = {
-          'Documentation': 'https://roboglia.readthedocs.io/en/latest/'
+          'Documentation': 'https://roboglia.readthedocs.io/en/latest/',
+          'Bug tracker': 'https://github.com/sonelu/roboglia/issues',
+          'Installation': 
+            'https://roboglia.readthedocs.io/en/latest/install.html'
       },
       license='GNU GENERAL PUBLIC LICENSE Version 3',
       classifiers=[

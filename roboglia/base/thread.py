@@ -27,11 +27,13 @@ class BaseThread():
     in a separate thread with the ability to pause / resume or fully stop
     the task.
 
-    The main processing should be impemented in the `run` method where the
+
+    The main processing should be implemented in the `run` method where the
     subclass should make sure that it checks periodically the status
     (`paused` or `stopped`) and behave appropriately. The `run` can
-    be flanked by the `setup` and `teardown` mthods where subclasses can
-    impement logic needed before the main processing is started or finished.
+    be flanked by the `setup` and `teardown` methods where subclasses can
+    implement logic needed before the main processing is started or finished.
+
     This becomes very handy for loops that normally prepare the work, then
     run for an indefinite time, and later are closed when the owner signals.
     """
@@ -56,7 +58,7 @@ class BaseThread():
         """ Run method of the thread.
         .. note:: In order to be stoppable (resp. pausable), this method has to
         check the running property - as often as possible to improve
-        responsivness - and terminate when :meth:`should_stop` (resp.
+        responsiveness - and terminate when :meth:`should_stop` (resp.
         :meth:`should_pause`) becomes True.
             For instance::
                 while <some condition for work>:

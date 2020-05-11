@@ -25,7 +25,42 @@ rather than gritty details.
 
 ## Installation
 
-Please read carefully the installation instrcutions from the
+You can install ``roboglia`` with ``pip`` as follows:
+
+    pip install roboglia
+
+By default this will only install the ``roboglia`` package and the core
+dependencies (like ``PyYAML``) and will not include any hardware access
+libraries. As different projects require different hardware communication
+it is up to yu to decide which of the **extra** dependencies need to be
+installed.
+
+If you need to use Dynamixel devices, then install the ``dynamixel_sdk``
+library like this:
+
+    pip install roboglia[dynamixel]
+
+If you need to work with I2C devices, install it the following way:
+
+    pip install roboglia[i2c]
+
+If you need SPI devices, install the extra libraries with:
+
+    pip install roboglia[spi]
+
+If you need to install a combination of libraries, then enter them separated
+by commas as follows:
+
+    pip install roboglia[dynamixel,i2c]
+
+If you wish to install all the hardware access packages then use:
+
+    pip install roboglia[all]
+
+The ``all`` option for` **extras** will be updated if additional hardware
+channels are added to the library.
+
+Please read carefully the installation instructions from the
 [documentation](https://roboglia.readthedocs.io/en/latest/install.html).
 As ``roboglia`` needs to interact with a lot of hardware devices, it is very
 sensitive to the platform and OS version used. The documentation provides more
