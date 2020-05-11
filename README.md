@@ -1,8 +1,9 @@
+# Roboglia
+
+[![PyPI version](https://badge.fury.io/py/roboglia.svg)](https://badge.fury.io/py/roboglia)
 [![Build Status](https://travis-ci.com/sonelu/roboglia.svg?branch=master)](https://travis-ci.com/sonelu/roboglia)
 [![Documentation Status](https://readthedocs.org/projects/roboglia/badge/?version=latest)](https://roboglia.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/sonelu/roboglia/branch/master/graph/badge.svg)](https://codecov.io/gh/sonelu/roboglia)
-
-# Roboglia
 
 ``roboglia`` is a framework that helps developers with the setup of robots
 in a more reusable fashion. Most of the times the creation of robots involve
@@ -12,7 +13,7 @@ activities.
 
 The name `roboglia` is derived from the glial cells present in the brian.
 Their role is to support the neurons' functions by supplying them
-with nutirients, energy and disposing of waste. The analogy is that ``roboglia``
+with nutrients, energy and disposing of waste. The analogy is that ``roboglia``
 provides this boring, but very complex activity of putting together the specific
 functions of the physical devices used in robots in order to provide a more
 accessible high-level representation of the robot for the use of the "smart"
@@ -24,6 +25,41 @@ making it easier for developer to focus on the higher level functionality,
 rather than gritty details.
 
 ## Installation
+
+You can install ``roboglia`` with ``pip`` as follows:
+
+    pip install roboglia
+
+By default this will only install the ``roboglia`` package and the core
+dependencies (like ``PyYAML``) and will not include any hardware access
+libraries. As different projects require different hardware communication
+it is up to yu to decide which of the **extra** dependencies need to be
+installed.
+
+If you need to use Dynamixel devices, then install the ``dynamixel_sdk``
+library like this:
+
+    pip install roboglia[dynamixel]
+
+If you need to work with I2C devices, install it the following way:
+
+    pip install roboglia[i2c]
+
+If you need SPI devices, install the extra libraries with:
+
+    pip install roboglia[spi]
+
+If you need to install a combination of libraries, then enter them separated
+by commas as follows:
+
+    pip install roboglia[dynamixel,i2c]
+
+If you wish to install all the hardware access packages then use:
+
+    pip install roboglia[all]
+
+The ``all`` option for` **extras** will be updated if additional hardware
+channels are added to the library.
 
 Please read carefully the installation instrcutions from the
 [documentation](https://roboglia.readthedocs.io/en/latest/install.html).
