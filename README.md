@@ -61,7 +61,7 @@ If you wish to install all the hardware access packages then use:
 The ``all`` option for` **extras** will be updated if additional hardware
 channels are added to the library.
 
-Please read carefully the installation instrcutions from the
+Please read carefully the installation instructions from the
 [documentation](https://roboglia.readthedocs.io/en/latest/install.html).
 As ``roboglia`` needs to interact with a lot of hardware devices, it is very
 sensitive to the platform and OS version used. The documentation provides more
@@ -80,7 +80,7 @@ There is also an epub version that can be accessed
 ## Contribution
 
 We are very receptive for contributions. Please clone the repository and
-sumbit pull requests with the desired contrbution. They will be moderated and,
+submit pull requests with the desired contribution. They will be moderated and,
 if they add values to the users, they will be integrated. Please note that
 the [Travis CI](https://travis-ci.com) integration will perform the following
 two tests on the pull requests:
@@ -93,12 +93,12 @@ two tests on the pull requests:
 
       sudo python setup.py install
       cd tests
-      pyton all_tests.py
+      python all_tests.py
 
   Make sure that there are no errors issued by the unit tests. If you created
   new classes or new functions that are not covered by testing, then you will
   also need to write a test class or add a test method in an exiting class
-  to test that functionlity and submit those changes too.
+  to test that functionality and submit those changes too.
 
 * it will check PEP8 on the Python code using flake8. You should install
   (if you don't have it already) on your machine and run this (from the
@@ -119,7 +119,7 @@ in the pull request.
 
 If you create new Python files please add the copyright comments as they are
 included in the other files. Make sure you update your name at the top, we want
-people to recieve the creadit for their work. Similarly, if you change an
+people to receive the credit for their work. Similarly, if you change an
 existing file feel free to add your name at the top of the file.
 
 ## Showcasing your robot
@@ -128,7 +128,7 @@ If you use ``roboglia`` in your project we will like to hear about it and
 we will showcase it on this page. Please
 [open an issue](https://github.com/sonelu/roboglia/issues/new) with title
 "Showcase of robot" and provide us with information about your robot. You can
-send us links to the documentaion or code of the robot and one picture
+send us links to the documentation or code of the robot and one picture
 (link to an public one) that we could use in the showcase. If you want to
 provide an email address for contact we will be more than happy to include
 that too.
