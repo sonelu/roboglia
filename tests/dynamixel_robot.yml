@@ -16,3 +16,44 @@ dynamixel:
       id: 11
       model: XL-320
       auto: True
+
+    d12:
+      class: DynamixelDevice
+      bus: ttys1
+      id: 12
+      model: XL-320
+      auto: True
+
+  groups:
+    all_servos:
+      devices: [d11, d12]
+
+  syncs:
+    syncwrite:
+      group: all_servos
+      class: DynamixelSyncWriteLoop
+      registers: [goal_position_deg, moving_speed_rpm]
+      frequency: 10.0
+      auto: False
+
+    syncread:
+      group: all_servos
+      class: DynamixelSyncReadLoop
+      registers: [present_position_deg, present_speed_rpm]
+      frequency: 10.0
+      auto: False
+
+    bulkwrite:
+      group: all_servos
+      class: DynamixelBulkWriteLoop
+      registers: [d_gain, i_gain, p_gain]
+      frequency: 10.0
+      auto: False
+
+    bulkread:
+      group: all_servos
+      class: DynamixelBulkReadLoop
+      registers: [present_voltage, present_temperature]
+      frequency: 10.0
+      auto: False
+  

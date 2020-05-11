@@ -110,6 +110,10 @@ class BaseSync(BaseLoop):
                    f'connected to a single bus.'
             logger.critical(mess)
             raise ValueError(mess)
+        elif len(buses) == 0:
+            mess = f'You need at least one device for sync {self.name}.'
+            logger.critical(mess)
+            raise ValueError(mess)
         # there must be only one!
         one_bus = buses.pop()
         return one_bus

@@ -13,8 +13,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import logging
 from pathlib import Path
+
+from dynamixel_sdk import DXL_HIBYTE, DXL_HIWORD, DXL_LOBYTE, DXL_LOWORD
+
 from ..base import BaseDevice
+
+logger = logging.getLogger(__name__)
 
 
 class DynamixelDevice(BaseDevice):
@@ -31,6 +37,30 @@ class DynamixelDevice(BaseDevice):
         """
         # return os.path.join(os.path.dirname(__file__), 'devices')
         return Path(__file__).parent / 'devices/'
+
+    def register_low_endian(self, value, size):
+        """Converts a value into a list of bytes in little endian order.
+
+        Args:
+            value (int): the value of the register
+            size (int): the size of the register
+
+        Returns:
+            (list) List of bytes of len ``size`` with bytes ordered lowest
+                first.
+        """
+        if size == 1:
+            return [value]
+        elif size == 2:
+            return [DXL_LOBYTE(value), DXL_HIBYTE(value)]
+        elif size == 4:
+            lw = DXL_LOWORD(value)
+            hw = DXL_HIWORD(value)
+            return [DXL_LOBYTE(lw), DXL_HIBYTE(lw),
+                    DXL_LOBYTE(hw), DXL_HIBYTE(hw)]
+        else:
+            logger.error(f'Unexpected register size: {size}')
+            return None
 
     def open(self):
         """Reads all registers of the device if not synced.

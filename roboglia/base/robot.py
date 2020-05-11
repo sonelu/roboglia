@@ -163,6 +163,21 @@ class BaseRobot():
         """(read-only) The devices of the robot as a dict."""
         return self.__devices
 
+    def device_by_id(self, dev_id):
+        """Returns a device by it's ID.
+
+        Args:
+            dev_id (int): the ID or device to be returned
+
+        Returns:
+            (BaseRegister): the register with that ID in the device. If
+                no register with that ID exists, returns ``None``.
+        """
+        for device in self.devices.values():
+            if device.dev_id == dev_id:
+                return device
+        return None
+
     @property
     def joints(self):
         """(read-only) The joints of the robot as a dict."""
