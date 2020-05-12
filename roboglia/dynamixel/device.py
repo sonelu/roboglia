@@ -68,4 +68,6 @@ class DynamixelDevice(BaseDevice):
         for reg in self.registers.values():
             # only registers that are not flagged for sync replication
             if not reg.sync:
-                reg.int_value = self.read_register(reg)
+                value = self.read_register(reg)
+                if value is not None:
+                    reg.int_value 

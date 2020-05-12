@@ -13,5 +13,5 @@ i2crobot:
       class: I2CDevice
       bus: i2c2
       id: 11
-      model: LSM6DS3
+      model: DUMMY
       auto: True

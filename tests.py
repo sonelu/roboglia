@@ -57,7 +57,7 @@ class TestMockRobot:
         assert (reg.int_value - exp_int) <=1
 
     def test_register_with_threshold(self, mock_robot):
-        reg = mock_robot.devices['d03'].writtable_current_load
+        reg = mock_robot.devices['d03'].writeable_current_load
         assert isinstance(reg, RegisterWithThreshold)
         assert not reg.sync
         reg.value = 50
@@ -538,6 +538,22 @@ class TestDynamixelRobot:
         bus.stop_using()
         robot.stop()
 
+    def test_dynamixel_register_low_endian(self, mock_robot_init, caplog):
+        robot = BaseRobot(mock_robot_init)
+        dev = robot.devices['d11']
+        assert dev.register_low_endian(123, 4) == [123, 0, 0, 0]
+        num = 12 * 256 + 42
+        assert dev.register_low_endian(num, 4) == [42, 12, 0, 0]
+        num = 39 * 65536 + 12 * 256 + 42
+        assert dev.register_low_endian(num, 4) == [42, 12, 39, 0]
+        num = 45 * 16777216 + 39 * 65536 + 12 * 256 + 42
+        assert dev.register_low_endian(num, 4) == [42, 12, 39, 45]
+        caplog.clear()
+        _ = dev.register_low_endian(num, 6)
+        assert len(caplog.records) == 1
+        assert 'Unexpected register size' in caplog.text
+
+
 class TestI2CRobot:
 
     @pytest.fixture
@@ -560,11 +576,30 @@ class TestI2CRobot:
         # assert 'failed to close I2C bus' in caplog.text
 
     def test_i2c_robot(self, mock_robot_init, caplog):
-        caplog.set_level(logging.WARNING)
         robot = BaseRobot(mock_robot_init)
         robot.start()
         dev = robot.devices['imu']
-        assert dev.ctrl3_c.value == 4
-        dev.ctrl1_xl.value = 20
-        assert dev.ctrl1_xl.value == 20
+        # 1 Byte registers
+        for _ in range(5):              # to account for possible comm errs
+            dev.byte_xl_x.value = 20
+            assert dev.byte_xl_x.value == 20
+            # word register
+            dev.word_xl_x.value = 12345
+            assert dev.word_xl_x.value == 12345      
         robot.stop()
+
+    def test_i2c_bus_closed(self, mock_robot_init, caplog):
+        robot = BaseRobot(mock_robot_init)
+        dev = robot.devices['imu']
+        # write to closed bus
+        caplog.clear()
+        dev.byte_xl_x.value = 20
+        assert len(caplog.records) == 1
+        assert 'attempted to write to a closed bus' in caplog.text
+        # read from closed bus
+        caplog.clear()
+        _ = dev.byte_xl_x.value
+        assert len(caplog.records) == 1
+        assert 'attempted to read from a closed bus' in caplog.text
+
+

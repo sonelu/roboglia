@@ -22,7 +22,13 @@ logger = logging.getLogger(__name__)
 
 
 class I2CDevice(BaseDevice):
+    """Implements a representation of an I2C device.
 
+    It only adds an override for the :py:method:`~get_model_path` in order
+    to localize the device definitions in the ``device`` directory of the
+    ``i2c`` module and the method :py:method:`~open` that will attempt to
+    read all the registers not marked as ``sync``.
+    """
     def __init__(self, init_dict):
         super().__init__(init_dict)
 
@@ -30,40 +36,18 @@ class I2CDevice(BaseDevice):
         """Builds the path to the `.yml` documents.
 
         Returns:
-            str :A full document path including the name of the model and the
-                extension `.yml`.
+            str: the path to the *standard`* directory with device
+                definitions. In this case ``devices`` in the ``i2c`` module
+                directory.
         """
         # return os.path.join(os.path.dirname(__file__), 'devices')
         return Path(__file__).parent / 'devices/'
 
-    # def register_low_endian(self, value, size):
-    #     """Converts a value into a list of bytes in little endian order.
-
-    #     Args:
-    #         value (int): the value of the register
-    #         size (int): the size of the register
-
-    #     Returns:
-    #         (list) List of bytes of len ``size`` with bytes ordered lowest
-    #             first.
-    #     """
-    #     if size == 1:
-    #         return [value]
-    #     elif size == 2:
-    #         return [DXL_LOBYTE(value), DXL_HIBYTE(value)]
-    #     elif size == 4:
-    #         lw = DXL_LOWORD(value)
-    #         hw = DXL_HIWORD(value)
-    #         return [DXL_LOBYTE(lw), DXL_HIBYTE(lw),
-    #                 DXL_LOBYTE(hw), DXL_HIBYTE(hw)]
-    #     else:
-    #         logger.error(f'Unexpected register size: {size}')
-    #         return None
-
     def open(self):
-        """Reads all registers of the device if not synced.
-        """
+        """Reads all registers of the device if not synced."""
         for reg in self.registers.values():
             # only registers that are not flagged for sync replication
             if not reg.sync:
-                reg.int_value = self.read_register(reg)
+                value = self.read_register(reg)
+                if value is not None:
+                    reg.int_value = value

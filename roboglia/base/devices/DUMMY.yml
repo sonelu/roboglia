@@ -82,7 +82,7 @@ registers:
 
     # not really often in practice as RW
     # here for testing
-  writtable_current_load:
+  writeable_current_load:
     class: RegisterWithThreshold
     address: 95
     size: 2

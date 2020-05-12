@@ -130,13 +130,10 @@ registers:
     address: 30
     desc: Status data register 
 
-  out_temp_l:
+  out_temp:
     address: 32
+    size: 2
     desc: Temperature output data register 
-
-  out_temp_h:
-    address: 33
-    desc: Temperature output data register
 
   outx_l_g:
     address: 34

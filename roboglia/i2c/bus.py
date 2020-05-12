@@ -71,6 +71,7 @@ class I2CBus(BaseBus):
         """
         if not self.is_open:
             logger.error(f'attempted to read from a closed bus: {self.name}')
+            return None
         else:
             if reg.size == 1:
                 function = self.__i2cbus.read_byte_data
@@ -141,6 +142,8 @@ class MockSMBus(SMBus):
 
     def close(self):
         self.fd = None
+        # we do this so that the testing covers the error part of the branch
+        raise OSError('error closing the bus')
 
     def __common_read(self, dev_id, address):
         if random.random() < self.__err:
@@ -168,7 +171,7 @@ class MockSMBus(SMBus):
 
     def __common_write(self, dev_id, address, value):
         if random.random() < self.__err:
-            raise OSError('failed to read')
+            raise OSError('failed to write')
         else:
             return None
 

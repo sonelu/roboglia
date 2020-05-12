@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class BaseSync(BaseLoop):
     """Base processing for a sync loop.
 
-    This class is internded to be subclassed to provide specific functionality.
+    This class is intended to be subclassed to provide specific functionality.
     It only parses the common elements that a sync loop would need:
     the devices (provided by a group) and registers (provided by a list).
     It will check that the provided devices are on the same bus and that
@@ -34,7 +34,7 @@ class BaseSync(BaseLoop):
         init_dict (dict): The dictionary used to initialize the sync.
 
     In addition to the keys expected by the :py:class:`BaseLoop` The following
-    keys are exepcted in the dictionary:
+    keys are expected in the dictionary:
 
     - ``group``: the set with the devices used by sync; normally the robot
       constructor replaces the name of the group from YAML file with the
@@ -119,7 +119,7 @@ class BaseSync(BaseLoop):
         return one_bus
 
     def process_registers(self):
-        """Checks that the supplied registers are avaialable in all
+        """Checks that the supplied registers are available in all
         devices and sets the ``sync`` attribute to ``True`` if not already
         set."""
         for device in self.__devices:
@@ -169,7 +169,7 @@ class BaseReadSync(BaseSync):
                                        f'of device {device.name}')
             self.bus.stop_using()
         else:
-            logger.error(f'failed to aquire buss {self.bus.name}')
+            logger.error(f'failed to acquire buss {self.bus.name}')
 
 
 class BaseWriteSync(BaseSync):
@@ -190,4 +190,4 @@ class BaseWriteSync(BaseSync):
                     self.bus.naked_write(device, reg, reg.int_value)
             self.bus.stop_using()
         else:
-            logger.error(f'failed to aquire buss {self.bus.name}')
+            logger.error(f'failed to acquire buss {self.bus.name}')
