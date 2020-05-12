@@ -2,9 +2,8 @@ from ..utils.factory import register_class
 
 from .bus import BaseBus                        # noqa: 401
 from .bus import FileBus                        # noqa: 401
-from .bus import ShareableBus                   # noqa: 401
-from .bus import ShareableFileBus               # noqa: 401
-
+from .bus import SharedBus                      # noqa: 401
+from .bus import SharedFileBus                  # noqa: 401
 
 from .register import BaseRegister              # noqa: 401
 from .register import BoolRegister              # noqa: 401
@@ -27,7 +26,7 @@ from .sync import BaseWriteSync                 # noqa: 401
 from .robot import BaseRobot                    # noqa: 401
 
 register_class(FileBus)
-register_class(ShareableFileBus)
+register_class(SharedFileBus)
 
 register_class(BaseRegister)
 register_class(RegisterWithConversion)

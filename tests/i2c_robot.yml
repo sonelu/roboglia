@@ -1,0 +1,17 @@
+# robot definition file for running automated tests
+#
+i2crobot:
+  buses:
+    i2c2:
+      class: SharedI2CBus
+      port: 2
+      auto: True
+      mock: True
+
+  devices:
+    imu:
+      class: I2CDevice
+      bus: i2c2
+      id: 11
+      model: LSM6DS3
+      auto: True

@@ -14,6 +14,8 @@ from roboglia.dynamixel import DynamixelAXBaudRateRegister
 from roboglia.dynamixel import DynamixelAXComplianceSlopeRegister
 from roboglia.dynamixel import DynamixelXLBaudRateRegister
 
+from roboglia.i2c import SharedI2CBus
+
 
 # logging.basicConfig(format=format, 
 #                     # file = 'test.log', 
@@ -231,7 +233,7 @@ class TestMockRobot:
             assert str(register.address) in str_repr
             assert str(register.int_value) in str_repr
 
-    def test_bus_aquire(self, mock_robot, caplog):
+    def test_bus_acquire(self, mock_robot, caplog):
         dev = mock_robot.devices['d01']
         bus = mock_robot.buses['busA']
         # stop syncs to avoid interference (additional messages)
@@ -242,12 +244,12 @@ class TestMockRobot:
         caplog.clear()
         bus.read(dev, dev.current_pos)
         assert len(caplog.records) == 1
-        assert 'failed to aquire bus busA' in caplog.text
+        assert 'failed to acquire bus busA' in caplog.text
         # write
         caplog.clear()
         bus.write(dev, dev.current_pos, 10)
         assert len(caplog.records) == 1
-        assert 'failed to aquire bus busA' in caplog.text
+        assert 'failed to acquire bus busA' in caplog.text
         # release bus
         bus.stop_using()
         mock_robot.stop()
@@ -468,21 +470,21 @@ class TestDynamixelRobot:
         assert robot.buses['ttys1'].ping(11) == True
         robot.stop()
 
-    def test_dynamixel_bus_set_port_handler(self, mock_robot_init):
-        robot = BaseRobot(mock_robot_init)
-        mess = 'you can use the setter only with MockBus'
-        with pytest.raises(ValueError) as excinfo:
-            robot.buses['ttys1'].port_handler = 'dummy'
-        assert mess in str(excinfo.value)
-        robot.stop()
+    # def test_dynamixel_bus_set_port_handler(self, mock_robot_init):
+    #     robot = BaseRobot(mock_robot_init)
+    #     mess = 'you can use the setter only with MockBus'
+    #     with pytest.raises(ValueError) as excinfo:
+    #         robot.buses['ttys1'].port_handler = 'dummy'
+    #     assert mess in str(excinfo.value)
+    #     robot.stop()
     
-    def test_dynamixel_bus_set_packet_handler(self, mock_robot_init):
-        robot = BaseRobot(mock_robot_init)
-        mess = 'you can use the setter only with MockPacketHandler'
-        with pytest.raises(ValueError) as excinfo:
-            robot.buses['ttys1'].packet_handler = 'dummy'
-        assert mess in str(excinfo.value)
-        robot.stop()
+    # def test_dynamixel_bus_set_packet_handler(self, mock_robot_init):
+    #     robot = BaseRobot(mock_robot_init)
+    #     mess = 'you can use the setter only with MockPacketHandler'
+    #     with pytest.raises(ValueError) as excinfo:
+    #         robot.buses['ttys1'].packet_handler = 'dummy'
+    #     assert mess in str(excinfo.value)
+    #     robot.stop()
 
     def test_dynamixel_bus_baudrate(self, mock_robot_init):
         robot = BaseRobot(mock_robot_init)
@@ -534,4 +536,35 @@ class TestDynamixelRobot:
         assert 'failed to acquire bus ttys1' in caplog.text
         # release bus
         bus.stop_using()
+        robot.stop()
+
+class TestI2CRobot:
+
+    @pytest.fixture
+    def mock_robot_init(self):
+        with open('tests/i2c_robot.yml', 'r') as f:
+            info_dict = yaml.load(f, Loader=yaml.FullLoader)
+        yield info_dict
+
+    def test_i2c_robot_bus_error(self, mock_robot_init, caplog):
+        mock_robot_init['i2crobot']['buses']['i2c2']['mock'] = False
+        mock_robot_init['i2crobot']['buses']['i2c2']['auto'] = False
+        robot = BaseRobot(mock_robot_init)
+        caplog.clear()
+        robot.buses['i2c2'].open()
+        assert len(caplog.records) == 2
+        assert 'failed to open I2C bus' in caplog.text
+        # caplog.clear()
+        # robot.buses['i2c2'].close()
+        # assert len(caplog.records) == 2
+        # assert 'failed to close I2C bus' in caplog.text
+
+    def test_i2c_robot(self, mock_robot_init, caplog):
+        caplog.set_level(logging.WARNING)
+        robot = BaseRobot(mock_robot_init)
+        robot.start()
+        dev = robot.devices['imu']
+        assert dev.ctrl3_c.value == 4
+        dev.ctrl1_xl.value = 20
+        assert dev.ctrl1_xl.value == 20
         robot.stop()
