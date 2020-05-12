@@ -97,7 +97,7 @@ class DynamixelSyncReadLoop(BaseSync):
     def __init__(self, init_dict):
         super().__init__(init_dict)
         if self.bus.protocol != 2.0:
-            mess = f'SyncRead only supported for Dynamixel Protocol 2.0.'
+            mess = 'SyncRead only supported for Dynamixel Protocol 2.0.'
             logger.critical(mess)
             raise ValueError(mess)
 
@@ -162,7 +162,7 @@ class DynamixelBulkWriteLoop(BaseSync):
     def __init__(self, init_dict):
         super().__init__(init_dict)
         if self.bus.protocol != 2.0:
-            mess = f'BulkWrite only supported for Dynamixel Protocol 2.0.'
+            mess = 'BulkWrite only supported for Dynamixel Protocol 2.0.'
             logger.critical(mess)
             raise ValueError(mess)
 

@@ -107,7 +107,7 @@ class BaseSync(BaseLoop):
         buses = set([device.bus for device in self.__devices])
         if len(buses) > 1:
             mess = f'Devices used for sync {self.name} should be ' + \
-                   f'connected to a single bus.'
+                   'connected to a single bus.'
             logger.critical(mess)
             raise ValueError(mess)
         elif len(buses) == 0:
