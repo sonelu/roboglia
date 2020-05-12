@@ -16,10 +16,10 @@ from roboglia.dynamixel import DynamixelXLBaudRateRegister
 
 from roboglia.i2c import SharedI2CBus
 
-format = '%(asctime)s %(levelname)-7s %(threadName)-18s %(name)-32s %(message)s'
-logging.basicConfig(format=format, 
-                    # file = 'test.log', 
-                    level=60)    # silent
+# format = '%(asctime)s %(levelname)-7s %(threadName)-18s %(name)-32s %(message)s'
+# logging.basicConfig(format=format, 
+#                     # file = 'test.log', 
+#                     level=60)    # silent
 logger = logging.getLogger(__name__)
 
 
