@@ -15,3 +15,22 @@ i2crobot:
       id: 11
       model: DUMMY
       auto: True
+
+  groups:
+    imu:
+      devices: [imu]
+
+  syncs:
+    read_g:
+      class: I2CReadLoop
+      group: imu
+      registers: [word_g_x, word_g_y, word_g_z]
+      frequency: 50.0
+      auto: False
+
+    write_xl:
+      class: I2CWriteLoop
+      group: imu
+      registers: [word_xl_x, word_xl_y, word_xl_z]
+      frequency: 50.0
+      auto: False

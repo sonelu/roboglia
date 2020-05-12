@@ -38,7 +38,7 @@ class BaseThread():
     run for an indefinite time, and later are closed when the owner signals.
     """
     def __init__(self, init_dict):
-        # name shoukld have been checkd by the robot
+        # name should have been checked by the robot
         self.__name = init_dict['name']
         self.__started = threading.Event()
         self.__paused = threading.Event()
@@ -95,7 +95,7 @@ class BaseThread():
         return self.__started.is_set() and self.__paused.is_set()
 
     def _wrapped_target(self):
-        """Wrapps the execution of the task between the setup() and
+        """Wraps the execution of the task between the setup() and
         teardown() and sets / resets the events."""
         try:
             self.setup()
@@ -116,6 +116,7 @@ class BaseThread():
             self.stop()
         self.__thread = threading.Thread(target=self._wrapped_target)
         self.__thread.daemon = True
+        self.__thread.name = self.name
         self.__thread.start()
 
         if wait and (threading.current_thread() != self.__thread):
@@ -128,7 +129,7 @@ class BaseThread():
 
     def stop(self, wait=True):
         """Sends the stopping signal to the thread. By default waits for
-        the thred to finish."""
+        the thread to finish."""
         if self.started:
             self.__started.clear()
             self.__paused.clear()
@@ -169,9 +170,9 @@ class BaseLoop(BaseThread):
     - ``warning``: indicates a threshold in range [0..1] indicating when
       warnings should be logged to the logger in case the execution
       frequency is bellow the target. A 0.8 value indicates the real
-      execution is less than 0.8 * taget_frequency. The statistic is
+      execution is less than 0.8 * target_frequency. The statistic is
       calculated over a number of runs equal to the frequency (ex. if
-      the frequency is 10 Hz the statistics will be claculated after
+      the frequency is 10 Hz the statistics will be calculated after
       10 execution cycles and then reset). If not provided the
       value 0.9 (90%) will be used.
     - ``throttle``: is a float (small) that is used by the monitoring of
@@ -194,7 +195,7 @@ class BaseLoop(BaseThread):
         check_type(self.__throttle, float, 'loop', self.name, logger)
         self.__review = init_dict.get('review', 1.00)
         check_type(self.__review, float, 'loop', self.name, logger)
-        # to keeep statistics
+        # to keep statistics
         self.__exec_counts = 0
         self.__last_count_reset = None
 
@@ -210,7 +211,7 @@ class BaseLoop(BaseThread):
 
     @property
     def warning(self):
-        """Control the warning level for the warning message, the **seter**
+        """Control the warning level for the warning message, the **setter**
         is smart: if the value is larger than 2 it will assume it is a
         percentage and divied it by 100 and ignore if the number is higher
         than 110.

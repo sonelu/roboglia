@@ -16,10 +16,10 @@ from roboglia.dynamixel import DynamixelXLBaudRateRegister
 
 from roboglia.i2c import SharedI2CBus
 
-
-# logging.basicConfig(format=format, 
-#                     # file = 'test.log', 
-#                     level=60)    # silent
+format = '%(asctime)s %(levelname)-7s %(threadName)-18s %(name)-32s %(message)s'
+logging.basicConfig(format=format, 
+                    # file = 'test.log', 
+                    level=60)    # silent
 logger = logging.getLogger(__name__)
 
 
@@ -602,4 +602,52 @@ class TestI2CRobot:
         assert len(caplog.records) == 1
         assert 'attempted to read from a closed bus' in caplog.text
 
+    def test_i2c_read_loop(self, mock_robot_init):
+        robot = BaseRobot(mock_robot_init)
+        robot.start()
+        robot.syncs['read_g'].start()
+        time.sleep(1)
+        robot.stop()
 
+    def test_i2c_write_loop(self, mock_robot_init):
+        robot = BaseRobot(mock_robot_init)
+        robot.start()
+        robot.syncs['write_xl'].start()
+        time.sleep(1)
+        robot.stop()
+
+    def test_i2c_loop_failed_acquire(self, mock_robot_init, caplog):
+        robot = BaseRobot(mock_robot_init)
+        robot.start()
+        # lock the bus
+        robot.buses['i2c2'].can_use()
+        # read
+        caplog.clear()
+        robot.syncs['read_g'].start()
+        time.sleep(1)
+        assert len(caplog.records) >= 1
+        assert 'failed to acquire bus' in caplog.text
+        robot.syncs['read_g'].stop()    
+        # write
+        caplog.clear()
+        robot.syncs['write_xl'].start()
+        time.sleep(1)
+        assert len(caplog.records) >= 1
+        assert 'failed to acquire bus' in caplog.text
+        robot.syncs['read_g'].stop()    
+
+    def test_i2c_sharedbus_closed(self, mock_robot_init, caplog):
+        robot = BaseRobot(mock_robot_init)
+        # we haven't started the bus
+        # read
+        caplog.clear()
+        robot.syncs['read_g'].start()
+        assert len(caplog.records) == 1
+        assert 'attempt to start with a bus not open' in caplog.text
+        robot.syncs['read_g'].stop()    
+        # write
+        caplog.clear()
+        robot.syncs['write_xl'].start()
+        assert len(caplog.records) == 1
+        assert 'attempt to start with a bus not open' in caplog.text
+        robot.syncs['read_g'].stop()    

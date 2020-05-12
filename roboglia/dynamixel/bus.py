@@ -176,9 +176,7 @@ class DynamixelBus(BaseBus):
             elif reg.size == 4:
                 function = self.__packet_handler.read4ByteTxRx
             else:
-                logger.critical(f'unexpected size {reg.size} for register '
-                                f'{reg.name} of device {dev.name}')
-                return None
+                raise NotImplementedError
 
             # call the function
             try:
@@ -228,9 +226,7 @@ class DynamixelBus(BaseBus):
             elif reg.size == 4:
                 function = self.__packet_handler.write4ByteTxRx
             else:
-                logger.error(f'unexpected size {reg.size} for register '
-                             f'{reg.name} of device {dev.name}')
-                return None
+                raise NotImplementedError
 
             # execute the function
             try:

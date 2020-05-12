@@ -17,6 +17,7 @@ import logging
 import random
 from smbus2 import SMBus
 
+from ..utils import check_options
 from ..base import BaseBus, SharedBus
 
 logger = logging.getLogger(__name__)
@@ -33,8 +34,9 @@ class I2CBus(BaseBus):
     def __init__(self, init_dict):
         super().__init__(init_dict)
         mock = init_dict.get('mock', False)
+        check_options(mock, [True, False], 'bus', self.name, logger)
         if mock:
-            self.__i2cbus = MockSMBus(self.robot, err=0.05)
+            self.__i2cbus = MockSMBus(self.robot, err=0.1)
         else:
             self.__i2cbus = SMBus()             # not opened
 
@@ -78,10 +80,7 @@ class I2CBus(BaseBus):
             elif reg.size == 2:
                 function = self.__i2cbus.read_word_data
             else:
-                mess = f'unexpected size {reg.size} for register ' + \
-                       f'{reg.name} of device {dev.name}'
-                logger.critical(mess)
-                raise ValueError(mess)
+                raise NotImplementedError
             try:
                 return function(dev.dev_id, reg.address)
             except Exception as e:
@@ -129,6 +128,74 @@ class SharedI2CBus(SharedBus):
     def __init__(self, init_dict):
         super().__init__(I2CBus, init_dict)
 
+    def read_block_data(self, dev, address, length):
+        """Invokes the block read from SMBus.
+
+        Args:
+            dev (BaseDevice): the device for which the block read is performed
+            address (int): the start address
+            length (int): the length of data to read
+
+        Returns:
+            list of int: a list of length ``length``
+
+        Does not raise any exceptions, but logs any errors.
+        """
+        if not self.is_open:
+            logger.error(f'attempted to read form a closed bus: {self.name}')
+            return None
+
+        if not self.can_use():
+            logger.error(f'{self.name} failed to acquire bus')
+            return None
+
+        try:
+            data = self.port_handler.read_i2c_block_data(dev.dev_id,
+                                                         address,
+                                                         length)
+        except Exception as e:
+            logger.error(f'{self.name} failed to read block data '
+                         f'for device {dev.name}')
+            logger.error(str(e))
+            self.stop_using()
+            return None
+
+        self.stop_using()
+        return data
+
+    def write_block_data(self, dev, address, length, data):
+        """Invokes the block read from SMBus.
+
+        Args:
+            dev (BaseDevice): the device for which the block read is performed
+            address (int): the start address
+            length (int): the length of data to read
+
+        Returns:
+            list of int: a list of length ``length``
+
+        Does not raise any exceptions, but logs any errors.
+        """
+        if not self.is_open:
+            logger.error(f'attempted to write to a closed bus: {self.name}')
+            return None
+
+        if not self.can_use():
+            logger.error(f'{self.name} failed to acquire bus')
+            return None
+
+        try:
+            data = self.port_handler.write_i2c_block_data(dev.dev_id,
+                                                          address,
+                                                          length,
+                                                          data)
+        except Exception as e:
+            logger.error(f'{self.name} failed to write block data '
+                         f'for device {dev.name}')
+            logger.error(str(e))
+
+        self.stop_using()
+
 
 class MockSMBus(SMBus):
 
@@ -147,7 +214,8 @@ class MockSMBus(SMBus):
 
     def __common_read(self, dev_id, address):
         if random.random() < self.__err:
-            raise OSError('failed to read')
+            logger.error('*** random generated read error ***')
+            raise OSError
         else:
             device = self.__robot.device_by_id(dev_id)
             reg = device.register_by_address(address)
@@ -171,7 +239,8 @@ class MockSMBus(SMBus):
 
     def __common_write(self, dev_id, address, value):
         if random.random() < self.__err:
-            raise OSError('failed to write')
+            logger.error('*** random generated write error ***')
+            raise OSError
         else:
             return None
 
@@ -184,3 +253,16 @@ class MockSMBus(SMBus):
         logger.debug(f'writting WORD to I2C bus {self.fd} '
                      f'device {dev_id} address {address} value {value}')
         self.__common_write(dev_id, address, value)
+
+    def read_i2c_block_data(self, dev_id, address, length, force=None):
+        if random.random() < self.__err:
+            logger.error('*** random generated read-block error ***')
+            raise OSError
+        else:
+            # we'll just return a random list of numbers
+            return random.sample(range(0, 255), length)
+
+    def write_i2c_block_data(self, dev_id, address, length, data):
+        if random.random() < self.__err:
+            logger.error('*** random generated write-block error ***')
+            raise OSError

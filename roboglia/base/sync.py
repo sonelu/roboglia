@@ -135,6 +135,28 @@ class BaseSync(BaseLoop):
                     logger.debug(f'setting register {register} of device '
                                  f'{device.name} sync=True')
 
+    def get_register_range(self):
+        """Determines the start address of the range of registers and the
+        whole length. Registers do not need to be order, but be careful
+        that not all communication protocols can support gaps in the
+        bulk read of registers.
+        """
+        start_address = 65536
+        last_address = 0
+        last_length = 0
+        length = 0
+        # pick the first device; we expect all to have the same registers
+        device = self.devices[0]
+        for reg_name in self.registers:
+            register = getattr(device, reg_name)
+            if register.address < start_address:
+                start_address = register.address
+            if register.address > last_address:
+                last_address = register.address
+                last_length = register.size
+        length = last_address + last_length - start_address
+        return start_address, length
+
     def start(self):
         """Checks that the bus is open before calling the inherited
         ``start``."""

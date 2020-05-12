@@ -65,6 +65,7 @@ class BaseRobot():
     def __init_devices(self, init_dict):
         """Called by ``__init__`` to parse and instantiate devices."""
         self.__devices = {}
+        self.__dev_by_id = {}
         logger.info('Initializing devices...')
         check_key('devices', init_dict, 'robot', '', logger)
         for dev_name, dev_info in init_dict['devices'].items():
@@ -81,6 +82,7 @@ class BaseRobot():
             dev_class = get_registered_class(dev_info['class'])
             new_dev = dev_class(dev_info)
             self.__devices[dev_name] = new_dev
+            self.__dev_by_id[dev_info['id']] = new_dev
             logger.debug(f'\tdevice {dev_name} added')
 
     def __init_joints(self, init_dict):
@@ -173,10 +175,7 @@ class BaseRobot():
             (BaseRegister): the register with that ID in the device. If
                 no register with that ID exists, returns ``None``.
         """
-        for device in self.devices.values():
-            if device.dev_id == dev_id:
-                return device
-        return None
+        return self.__dev_by_id.get(dev_id, None)
 
     @property
     def joints(self):
