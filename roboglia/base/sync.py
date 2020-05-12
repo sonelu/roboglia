@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class BaseSync(BaseLoop):
     """Base processing for a sync loop.
 
-    This class is internded to be subclassed to provide specific functionality.
+    This class is intended to be subclassed to provide specific functionality.
     It only parses the common elements that a sync loop would need:
     the devices (provided by a group) and registers (provided by a list).
     It will check that the provided devices are on the same bus and that
@@ -34,7 +34,7 @@ class BaseSync(BaseLoop):
         init_dict (dict): The dictionary used to initialize the sync.
 
     In addition to the keys expected by the :py:class:`BaseLoop` The following
-    keys are exepcted in the dictionary:
+    keys are expected in the dictionary:
 
     - ``group``: the set with the devices used by sync; normally the robot
       constructor replaces the name of the group from YAML file with the
@@ -107,7 +107,7 @@ class BaseSync(BaseLoop):
         buses = set([device.bus for device in self.__devices])
         if len(buses) > 1:
             mess = f'Devices used for sync {self.name} should be ' + \
-                   f'connected to a single bus.'
+                   'connected to a single bus.'
             logger.critical(mess)
             raise ValueError(mess)
         elif len(buses) == 0:
@@ -119,7 +119,7 @@ class BaseSync(BaseLoop):
         return one_bus
 
     def process_registers(self):
-        """Checks that the supplied registers are avaialable in all
+        """Checks that the supplied registers are available in all
         devices and sets the ``sync`` attribute to ``True`` if not already
         set."""
         for device in self.__devices:
@@ -134,6 +134,28 @@ class BaseSync(BaseLoop):
                     reg_obj.sync = True
                     logger.debug(f'setting register {register} of device '
                                  f'{device.name} sync=True')
+
+    def get_register_range(self):
+        """Determines the start address of the range of registers and the
+        whole length. Registers do not need to be order, but be careful
+        that not all communication protocols can support gaps in the
+        bulk read of registers.
+        """
+        start_address = 65536
+        last_address = 0
+        last_length = 0
+        length = 0
+        # pick the first device; we expect all to have the same registers
+        device = self.devices[0]
+        for reg_name in self.registers:
+            register = getattr(device, reg_name)
+            if register.address < start_address:
+                start_address = register.address
+            if register.address > last_address:
+                last_address = register.address
+                last_length = register.size
+        length = last_address + last_length - start_address
+        return start_address, length
 
     def start(self):
         """Checks that the bus is open before calling the inherited
@@ -169,7 +191,7 @@ class BaseReadSync(BaseSync):
                                        f'of device {device.name}')
             self.bus.stop_using()
         else:
-            logger.error(f'failed to aquire buss {self.bus.name}')
+            logger.error(f'failed to acquire buss {self.bus.name}')
 
 
 class BaseWriteSync(BaseSync):
@@ -190,4 +212,4 @@ class BaseWriteSync(BaseSync):
                     self.bus.naked_write(device, reg, reg.int_value)
             self.bus.stop_using()
         else:
-            logger.error(f'failed to aquire buss {self.bus.name}')
+            logger.error(f'failed to acquire buss {self.bus.name}')

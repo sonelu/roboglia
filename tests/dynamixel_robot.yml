@@ -1,13 +1,14 @@
-# robot defintion file for running automated tests
+# robot definition file for running automated tests
 #
 dynamixel:
   buses:
     ttys1:
-      class: MockDynamixelBus
+      class: SharedDynamixelBus
       port: /dev/ttys1
       baudrate: 19200
       protocol: 2.0
       auto: True
+      mock: True
 
   devices:
     d11:

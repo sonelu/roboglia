@@ -14,7 +14,9 @@ from roboglia.dynamixel import DynamixelAXBaudRateRegister
 from roboglia.dynamixel import DynamixelAXComplianceSlopeRegister
 from roboglia.dynamixel import DynamixelXLBaudRateRegister
 
+from roboglia.i2c import SharedI2CBus
 
+# format = '%(asctime)s %(levelname)-7s %(threadName)-18s %(name)-32s %(message)s'
 # logging.basicConfig(format=format, 
 #                     # file = 'test.log', 
 #                     level=60)    # silent
@@ -55,7 +57,7 @@ class TestMockRobot:
         assert (reg.int_value - exp_int) <=1
 
     def test_register_with_threshold(self, mock_robot):
-        reg = mock_robot.devices['d03'].writtable_current_load
+        reg = mock_robot.devices['d03'].writeable_current_load
         assert isinstance(reg, RegisterWithThreshold)
         assert not reg.sync
         reg.value = 50
@@ -231,7 +233,7 @@ class TestMockRobot:
             assert str(register.address) in str_repr
             assert str(register.int_value) in str_repr
 
-    def test_bus_aquire(self, mock_robot, caplog):
+    def test_bus_acquire(self, mock_robot, caplog):
         dev = mock_robot.devices['d01']
         bus = mock_robot.buses['busA']
         # stop syncs to avoid interference (additional messages)
@@ -242,12 +244,12 @@ class TestMockRobot:
         caplog.clear()
         bus.read(dev, dev.current_pos)
         assert len(caplog.records) == 1
-        assert 'failed to aquire bus busA' in caplog.text
+        assert 'failed to acquire bus busA' in caplog.text
         # write
         caplog.clear()
         bus.write(dev, dev.current_pos, 10)
         assert len(caplog.records) == 1
-        assert 'failed to aquire bus busA' in caplog.text
+        assert 'failed to acquire bus busA' in caplog.text
         # release bus
         bus.stop_using()
         mock_robot.stop()
@@ -468,21 +470,21 @@ class TestDynamixelRobot:
         assert robot.buses['ttys1'].ping(11) == True
         robot.stop()
 
-    def test_dynamixel_bus_set_port_handler(self, mock_robot_init):
-        robot = BaseRobot(mock_robot_init)
-        mess = 'you can use the setter only with MockBus'
-        with pytest.raises(ValueError) as excinfo:
-            robot.buses['ttys1'].port_handler = 'dummy'
-        assert mess in str(excinfo.value)
-        robot.stop()
+    # def test_dynamixel_bus_set_port_handler(self, mock_robot_init):
+    #     robot = BaseRobot(mock_robot_init)
+    #     mess = 'you can use the setter only with MockBus'
+    #     with pytest.raises(ValueError) as excinfo:
+    #         robot.buses['ttys1'].port_handler = 'dummy'
+    #     assert mess in str(excinfo.value)
+    #     robot.stop()
     
-    def test_dynamixel_bus_set_packet_handler(self, mock_robot_init):
-        robot = BaseRobot(mock_robot_init)
-        mess = 'you can use the setter only with MockPacketHandler'
-        with pytest.raises(ValueError) as excinfo:
-            robot.buses['ttys1'].packet_handler = 'dummy'
-        assert mess in str(excinfo.value)
-        robot.stop()
+    # def test_dynamixel_bus_set_packet_handler(self, mock_robot_init):
+    #     robot = BaseRobot(mock_robot_init)
+    #     mess = 'you can use the setter only with MockPacketHandler'
+    #     with pytest.raises(ValueError) as excinfo:
+    #         robot.buses['ttys1'].packet_handler = 'dummy'
+    #     assert mess in str(excinfo.value)
+    #     robot.stop()
 
     def test_dynamixel_bus_baudrate(self, mock_robot_init):
         robot = BaseRobot(mock_robot_init)
@@ -535,3 +537,117 @@ class TestDynamixelRobot:
         # release bus
         bus.stop_using()
         robot.stop()
+
+    def test_dynamixel_register_low_endian(self, mock_robot_init, caplog):
+        robot = BaseRobot(mock_robot_init)
+        dev = robot.devices['d11']
+        assert dev.register_low_endian(123, 4) == [123, 0, 0, 0]
+        num = 12 * 256 + 42
+        assert dev.register_low_endian(num, 4) == [42, 12, 0, 0]
+        num = 39 * 65536 + 12 * 256 + 42
+        assert dev.register_low_endian(num, 4) == [42, 12, 39, 0]
+        num = 45 * 16777216 + 39 * 65536 + 12 * 256 + 42
+        assert dev.register_low_endian(num, 4) == [42, 12, 39, 45]
+        caplog.clear()
+        _ = dev.register_low_endian(num, 6)
+        assert len(caplog.records) == 1
+        assert 'Unexpected register size' in caplog.text
+
+
+class TestI2CRobot:
+
+    @pytest.fixture
+    def mock_robot_init(self):
+        with open('tests/i2c_robot.yml', 'r') as f:
+            info_dict = yaml.load(f, Loader=yaml.FullLoader)
+        yield info_dict
+
+    def test_i2c_robot_bus_error(self, mock_robot_init, caplog):
+        mock_robot_init['i2crobot']['buses']['i2c2']['mock'] = False
+        mock_robot_init['i2crobot']['buses']['i2c2']['auto'] = False
+        robot = BaseRobot(mock_robot_init)
+        caplog.clear()
+        robot.buses['i2c2'].open()
+        assert len(caplog.records) == 2
+        assert 'failed to open I2C bus' in caplog.text
+        # caplog.clear()
+        # robot.buses['i2c2'].close()
+        # assert len(caplog.records) == 2
+        # assert 'failed to close I2C bus' in caplog.text
+
+    def test_i2c_robot(self, mock_robot_init, caplog):
+        robot = BaseRobot(mock_robot_init)
+        robot.start()
+        dev = robot.devices['imu']
+        # 1 Byte registers
+        for _ in range(5):              # to account for possible comm errs
+            dev.byte_xl_x.value = 20
+            assert dev.byte_xl_x.value == 20
+            # word register
+            dev.word_xl_x.value = 12345
+            assert dev.word_xl_x.value == 12345      
+        robot.stop()
+
+    def test_i2c_bus_closed(self, mock_robot_init, caplog):
+        robot = BaseRobot(mock_robot_init)
+        dev = robot.devices['imu']
+        # write to closed bus
+        caplog.clear()
+        dev.byte_xl_x.value = 20
+        assert len(caplog.records) == 1
+        assert 'attempted to write to a closed bus' in caplog.text
+        # read from closed bus
+        caplog.clear()
+        _ = dev.byte_xl_x.value
+        assert len(caplog.records) == 1
+        assert 'attempted to read from a closed bus' in caplog.text
+
+    def test_i2c_read_loop(self, mock_robot_init):
+        robot = BaseRobot(mock_robot_init)
+        robot.start()
+        robot.syncs['read_g'].start()
+        time.sleep(1)
+        robot.stop()
+
+    def test_i2c_write_loop(self, mock_robot_init):
+        robot = BaseRobot(mock_robot_init)
+        robot.start()
+        robot.syncs['write_xl'].start()
+        time.sleep(1)
+        robot.stop()
+
+    def test_i2c_loop_failed_acquire(self, mock_robot_init, caplog):
+        robot = BaseRobot(mock_robot_init)
+        robot.start()
+        # lock the bus
+        robot.buses['i2c2'].can_use()
+        # read
+        caplog.clear()
+        robot.syncs['read_g'].start()
+        time.sleep(1)
+        assert len(caplog.records) >= 1
+        assert 'failed to acquire bus' in caplog.text
+        robot.syncs['read_g'].stop()    
+        # write
+        caplog.clear()
+        robot.syncs['write_xl'].start()
+        time.sleep(1)
+        assert len(caplog.records) >= 1
+        assert 'failed to acquire bus' in caplog.text
+        robot.syncs['read_g'].stop()    
+
+    def test_i2c_sharedbus_closed(self, mock_robot_init, caplog):
+        robot = BaseRobot(mock_robot_init)
+        # we haven't started the bus
+        # read
+        caplog.clear()
+        robot.syncs['read_g'].start()
+        assert len(caplog.records) == 1
+        assert 'attempt to start with a bus not open' in caplog.text
+        robot.syncs['read_g'].stop()    
+        # write
+        caplog.clear()
+        robot.syncs['write_xl'].start()
+        assert len(caplog.records) == 1
+        assert 'attempt to start with a bus not open' in caplog.text
+        robot.syncs['read_g'].stop()    

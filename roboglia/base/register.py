@@ -29,7 +29,7 @@ class BaseRegister():
     Args:
         init_dict (dict): The dictionary used to initialize the register.
 
-    The following keys are exepcted in the dictionary:
+    The following keys are expected in the dictionary:
 
     - ``name``: the name of the register
     - ``device``: the device where the register is attached to
@@ -217,7 +217,7 @@ class RegisterWithThreshold(BaseRegister):
     a threshold between negative and positive values::
 
         if internal >= threshold:
-            external = (internal - threashold) / factor
+            external = (internal - threshold) / factor
         else:
             external = - internal / factor
 
@@ -232,7 +232,7 @@ class RegisterWithThreshold(BaseRegister):
         init_dict (dict): The dictionary used to initialize the register.
 
     In addition to the fields used in :py:class:`BaseRegister`, the following
-    keys are exepcted in the dictionary:
+    keys are expected in the dictionary:
 
     - ``factor``: a factor used for conversion (float)
     - ``threshold``: a threshold that separates the positive from negative

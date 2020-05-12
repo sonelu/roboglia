@@ -1,8 +1,12 @@
+# Roboglia
+
+[![Master Version](https://img.shields.io/badge/master-0.0.11-blue)](https://img.shields.io/badge/master-0.0.11-blue)
+[![PyPI version](https://badge.fury.io/py/roboglia.svg)](https://badge.fury.io/py/roboglia)
+![GitHub issues](https://img.shields.io/github/issues/sonelu/roboglia)
+
 [![Build Status](https://travis-ci.com/sonelu/roboglia.svg?branch=master)](https://travis-ci.com/sonelu/roboglia)
 [![Documentation Status](https://readthedocs.org/projects/roboglia/badge/?version=latest)](https://roboglia.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/sonelu/roboglia/branch/master/graph/badge.svg)](https://codecov.io/gh/sonelu/roboglia)
-
-# Roboglia
 
 ``roboglia`` is a framework that helps developers with the setup of robots
 in a more reusable fashion. Most of the times the creation of robots involve
@@ -12,7 +16,7 @@ activities.
 
 The name `roboglia` is derived from the glial cells present in the brian.
 Their role is to support the neurons' functions by supplying them
-with nutirients, energy and disposing of waste. The analogy is that ``roboglia``
+with nutrients, energy and disposing of waste. The analogy is that ``roboglia``
 provides this boring, but very complex activity of putting together the specific
 functions of the physical devices used in robots in order to provide a more
 accessible high-level representation of the robot for the use of the "smart"
@@ -79,7 +83,7 @@ There is also an epub version that can be accessed
 ## Contribution
 
 We are very receptive for contributions. Please clone the repository and
-sumbit pull requests with the desired contrbution. They will be moderated and,
+submit pull requests with the desired contribution. They will be moderated and,
 if they add values to the users, they will be integrated. Please note that
 the [Travis CI](https://travis-ci.com) integration will perform the following
 two tests on the pull requests:
@@ -92,12 +96,12 @@ two tests on the pull requests:
 
       sudo python setup.py install
       cd tests
-      pyton all_tests.py
+      python all_tests.py
 
   Make sure that there are no errors issued by the unit tests. If you created
   new classes or new functions that are not covered by testing, then you will
   also need to write a test class or add a test method in an exiting class
-  to test that functionlity and submit those changes too.
+  to test that functionality and submit those changes too.
 
 * it will check PEP8 on the Python code using flake8. You should install
   (if you don't have it already) on your machine and run this (from the
@@ -118,7 +122,7 @@ in the pull request.
 
 If you create new Python files please add the copyright comments as they are
 included in the other files. Make sure you update your name at the top, we want
-people to recieve the creadit for their work. Similarly, if you change an
+people to receive the credit for their work. Similarly, if you change an
 existing file feel free to add your name at the top of the file.
 
 ## Showcasing your robot
@@ -127,7 +131,7 @@ If you use ``roboglia`` in your project we will like to hear about it and
 we will showcase it on this page. Please
 [open an issue](https://github.com/sonelu/roboglia/issues/new) with title
 "Showcase of robot" and provide us with information about your robot. You can
-send us links to the documentaion or code of the robot and one picture
+send us links to the documentation or code of the robot and one picture
 (link to an public one) that we could use in the showcase. If you want to
 provide an email address for contact we will be more than happy to include
 that too.

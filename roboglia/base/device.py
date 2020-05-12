@@ -26,7 +26,7 @@ class BaseDevice():
     """A base virtual class for all devices.
 
     A BaseDevice is a surrogate representation of an actual device,
-    characterised by a number of internal registers that can be read or
+    characterized by a number of internal registers that can be read or
     written to by the means of a coomunication bus.
     Any device is based on a `model` that identifies the `.device` file
     describing the structure of the device (the registers).
@@ -34,7 +34,7 @@ class BaseDevice():
     Args:
         init_dict (dict): The dictionary used to initialize the joint.
 
-    The following keys are exepcted in the dictionary:
+    The following keys are expected in the dictionary:
 
     - ``name``: the name of the joint
     - ``bus``: the bus object where the device is attached to
@@ -65,6 +65,7 @@ class BaseDevice():
         with open(model_file, 'r') as f:
             model_ini = yaml.load(f, Loader=yaml.FullLoader)
         self.__registers = {}
+        self.__reg_by_addr = {}
         for reg_name, reg_info in model_ini['registers'].items():
             # add name to the dictionary
             reg_info['name'] = reg_name
@@ -74,6 +75,7 @@ class BaseDevice():
             new_register = reg_class(reg_info)
             self.__dict__[reg_info['name']] = new_register
             self.__registers[reg_info['name']] = new_register
+            self.__reg_by_addr[reg_info['address']] = new_register
         self.__auto_open = init_dict.get('auto', True)
         check_options(self.__auto_open, [True, False], 'device',
                       self.name, logger)
@@ -89,10 +91,7 @@ class BaseDevice():
         return self.__registers
 
     def register_by_address(self, address):
-        for register in self.registers.values():
-            if register.address == address:
-                return register
-        return None
+        return self.__reg_by_addr.get(address, None)
 
     @property
     def dev_id(self):
@@ -126,7 +125,7 @@ class BaseDevice():
 
     def default_register(self):
         """Default register for the device in case is not explicitly
-        provided in the device defition file.
+        provided in the device definition file.
         Subclasses of `BaseDevice` can overide the method to derive their
         own class.
         """

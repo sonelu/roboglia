@@ -16,10 +16,10 @@
 import logging
 import random
 
-import dynamixel_sdk
+from dynamixel_sdk import PacketHandler, PortHandler
 from serial import rs485
 
-from ..base import BaseBus, ShareableBus
+from ..base import BaseBus, SharedBus
 from ..utils import check_key, check_type, check_options
 
 logger = logging.getLogger(__name__)
@@ -33,12 +33,17 @@ class DynamixelBus(BaseBus):
     Args:
         init_dict (dict): The dictionary used to initialize the bus.
 
-    In addition to the keys that are required by the :py:class:BaseBus the
+    In addition to the keys that are required by the :py:class:`BaseBus` the
     following key must by provided:
 
     - ``baudrate``: communication speed for the bus (int)
     - ``protocol``: communication protocol for the bus; must be 1.0 or 2.0
-    - ``rs485``: activates RS485 protocol on the serial bus (bool)
+
+    Additional keys:
+    - ``rs485``: activates RS485 protocol on the serial bus (bool); default
+      is ``False``
+    - ``mock``: indicates to use mock bus for testing purposes; default is
+      ``False``
 
     Raises:
         KeyError: if any of the required keys are missing
@@ -56,32 +61,18 @@ class DynamixelBus(BaseBus):
         check_options(self.__rs485, [True, False], 'bus', self.name, logger)
         self.__port_handler = None
         self.__packet_handler = None
+        self.__mock = init_dict.get('mock', False)
+        check_options(self.__mock, [True, False], 'bus', self.name, logger)
 
     @property
     def port_handler(self):
         """The Dynamixel port handler for this bus."""
         return self.__port_handler
 
-    @port_handler.setter
-    def port_handler(self, ph):
-        if ph == 'MockBus' or ph is None:
-            self.__port_handler = ph
-        else:
-            raise ValueError('you can use the setter only with MockBus for '
-                             'testing purposes...')
-
     @property
     def packet_handler(self):
         """The Dynamixel packet handler for this bus."""
         return self.__packet_handler
-
-    @packet_handler.setter
-    def packet_handler(self, pkh):
-        if isinstance(pkh, MockPacketHandler) or pkh is None:
-            self.__packet_handler = pkh
-        else:
-            raise ValueError('you can use the setter only with '
-                             'MockPacketHandler for testing purpoises...')
 
     @property
     def protocol(self):
@@ -94,36 +85,50 @@ class DynamixelBus(BaseBus):
         return self.__baudrate
 
     def open(self):
-        """Opens the actual physical bus. Must be overriden by the
-        subclass.
+        """Allocates the port_handler and the packet_handler. If the
+        ``init_dict`` contains the attribute ``mock`` to ``True`` then
+        uses MockPacketHandler.
         """
-        self.__port_handler = dynamixel_sdk.PortHandler(self.port)
-        self.__port_handler.openPort()
-        self.__port_handler.setBaudRate(self.__baudrate)
-        if self.__rs485:
-            self.__port_handler.ser.rs485_mode = rs485.RS485Settings()
-            logger.info(f'bus {self.name} set in rs485 mode')
-        self.__packet_handler = dynamixel_sdk.PacketHandler(self.__protocol)
+        if self.__mock:
+            self.__port_handler = 'MockBus'
+            self.__packet_handler = MockPacketHandler(self.protocol,
+                                                      self.robot)
+        else:
+            self.__port_handler = PortHandler(self.port)
+            self.__port_handler.openPort()
+            self.__port_handler.setBaudRate(self.__baudrate)
+            if self.__rs485:
+                self.__port_handler.ser.rs485_mode = rs485.RS485Settings()
+                logger.info(f'bus {self.name} set in rs485 mode')
+            self.__packet_handler = PacketHandler(self.__protocol)
         logger.info(f'bus {self.name} opened')
 
     def close(self):
-        """Closes the actual physical bus. Must be overriden by the
-        subclass.
+        """Closes the actual physical bus.
         """
         if self.is_open:
             self.__packet_handler = None
-            self.__port_handler.closePort()
+            if not self.__mock:
+                self.__port_handler.closePort()
             self.__port_handler = None
             logger.info(f'bus {self.name} closed')
 
     @property
     def is_open(self):
-        """Returns `True` or `False` if the bus is open. Must be overriden
+        """Returns `True` or `False` if the bus is open. Must be overridden
         by the subclass.
         """
         return self.__port_handler is not None
 
     def ping(self, dxl_id):
+        """Performs a Dynamixel ``ping`` of a device.
+
+        Args:
+            dxl_id (int): the Dynamixel device number to be pinged.
+
+        Returns:
+            (bool): ``True`` if the device responded, ``False`` otherwise.
+        """
         if not self.is_open:
             logger.error('ping invoked with a bus not opened')
         else:
@@ -135,22 +140,34 @@ class DynamixelBus(BaseBus):
                 return False
 
     def scan(self, range=range(254)):
+        """Scans the devices on the bus.
+
+        Args:
+            range(int range): the range of devices to be cheked if they
+                exit on the bus. The method will call :py:method:`~ping`
+                for each ID in the list. By default the list is [0, 255).
+
+        Returns:
+            (list int): the list of IDs that have been successfully
+                identified on the bus. If none is found the list will be
+                empty.
+        """
         if not self.is_open:
             logger.error('scan invoked with a bus not opened')
         else:
             return [dxl_id for dxl_id in range if self.ping(dxl_id)]
 
     def read(self, dev, reg):
-        """Depending on the size of the register is calls the corresponding
+        """Depending on the size of the register calls the corresponding
         TxRx function from the packet handler.
         If the result is ok (communication error and dynamixel error are both
-        0) then the obtained value is returned. Otherwise it will throw a
-        ConnectionError. Callers shoud intercept the exception if they
-        want to control it.
+        0) then the obtained value is returned. Communication and data
+        errors are logged and no exceptions are raised.
         """
         if not self.is_open:
             logger.error(f'attempt to use closed bus {self.name}')
         else:
+
             # select the function by the size of register
             if reg.size == 1:
                 function = self.__packet_handler.read1ByteTxRx
@@ -159,40 +176,48 @@ class DynamixelBus(BaseBus):
             elif reg.size == 4:
                 function = self.__packet_handler.read4ByteTxRx
             else:
-                raise ValueError(f'unexpected size {reg.size} for register '
-                                 f'{reg.name} of device {dev.name}')
+                raise NotImplementedError
+
             # call the function
-            res, cerr, derr = function(self.__port_handler,
-                                       dev.dev_id, reg.address)
+            try:
+                res, cerr, derr = function(self.__port_handler,
+                                           dev.dev_id, reg.address)
+            except Exception as e:
+                logger.error(f'Exception raised while reading bus {self.name}'
+                             f' device {dev.name} register {reg.name}')
+                logger.error(str(e))
+                return None
+
+            # success call - log DEBUG
             logger.debug(f'[readXByteTxRx] dev={dev.dev_id} '
                          f'reg={reg.address}: '
                          f'{res} (cerr={cerr}, derr={derr})')
             # process result
             if cerr != 0:
                 # communication error
-                err_descr = self.__packet_handler.getTxRxResult(cerr)
+                err_desc = self.__packet_handler.getTxRxResult(cerr)
                 logger.error(f'[bus {self.name}] device {dev.name}, '
-                             f'register {reg.name}: {err_descr}')
+                             f'register {reg.name}: {err_desc}')
                 return None
             else:
                 if derr != 0:
                     # device error
-                    err_descr = self.__packet_handler.getRxPacketError(derr)
+                    err_desc = self.__packet_handler.getRxPacketError(derr)
                     logger.warning(f'device {dev.name} responded with a '
-                                   f'return error: {err_descr}')
+                                   f'return error: {err_desc}')
                 else:
                     return res
 
     def write(self, dev, reg, value):
-        """Depending on the size of the register is calls the corresponding
+        """Depending on the size of the register calls the corresponding
         TxRx function from the packet handler.
-        If the result is not ok (communication error or dynamixel error are not
-        both 0) it will throw a ConnectionError. Callers shoud intercept the
-        exception if they want to control it.
+        Communication and data errors are logged and no exceptions are
+        raised.
         """
         if not self.is_open:
             logger.error(f'attempt to use closed bus {self.name}')
         else:
+
             # select function by register size
             if reg.size == 1:
                 function = self.__packet_handler.write1ByteTxRx
@@ -201,94 +226,60 @@ class DynamixelBus(BaseBus):
             elif reg.size == 4:
                 function = self.__packet_handler.write4ByteTxRx
             else:
-                raise ValueError(f'unexpected size {reg.size} for register '
-                                 f'{reg.name} of device {dev.name}')
+                raise NotImplementedError
+
             # execute the function
-            cerr, derr = function(self.__port_handler, dev.dev_id,
-                                  reg.address, value)
+            try:
+                cerr, derr = function(self.__port_handler, dev.dev_id,
+                                      reg.address, value)
+            except Exception as e:
+                logger.error(f'Exception raised while writing bus {self.name}'
+                             f' device {dev.name} register {reg.name}')
+                logger.error(str(e))
+                return None
+
+            # success call - log DEBUG
             logger.debug(f'[writeXByteTxRx] dev={dev.dev_id} '
                          f'reg={reg.address}: '
                          f'{value} (cerr={cerr}, derr={derr})')
             # process result
             if cerr != 0:
                 # communication error
-                err_descr = self.__packet_handler.getTxRxResult(cerr)
+                err_desc = self.__packet_handler.getTxRxResult(cerr)
                 logger.error(f'[bus {self.name}] device {dev.name}, '
-                             f'register {reg.name}: {err_descr}')
+                             f'register {reg.name}: {err_desc}')
             else:
                 if derr != 0:
                     # device error
-                    err_descr = self.__packet_handler.getRxPacketError(derr)
+                    err_desc = self.__packet_handler.getRxPacketError(derr)
                     logger.warning(f'device {dev.name} responded with a '
-                                   f'return error: {err_descr}')
+                                   f'return error: {err_desc}')
 
 
-class ShareableDynamixelBus(DynamixelBus, ShareableBus):
+class SharedDynamixelBus(SharedBus):
     """A DynamixelBus that can be used in multithreaded environment.
 
-    Includes the functionality of a :py:class:`ShareableBus` in a
-    :py:class:`DynamixelBus`. The :py:method:`write` and :py:method:`read`
-    methods are wrapped around in :py:method:`can_use` and
-    :py:method:`stop_using` to provide the exclusive access.
+    Includes the functionality of a :py:class:`SharedBus` in a
+    :py:class:`DynamixelBus`. The :py:method:`~write` and :py:method:`~read`
+    methods are wrapped around in :py:method:`~can_use` and
+    :py:method:`~stop_using` to provide the exclusive access.
 
-    In addition, two methods :py:method:`naked_write` and
-    :py:method:`naked_read` are provided so that classes that want sequence
+    In addition, two methods :py:method:`~naked_write` and
+    :py:method:`~naked_read` are provided so that classes that want sequence
     of read / writes can do that more efficiently without accessing the
     lock every time. They simply invoke the *unsafe* methods
-    :py:method:Filebus.`write` and :py:method:Filebus.`read` from the
-    :py:class:`DynamixelBus` class.
+    :py:method:DynamixelBus.`write` and :py:method:DynamixelBus.`read` from
+    the :py:class:`DynamixelBus` class.
 
     .. warning::
 
-        If you are using :py:method:`naked_write` and :py:method:`naked_read`
-        you **must** ensure that you wrap them in :py:method:`can_use` and
-        :py:method:`stop_using` in the calling code.
+        If you are using :py:method:`~naked_write` and :py:method:`~naked_read`
+        you **must** ensure that you wrap them in :py:method:`~can_use` and
+        :py:method:`~stop_using` in the calling code.
 
     """
     def __init__(self, init_dict):
-        DynamixelBus.__init__(self, init_dict)
-        ShareableBus.__init__(self, init_dict)
-
-    def write(self, dev, reg, value):
-        """Write to file in a sharead environment.
-        If the method fails to acquire the lock it will log as an error
-        but will not raise an Exception.
-        """
-        if self.can_use():
-            super().write(dev, reg, value)
-            self.stop_using()
-        else:
-            logger.error(f'failed to acquire bus {self.name}')
-
-    def naked_write(self, dev, reg, value):
-        """Provided for efficient sequence write.
-        Simply calls the :py:method:DynamixelBus.`write` method.
-        """
-        super().write(dev, reg, value)
-
-    def read(self, dev, reg):
-        """Read from file in a sharead environment.
-        If the method fails to acquire the lock it will log as an error
-        but will not raise an Exception. Will return None in this case.
-
-        Returns:
-            (int) the value from file or None is failing to read or
-            acquire the lock.
-
-        """
-        if self.can_use():
-            value = super().read(dev, reg)
-            self.stop_using()
-            return value
-        else:
-            logger.error(f'failed to acquire bus {self.name}')
-            return None
-
-    def naked_read(self, dev, reg):
-        """Provided for efficient sequence read.
-        Simply calls the :py:method:DynamixelBus.`read` method.
-        """
-        return super().read(dev, reg)
+        super().__init__(DynamixelBus, init_dict)
 
 
 class MockPacketHandler():
@@ -303,24 +294,20 @@ class MockPacketHandler():
         return self.__protocol
 
     def getTxRxResult(self, err):
-        ph = dynamixel_sdk.PacketHandler(self.__protocol)
+        ph = PacketHandler(self.__protocol)
         return ph.getTxRxResult(err)
 
     def getRxPacketError(self, err):
-        ph = dynamixel_sdk.PacketHandler(self.__protocol)
+        ph = PacketHandler(self.__protocol)
         return ph.getRxPacketError(err)
 
     def __common_writeTxRx(self, ph, dev_id, address, value):
         if random.random() < self.__err:
             return -3001, 0
         else:
-            for dev in self.__robot.devices.values():
-                if dev.dev_id == dev_id:
-                    break
-            for reg in dev.registers.values():
-                if reg.address == address:
-                    break
-            reg.int_value = value
+            # device = self.__robot.device_by_id(dev_id)
+            # reg = device.register_by_address(address)
+            # reg.int_value = value
             if random.random() < self.__err:
                 return 0, 4         # overheat
             else:
@@ -339,12 +326,8 @@ class MockPacketHandler():
         if random.random() < self.__err:
             return 0, -3001, 0
         else:
-            for dev in self.__robot.devices.values():
-                if dev.dev_id == dev_id:
-                    break
-            for reg in dev.registers.values():
-                if reg.address == address:
-                    break
+            device = self.__robot.device_by_id(dev_id)
+            reg = device.register_by_address(address)
             if random.random() < self.__err:
                 return reg.int_value, 0, 4      # overheat
             else:
@@ -386,7 +369,7 @@ class MockPacketHandler():
             return 0, -3001, 0
 
         # we're not going to check the device and register as we
-        # expect both to be avaialable since we checked them when
+        # expect both to be available since we checked them when
         # we setup the sync
         else:
             if self.__mode == 'sync':
@@ -432,32 +415,3 @@ class MockPacketHandler():
             if device.dev_id == dxl_id:
                 return device.model_number, 0, 0
         return 0, -3001, 0
-
-
-class MockDynamixelBus(ShareableDynamixelBus):
-
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
-
-    def open(self):
-        """Opens the actual physical bus. Must be overriden by the
-        subclass.
-        """
-        self.port_handler = 'MockBus'
-        # self.port_handler.openPort()
-        # self.port_handler.setBaudRate(self.baudrate)
-        # if self.__rs485:
-        #     self.__port_handler.rs485_mode = rs485.RS485Settings()
-        #     logger.info(f'bus {self.name} set in rs485 mode')
-        self.packet_handler = MockPacketHandler(self.protocol,
-                                                self.robot)
-        logger.info(f'bus {self.name} opened')
-
-    def close(self):
-        """Closes the actual physical bus. Must be overriden by the
-        subclass.
-        """
-        if self.is_open:
-            self.packet_handler = None
-            self.port_handler = None
-            logger.info(f'bus {self.name} closed')

@@ -29,7 +29,7 @@ class BaseRobot():
     def __init__(self, init_dict):
         logger.info('***** Initializing robot *************')
         if len(init_dict) > 1:
-            logger.warning(f'Only the first robot will be considered.')
+            logger.warning('Only the first robot will be considered.')
         self.__name = list(init_dict)[0]
         components = init_dict[self.__name]
         self.__init_buses(components)
@@ -49,7 +49,7 @@ class BaseRobot():
     def __init_buses(self, init_dict):
         """Called by ``__init__`` to parse and instantiate buses."""
         self.__buses = {}
-        logger.info(f'Initializing buses...')
+        logger.info('Initializing buses...')
         check_key('buses', init_dict, 'robot', self.name, logger)
         for bus_name, bus_info in init_dict['buses'].items():
             # add the name in the dict
@@ -65,7 +65,8 @@ class BaseRobot():
     def __init_devices(self, init_dict):
         """Called by ``__init__`` to parse and instantiate devices."""
         self.__devices = {}
-        logger.info(f'Initializing devices...')
+        self.__dev_by_id = {}
+        logger.info('Initializing devices...')
         check_key('devices', init_dict, 'robot', '', logger)
         for dev_name, dev_info in init_dict['devices'].items():
             # add the name in the dev_info
@@ -81,12 +82,13 @@ class BaseRobot():
             dev_class = get_registered_class(dev_info['class'])
             new_dev = dev_class(dev_info)
             self.__devices[dev_name] = new_dev
+            self.__dev_by_id[dev_info['id']] = new_dev
             logger.debug(f'\tdevice {dev_name} added')
 
     def __init_joints(self, init_dict):
         """Called by ``__init__`` to parse and instantiate joints."""
         self.__joints = {}
-        logger.info(f'Initializing joints...')
+        logger.info('Initializing joints...')
         for joint_name, joint_info in init_dict.get('joints', {}).items():
             # add the name in the joint_info
             joint_info['name'] = joint_name
@@ -108,7 +110,7 @@ class BaseRobot():
     def __init_groups(self, init_dict):
         """Called by ``__init__`` to parse and instantiate groups."""
         self.__groups = {}
-        logger.info(f'Initializing groups...')
+        logger.info('Initializing groups...')
         for grp_name, grp_info in init_dict.get('groups', {}).items():
             new_grp = set()
             # groups of devices
@@ -132,7 +134,7 @@ class BaseRobot():
     def __init_syncs(self, init_dict):
         """Called by ``__init__`` to parse and instantiate syncs."""
         self.__syncs = {}
-        logger.info(f'Initializing syncs...')
+        logger.info('Initializing syncs...')
         for sync_name, sync_info in init_dict.get('syncs', {}).items():
             sync_info['name'] = sync_name
             check_key('group', sync_info, 'sync', sync_name, logger)
@@ -173,10 +175,7 @@ class BaseRobot():
             (BaseRegister): the register with that ID in the device. If
                 no register with that ID exists, returns ``None``.
         """
-        for device in self.devices.values():
-            if device.dev_id == dev_id:
-                return device
-        return None
+        return self.__dev_by_id.get(dev_id, None)
 
     @property
     def joints(self):
@@ -202,28 +201,28 @@ class BaseRobot():
 
         """
         logger.info('***** Starting robot *****************')
-        logger.info(f'Opening buses...')
+        logger.info('Opening buses...')
         for bus in self.buses.values():
             if bus.auto_open:
                 logger.debug(f'--> Opening bus: {bus.name}')
                 bus.open()
             else:
                 logger.debug(f'--> Opening bus: {bus.name} - skipped')
-        logger.info(f'Opening devices...')
+        logger.info('Opening devices...')
         for device in self.devices.values():
             if device.auto_open:
                 logger.debug(f'--> Opening device: {device.name}')
                 device.open()
             else:
                 logger.debug(f'--> Opening device: {device.name} - skipped')
-        logger.info(f'Activating joints...')
+        logger.info('Activating joints...')
         for joint in self.joints.values():
             if joint.auto_activate:
                 logger.debug(f'--> Activating joint: {joint.name}')
                 joint.active = True
             else:
                 logger.debug(f'--> Activating joint: {joint.name} - skipped')
-        logger.info(f'Starting syncs...')
+        logger.info('Starting syncs...')
         for sync in self.syncs.values():
             if sync.auto_start:
                 logger.debug(f'--> Starting sync: {sync.name}')
@@ -241,17 +240,17 @@ class BaseRobot():
 
         """
         logger.info('***** Stopping robot *****************')
-        logger.info(f'Stopping syncs...')
+        logger.info('Stopping syncs...')
         for sync in self.syncs.values():
             logger.debug(f'--> Stopping sync: {sync.name}')
             sync.stop()
         for joint in self.joints.values():
             logger.debug(f'--> Deactivating joint: {joint.name}')
-        logger.info(f'Closing devices...')
+        logger.info('Closing devices...')
         for device in self.devices.values():
             logger.debug(f'--> Closing device: {device.name}')
             device.close()
-        logger.info(f'Closing buses...')
+        logger.info('Closing buses...')
         for bus in self.buses.values():
             logger.debug(f'--> Closing bus: {bus.name}')
             bus.close()

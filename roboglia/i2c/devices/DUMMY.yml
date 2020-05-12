@@ -1,0 +1,70 @@
+# an example I2C device for testing purposes
+#
+registers:
+  control_1:
+    address: 1
+    access: RW
+    default: 42
+    desc: Control Accelerometer 
+
+  word_control_2:
+    address: 2
+    size: 2
+    access: RW
+    default: 0x4242
+    desc: A 2 Byte control register
+
+  byte_xl_x:
+    address: 4
+    access: RW
+    desc: Accelerometer X Byte Register
+
+  byte_xl_y:
+    address: 5
+    access: RW
+    desc: Accelerometer Y Byte Register
+
+  byte_xl_z:
+    address: 6
+    access: RW
+    desc: Accelerometer Z Byte Register
+
+  word_xl_x:
+    address: 7
+    size: 2
+    access: RW
+    desc: Accelerometer X Word Register
+
+  word_xl_y:
+    address: 9
+    size: 2
+    access: RW
+    desc: Accelerometer Y Word Register
+
+  word_xl_z:
+    address: 11
+    size: 2
+    access: RW
+    desc: Accelerometer Z Word Register
+
+  temp:
+    address: 12
+    access: R
+    desc: Temperature
+
+  word_g_x:
+    address: 13
+    size: 2
+    desc: Gyro X Word Register
+
+  word_g_y:
+    address: 15
+    size: 2
+    desc: Gyro Y Word Register
+
+  word_g_z:
+    address: 17
+    size: 2
+    desc: Gyro Z Word Register
+
+  
