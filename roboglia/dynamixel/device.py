@@ -70,4 +70,4 @@ class DynamixelDevice(BaseDevice):
             if not reg.sync:
                 value = self.read_register(reg)
                 if value is not None:
-                    reg.int_value 
+                    reg.int_value
