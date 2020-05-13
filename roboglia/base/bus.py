@@ -16,7 +16,7 @@
 import logging
 import threading
 
-from ..utils import check_key, check_type, check_options
+from ..utils import check_key, check_type, check_options, check_not_empty
 
 
 logger = logging.getLogger(__name__)
@@ -31,29 +31,36 @@ class BaseBus():
     physical object. Your subclass can add additional attributes and
     methods to deal with the particularities of the real bus represented.
 
-    Args:
-        init_dict (dict): The dictionary used to initialize the bus.
+    Parameters
+    ----------
+    name: str
+        The name of the bus
 
-    The following keys are expected in the dictionary:
+    robot: BaseRobot
+        A reference to the robot using the bus
 
-    - ``name``: the name of the bus
-    - ``port``: the port used by the bus
+    port: any
+        An identification for the physical bus access. Some busses have
+        string description like ``/dev/ttySC0`` while others could be just
+        integers (like in the case of I2C or SPI buses)
 
-    Optionally the following parameters can be provided:
-
-    - ``auto``: the bus should be opened automatically when the robot
-      starts; defaults to ``True``
+    auto: Bool
+        If ``True`` the bus will be opened when the robot is started by
+        calling :py:meth:`BaseRobot.start`. If ``False`` the bus will be
+        left closed during robot initialization and needs to be opened
+        by the programmer.
 
     Raises:
         KeyError: if ``port`` not supplied
     """
-    def __init__(self, init_dict):
+    def __init__(self, name='BUS', robot=None, port='', auto=True, **kwargs):
         # already checked by robot
-        self.__name = init_dict['name']
-        self.__robot = init_dict['robot']
-        check_key('port', init_dict, 'bus', self.__name, logger)
-        self.__port = init_dict['port']
-        self.__auto_open = init_dict.get('auto', True)
+        check_not_empty(robot, 'robot', 'bus', name, logger)
+        check_not_empty(port, 'port', 'bus', name, logger)
+        self.__name = name
+        self.__robot = robot
+        self.__port = port
+        self.__auto_open = auto
         check_options(self.__auto_open, [True, False], 'bus',
                       self.__name, logger)
 
@@ -86,9 +93,24 @@ class BaseBus():
 
     def close(self):
         """Closes the actual physical bus. Must be overridden by the
-        subclass.
+        subclass, but the implementation in the subclass should first check
+        for the return from this method before actually closing the bus as
+        dependent object on this bus might be affected::
+
+            def close(self):
+                if super().close()
+                    ... do the close activities
+                # optional; the handling in the ``BaseBus.close()`` will
+                # issue error message to log
+                else:
+                    logger.<level>('message')
         """
-        raise NotImplementedError
+        for sync in self.robot.syncs.values():
+            if sync.bus == self and sync.started:
+                logger.error(f'attempted to close bus {self.name} that is '
+                             f'used by running syncs')
+                return False
+        return True
 
     @property
     def is_open(self):
@@ -97,75 +119,113 @@ class BaseBus():
         """
         raise NotImplementedError
 
-    def read(self, dev, reg):
-        """Reads one standard information from the bus. Must be overridden.
+    def read(self, reg):
+        """Reads one register information from the bus. Must be overridden.
+
+        Parameters
+        ----------
+        reg: BaseRegister or subclass
+            The register object that needs to be read. Keep in mind that
+            the register object also contains a reference to the device
+            in the ``device`` attribute and it is up to the subclass to
+            determine the way the information must be processed before
+            providing it to the caller.
+
+        Returns
+        -------
+        int
+            Typically it would return an ``int`` that will have to be
+            handled by the caller.
         """
         raise NotImplementedError
 
-    def write(self, dev, reg, val):
-        """Writes one standard information from the bus. Must be overridden.
+    def write(self, reg, val):
+        """Writes one register information from the bus. Must be overridden.
+        
+        Parameters
+        ----------
+        reg: BaseRegister or subclass
+            The register object that needs to be written. Keep in mind that
+            the register object also contains a reference to the device
+            in the ``device`` attribute and it is up to the subclass to
+            determine the way the information must be processed before
+            providing it actual device.
+        
+        val: int
+            The value needed to the written to the device.
         """
         raise NotImplementedError
 
 
 class FileBus(BaseBus):
-    """A bus that writes to a file with cache.
+    """A bus that writes to a file with cache provided for testing purposes.
 
-    Read returns the last written data. Provided for testing purposes.
+    Writes by this class are send to a file stream and also buffered in a
+    local memory. Reads use this buffer to return values or use the default
+    values from the register defintion.
 
-    Args:
-        init_dict (dict): the initialization dictionary. Same parameters
-            required as for :py:class:`BaseBus`.
-
-    Raises:
-        same as :py:class:`BaseBus`.
+    Same parameters as :py:class:`BaseBus`.
     """
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
+    def __init__(self, name='FILEBUS', robot=None, port='', auto=True,
+                 **kwargs):
+        super().__init__(name=name,
+                         robot=robot,
+                         port=port,
+                         auto=auto,
+                         **kwargs)
         self.__fp = None
         self.__last = {}
         logger.debug(f'FileBus {self.name} initialized')
 
     def open(self):
         """Opens the file associated with the ``FileBus``."""
-        self.__fp = open(self.port, 'w')
-        logger.debug(f'FileBus {self.name} opened')
+        if self.is_open:
+            logger.warning(f'bus {self.name} already open')
+        else:
+            self.__fp = open(self.port, 'w')
+            logger.debug(f'FileBus {self.name} opened')
 
     def close(self):
         """Closes the file associated with the ``FileBus``."""
         if self.is_open:
-            self.__fp.close()
-            logger.debug(f'FileBus {self.name} closed')
+            if super().close():
+                self.__fp.close()
+                logger.debug(f'FileBus {self.name} closed')
 
     @property
     def is_open(self):
         """Returns ``True`` is the file is opened."""
         return False if not self.__fp else not self.__fp.closed
 
-    def write(self, dev, reg, value):
+    def write(self, reg, value):
         """Updates the values in the FileBus.
-
-        Args:
-            dev (obj): is the device that is writing
-            reg (obj): is the register object that is written
-            value (int): is the value beeing written.
-
-        Raises:
-            the method intercept the raise errors from writing to the
-            physical file and converts them to errors in the log file
-            so that the rest of the program can continue uninterrupted.
 
         The method will update the buffer with the value provided then
         will log the write on the file. A flush() is performed in case
         you want to inspect the content of the file while the robot
         is running.
+
+        File writing errors are intercepted and logged but no Exception is
+        raised.
+
+        Parameters
+        ----------
+        reg: BaseRegister or subclass
+            The register object that needs to be written. Keep in mind that
+            the register object also contains a reference to the device
+            in the ``device`` attribute and it is up to the subclass to
+            determine the way the information must be processed before
+            providing it actual device.
+        
+        value: int
+            The value needed to the written to the device.
         """
         if not self.is_open:
             logger.error(f'attempt to write to closed bus {self.name}')
         else:
-            self.__last[(dev.dev_id, reg.address)] = value
+            self.__last[(reg.device.dev_id, reg.address)] = value
             text = f'written {value} in register {reg.name} ' + \
-                   f'({reg.address}) of device {dev.dev_id}'
+                   f'({reg.address}) of device {reg.device.dev_id}'
             try:
                 self.__fp.write(text + '\n')
                 self.__fp.flush()
@@ -174,35 +234,42 @@ class FileBus(BaseBus):
                              f'for bus: {self.name}')
             logger.debug(f'FileBus {self.name} {text}')
 
-    def read(self, dev, reg):
+    def read(self, reg):
         """Reads the value from the buffer of ``FileBus`` and logs it.
 
-        Args:
-            dev (obj): the device being read
-            reg (obj): register object being read
-
-        Returns:
-            int : the value from the requested register
-
-        Raises:
-            the method intercept the raise errors from writing to the
-            physical file and converts them to errors in the log file
-            so that the rest of the program can continue uninterrupted.
+        The method intercepts the ``raise`` errors from writing to the
+        physical file and converts them to errors in the log file
+        so that the rest of the program can continue uninterrupted.
 
         The method will try to read from the buffer the value. If there
         is no value in the buffer it will be defaulted from the register's
         default value. The method will log the read to the file and return
         the value.
+
+        Parameters
+        ----------
+        reg: BaseRegister or subclass
+            The register object that needs to be read. Keep in mind that
+            the register object also contains a reference to the device
+            in the ``device`` attribute and it is up to the subclass to
+            determine the way the information must be processed before
+            providing it to the caller.
+
+        Returns
+        -------
+        int
+            Typically it would return an ``int`` that will have to be
+            handled by the caller.
         """
         if not self.is_open:
             logger.error(f'attempt to read from a closed bus {self.name}')
             return None
         else:
-            if (dev.dev_id, reg.address) not in self.__last:
-                self.__last[(dev.dev_id, reg.address)] = reg.default
-            val = self.__last[(dev.dev_id, reg.address)]
+            if (reg.device.dev_id, reg.address) not in self.__last:
+                self.__last[(reg.device.dev_id, reg.address)] = reg.default
+            val = self.__last[(reg.device.dev_id, reg.address)]
             text = f'read {val} from register {reg.name} ){reg.address}) ' + \
-                   f'of device {dev.dev_id}'
+                   f'of device {reg.device.dev_id}'
             try:
                 self.__fp.write(text + '\n')
                 self.__fp.flush()
@@ -213,6 +280,9 @@ class FileBus(BaseBus):
             return val
 
     def __str__(self):
+        """The string representation of the ``FileBus`` is a dump of the
+        internal buffer.
+        """
         result = ''
         for (dev_id, reg_address), value in self.__last.items():
             result += f'Device {dev_id}, Register ID {reg_address}: ' + \
@@ -221,14 +291,37 @@ class FileBus(BaseBus):
 
 
 class SharedBus():
+    """Implements a bus that provides a locking mechanism for the access to
+    the underlying hardware, aimed specifically for use in multi-threaded
+    environments where multiple jobs could compete for access to one single
+    bus.
 
-    def __init__(self, BusClass, init_dict):
-        self.__main_bus = BusClass(init_dict)
-        self.__timeout = init_dict.get('timeout', 0.5)
-        check_type(self.__timeout, float, 'bus', init_dict['name'], logger)
+    .. note:: This class implements ``__getattr__`` so that any calls to
+        an instance of this class that are not already implemented bellow will
+        be passed to the internal instance of ``BusClass`` that was created
+        at instantiation. This way you can access all the attributes and
+        methods of the ``BusClass`` instance transparently, as long as they
+        are not already overridden by this class.
+
+    Parameters
+    ----------
+    BusClass: BaseBus subclass
+        The class that will be wrapped by the ``SharedBus``
+    
+    timeout: float
+        A timeout for acquiring the lock that controls the access to the bus
+    
+    **kwargs: 
+        keyword arguments that are passed to the BusClass for
+        instantiation
+    """
+    def __init__(self, BusClass, timeout=0.5, **kwargs):
+        self.__main_bus = BusClass(**kwargs)
+        self.__timeout = timeout
+        check_type(self.__timeout, float, 'bus', self.__main_bus.name, logger)
         if self.__timeout > 0.5:
             logger.warning(f'timeout {self.__timeout} for shareable '
-                           f'{init_dict["name"]} might be excessive.')
+                           f'{self.__main_bus.name} might be excessive.')
         self.__lock = threading.Lock()
 
     @property
@@ -239,11 +332,24 @@ class SharedBus():
     def can_use(self):
         """Tries to acquire the resource on behalf of the caller.
 
-        Returns:
-            bool: ``True`` if managed to acquire the resource, ``False`` if
-                  not. It is the responsibility of the caller to decide what
-                  to do in case there is a ``False`` return including
-                  logging or Raising.
+        This method should be called every time a user of the bus wants to
+        perform an operation. If the result is ``False`` the user does not
+        have exclusive use of the bus and the actions are not guaranteed.
+
+        .. warning:: It is the responsibility of the user to call
+            :py:meth:`~SharedBus.stop_using` as soon as possible after
+            preforming the intended work with the bus if this method
+            grants it access. Failing to do so will result in the bus
+            being blocked by this user and prohibiting other users to
+            access it.
+
+        Returns
+        -------
+        bool
+            ``True`` if managed to acquire the resource, ``False`` if
+            not. It is the responsibility of the caller to decide what
+            to do in case there is a ``False`` return including
+            logging or Raising.
         """
         return self.__lock.acquire(timeout=self.__timeout)
 
@@ -251,40 +357,157 @@ class SharedBus():
         """Releases the resource."""
         self.__lock.release()
 
-    def naked_read(self, dev, reg):
-        """Calls the main bus without invoking the lock."""
-        return self.__main_bus.read(dev, reg)
+    def naked_read(self, reg):
+        """Calls the main bus read without invoking the lock. This is 
+        intended for those users that plan to use a series of read operations
+        and they do not want to lock and release the bus every time, as this
+        adds some overhead. Since the original bus' ``read`` method is
+        overridden (see below), any calls to ``read`` from a user will
+        result in using the wrapped version defined in this class. Therefore
+        in the scenario that the user wants to execute a series of quick
+        reads the ``naked_read`` can be used as long as the user wraps the
+        calls correctly for obtaining exclusive access::
+        
+            if bus.can_use():
+                val1 = bus.naked_read(reg1)
+                val2 = bus.naked_read(reg2)
+                val3 = bus.naked_read(reg3)
+                ...
+                bus.stop_using()
+            else:
+                logger.warning('some warning')
 
-    def naked_write(self, dev, reg, value):
-        """Calls the main bus without invoking the lock."""
-        self.__main_bus.write(dev, reg, value)
+        Parameters
+        ----------
+        reg: BaseRegister or subclass
+            The register object that needs to be read. Keep in mind that
+            the register object also contains a reference to the device
+            in the ``device`` attribute and it is up to the subclass to
+            determine the way the information must be processed before
+            providing it to the caller.
 
-    def read(self, dev, reg):
-        """Wraps the main bus call in a request for lock."""
+        Returns
+        -------
+        int
+            Typically it would return an ``int`` that will have to be
+            handled by the caller.
+        """
+        return self.__main_bus.read(reg)
+
+    def naked_write(self, reg, value):
+        """Calls the main bus write without invoking the lock. This is 
+        intended for those users that plan to use a series of write operations
+        and they do not want to lock and release the bus every time, as this
+        adds some overhead. Since the original bus' ``write`` method is
+        overridden (see below), any calls to ``write`` from a user will
+        result in using the wrapped version defined in this class. Therefore
+        in the scenario that the user wants to execute a series of quick
+        writes the ``naked_write`` can be used as long as the user wraps the
+        calls correctly for obtaining exclusive access::
+        
+            if bus.can_use():
+                val1 = bus.naked_write(reg1, val1)
+                val2 = bus.naked_write(reg2, val2)
+                val3 = bus.naked_write(reg3, val3)
+                ...
+                bus.stop_using()
+            else:
+                logger.warning('some warning')
+
+        Parameters
+        ----------
+        reg: BaseRegister or subclass
+            The register object that needs to be read. Keep in mind that
+            the register object also contains a reference to the device
+            in the ``device`` attribute and it is up to the subclass to
+            determine the way the information must be processed before
+            providing it to the caller.
+
+        value: int
+            The value needed to the written to the device.
+        """
+        self.__main_bus.write(reg, value)
+
+    def read(self, reg):
+        """Overrides the main bus' ``read`` method and
+        performs a **safe** read by wrapping the main bus ``read`` call
+        in a request to acquire the bus.
+        
+        If the method is not able to acquire the bus in time (times out)
+        it will log an error and return ``None``.
+
+        Parameters
+        ----------
+        reg: BaseRegister or subclass
+            The register object that needs to be read. Keep in mind that
+            the register object also contains a reference to the device
+            in the ``device`` attribute and it is up to the subclass to
+            determine the way the information must be processed before
+            providing it to the caller.
+
+        Returns
+        -------
+        int:
+            The value read for this register or ``None`` is the call failed
+            to secure with bus within the ``timeout``.
+        
+        """
         if self.can_use():
-            value = self.__main_bus.read(dev, reg)
+            value = self.__main_bus.read(reg)
             self.stop_using()
             return value
         else:
             logger.error(f'failed to acquire bus {self.__main_bus.name}')
             return None
 
-    def write(self, dev, reg, value):
-        """Wraps the main bus call in a request for lock."""
+    def write(self, reg, value):
+        """Overrides the main bus' ``write`` method and
+        performs a **safe** write by wrapping the main bus ``write`` call
+        in a request to acquire the bus.
+        
+        If the method is not able to acquire the bus in time (times out)
+        it will log an error.
+
+        Parameters
+        ----------
+        reg: BaseRegister or subclass
+            The register object that needs to be read. Keep in mind that
+            the register object also contains a reference to the device
+            in the ``device`` attribute and it is up to the subclass to
+            determine the way the information must be processed before
+            providing it to the caller.
+
+        value: int
+            The value to be written to the device.
+        """
         if self.can_use():
-            self.__main_bus.write(dev, reg, value)
+            self.__main_bus.write(reg, value)
             self.stop_using()
         else:
             logger.error(f'failed to acquire bus {self.__main_bus.name}')
 
     def __getattr__(self, name):
+        """Forwards all unanswered calls to the main bus instance."""
         return getattr(self.__main_bus, name)
 
 
 class SharedFileBus(SharedBus):
+    """This is a :py:class:`FileBus` class that was wrapped for access
+    to a shared resource.
 
-    def __init__(self, init_dict):
-        super().__init__(FileBus, init_dict)
+    All :py:class:`FileBus` methods and attributes are accessible
+    transparently but please be aware that the methods ``read`` and ``write``
+    are now **safe**, wrapped around calls to :py:meth:`SharedBus.can_use`
+    and :py:meth:`SharedBus.stop_using`. Additionally the two new access
+    methods :py:meth:`~SharedBus.naked_read` and
+    :py:meth:`~SharedBus.naked_write` are available.
+
+    .. note:: You should always use a ``SharedFileBus`` class if you plan
+        to use sync loops that run in separate threads and they will have
+        access to the same bus.
+    """
+    def __init__(self, **kwargs):
+        super().__init__(FileBus, **kwargs)
 
     def __str__(self):
         return FileBus.__str__(self)

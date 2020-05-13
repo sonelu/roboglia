@@ -14,6 +14,7 @@ roboglia.dynamixel.DynamixelSyncWriteLoop
    
       ~DynamixelSyncWriteLoop.__init__
       ~DynamixelSyncWriteLoop.atomic
+      ~DynamixelSyncWriteLoop.get_register_range
       ~DynamixelSyncWriteLoop.pause
       ~DynamixelSyncWriteLoop.process_devices
       ~DynamixelSyncWriteLoop.process_registers
@@ -32,7 +33,6 @@ roboglia.dynamixel.DynamixelSyncWriteLoop
 
    .. autosummary::
    
-      ~DynamixelSyncWriteLoop.all_length
       ~DynamixelSyncWriteLoop.auto_start
       ~DynamixelSyncWriteLoop.bus
       ~DynamixelSyncWriteLoop.devices
@@ -43,7 +43,6 @@ roboglia.dynamixel.DynamixelSyncWriteLoop
       ~DynamixelSyncWriteLoop.registers
       ~DynamixelSyncWriteLoop.review
       ~DynamixelSyncWriteLoop.running
-      ~DynamixelSyncWriteLoop.start_address
       ~DynamixelSyncWriteLoop.started
       ~DynamixelSyncWriteLoop.stopped
       ~DynamixelSyncWriteLoop.warning
@@ -58,6 +57,7 @@ roboglia.dynamixel.DynamixelSyncWriteLoop
    
    .. automethod:: __init__
    .. automethod:: atomic
+   .. automethod:: get_register_range
    .. automethod:: pause
    .. automethod:: process_devices
    .. automethod:: process_registers

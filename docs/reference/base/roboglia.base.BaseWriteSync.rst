@@ -14,6 +14,7 @@ roboglia.base.BaseWriteSync
    
       ~BaseWriteSync.__init__
       ~BaseWriteSync.atomic
+      ~BaseWriteSync.get_register_range
       ~BaseWriteSync.pause
       ~BaseWriteSync.process_devices
       ~BaseWriteSync.process_registers
@@ -56,6 +57,7 @@ roboglia.base.BaseWriteSync
    
    .. automethod:: __init__
    .. automethod:: atomic
+   .. automethod:: get_register_range
    .. automethod:: pause
    .. automethod:: process_devices
    .. automethod:: process_registers

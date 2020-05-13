@@ -15,13 +15,13 @@ dummy:
     d01:
       class: BaseDevice
       bus: busA
-      id: 1
+      dev_id: 1
       model: DUMMY
 
     d02:
       class: BaseDevice
       bus: busA
-      id: 2
+      dev_id: 2
       model: DUMMY
       auto: False
 
@@ -29,13 +29,13 @@ dummy:
     d03:
       class: BaseDevice
       bus: busA
-      id: 3
+      dev_id: 3
       model: DUMMY
 
     d04:
       class: BaseDevice
       bus: busB
-      id: 4
+      dev_id: 4
       model: DUMMY
 
   joints:
@@ -49,8 +49,8 @@ dummy:
       load_read: current_load
       load_write: desired_load
       activate: enable_device
-      min: -30.0
-      max: 30.0
+      minim: -30.0
+      maxim: 30.0
 
     tilt:
       class: JointPVL

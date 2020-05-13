@@ -182,7 +182,7 @@ class BaseReadSync(BaseSync):
             for device in self.devices:
                 for register in self.registers:
                     reg = getattr(device, register)
-                    value = self.bus.naked_read(device, reg)
+                    value = self.bus.naked_read(reg)
                     if value is not None:
                         reg.int_value = value
                     else:
@@ -209,7 +209,7 @@ class BaseWriteSync(BaseSync):
             for device in self.devices:
                 for register in self.registers:
                     reg = getattr(device, register)
-                    self.bus.naked_write(device, reg, reg.int_value)
+                    self.bus.naked_write(reg, reg.int_value)
             self.bus.stop_using()
         else:
             logger.error(f'failed to acquire buss {self.bus.name}')

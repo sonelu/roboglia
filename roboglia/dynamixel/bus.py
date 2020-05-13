@@ -20,7 +20,7 @@ from dynamixel_sdk import PacketHandler, PortHandler
 from serial import rs485
 
 from ..base import BaseBus, SharedBus
-from ..utils import check_key, check_type, check_options
+from ..utils import check_key, check_type, check_options, check_not_empty
 
 logger = logging.getLogger(__name__)
 
@@ -30,39 +30,51 @@ class DynamixelBus(BaseBus):
 
     Uses ``dynamixel_sdk``.
 
-    Args:
-        init_dict (dict): The dictionary used to initialize the bus.
+    .. note: The parameters listed bellow are only the specific ones
+        introduced by the ``DynamixelBus`` class. Since this is a subclass
+        of :py:class:`BaseBus` and the constructor will call the ``super()``
+        constructor, all the paramters supported by :py:class:`BaseBus` are
+        also supported and checked when creating a ``DynamixelBus``. For
+        instance the `name`, `robot` and `port` are validated.
 
-    In addition to the keys that are required by the :py:class:`BaseBus` the
-    following key must by provided:
+    Parameters
+    ----------
+    baudrate: int
+        Communication speed for the bus
 
-    - ``baudrate``: communication speed for the bus (int)
-    - ``protocol``: communication protocol for the bus; must be 1.0 or 2.0
+    protocol: float
+        Communication protocol for the bus; must be 1.0 or 2.0
 
-    Additional keys:
-    - ``rs485``: activates RS485 protocol on the serial bus (bool); default
-      is ``False``
-    - ``mock``: indicates to use mock bus for testing purposes; default is
-      ``False``
+    rs485: bool
+        If ``True``, ``DynamixelBus`` will configure the serial port with
+        RS485 support. This might be required for certain interfaces that
+        need this mode in order to control the semi-duplex protocol (one
+        wire) implemented by Dynamixel devices or if you genuinely use RS485
+        Dynamixel devices.
+
+    mock: bool
+        Indicates to use mock bus for testing purposes; this will make use
+        of the :py:class:`MockPacketHandler` to simulate the communication
+        on a Dynamixel bus and allow to test the software in CI testing.
 
     Raises:
         KeyError: if any of the required keys are missing
         ValueError: if any of the required data is incorrect
     """
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
-        check_key('baudrate', init_dict, 'bus', self.name, logger)
-        self.__baudrate = init_dict['baudrate']
-        check_type(self.__baudrate, int, 'bus', self.name, logger)
-        check_key('protocol', init_dict, 'bus', self.name, logger)
-        self.__protocol = init_dict['protocol']
-        check_options(self.__protocol, [1.0, 2.0], 'bus', self.name, logger)
-        self.__rs485 = init_dict.get('rs485', False)
-        check_options(self.__rs485, [True, False], 'bus', self.name, logger)
+    def __init__(self, baudrate=1000000, protocol=2.0, rs485=False,
+                 mock=False, **kwargs):
+        super().__init__(**kwargs)
+        check_type(baudrate, int, 'bus', self.name, logger)
+        check_not_empty(baudrate, 'baudrate', 'bus', self.name, logger)
+        self.__baudrate = baudrate
+        check_options(protocol, [1.0, 2.0], 'bus', self.name, logger)
+        self.__protocol = protocol
+        check_options(rs485, [True, False], 'bus', self.name, logger)
+        self.__rs485 = rs485
         self.__port_handler = None
         self.__packet_handler = None
-        self.__mock = init_dict.get('mock', False)
-        check_options(self.__mock, [True, False], 'bus', self.name, logger)
+        check_options(mock, [True, False], 'bus', self.name, logger)
+        self.__mock = mock
 
     @property
     def port_handler(self):
@@ -84,9 +96,14 @@ class DynamixelBus(BaseBus):
         """Bus baudrate."""
         return self.__baudrate
 
+    @property
+    def rs485(self):
+        """If the bus uses rs485."""
+        return self.__rs485
+
     def open(self):
         """Allocates the port_handler and the packet_handler. If the
-        ``init_dict`` contains the attribute ``mock`` to ``True`` then
+        attribute ``mock`` was ``True`` when setting up the bus, then
         uses MockPacketHandler.
         """
         if self.__mock:
@@ -96,38 +113,43 @@ class DynamixelBus(BaseBus):
         else:
             self.__port_handler = PortHandler(self.port)
             self.__port_handler.openPort()
-            self.__port_handler.setBaudRate(self.__baudrate)
-            if self.__rs485:
+            self.__port_handler.setBaudRate(self.baudrate)
+            if self.rs485:
                 self.__port_handler.ser.rs485_mode = rs485.RS485Settings()
                 logger.info(f'bus {self.name} set in rs485 mode')
             self.__packet_handler = PacketHandler(self.__protocol)
         logger.info(f'bus {self.name} opened')
 
     def close(self):
-        """Closes the actual physical bus.
-        """
+        """Closes the actual physical bus. Calls the ``super().close()`` to
+        check if there is ok to close the bus and no other objects are
+        using it."""
         if self.is_open:
-            self.__packet_handler = None
-            if not self.__mock:
-                self.__port_handler.closePort()
-            self.__port_handler = None
-            logger.info(f'bus {self.name} closed')
+            if super().close():
+                self.__packet_handler = None
+                if not self.__mock:
+                    self.__port_handler.closePort()
+                self.__port_handler = None
+                logger.info(f'bus {self.name} closed')
 
     @property
     def is_open(self):
-        """Returns `True` or `False` if the bus is open. Must be overridden
-        by the subclass.
+        """Returns `True` or `False` if the bus is open.
         """
         return self.__port_handler is not None
 
     def ping(self, dxl_id):
         """Performs a Dynamixel ``ping`` of a device.
 
-        Args:
-            dxl_id (int): the Dynamixel device number to be pinged.
+        Parameters
+        ----------
+        dxl_id: int
+            The Dynamixel device number to be pinged.
 
-        Returns:
-            (bool): ``True`` if the device responded, ``False`` otherwise.
+        Returns
+        -------
+        bool
+            ``True`` if the device responded, ``False`` otherwise.
         """
         if not self.is_open:
             logger.error('ping invoked with a bus not opened')
@@ -142,32 +164,45 @@ class DynamixelBus(BaseBus):
     def scan(self, range=range(254)):
         """Scans the devices on the bus.
 
-        Args:
-            range(int range): the range of devices to be cheked if they
-                exit on the bus. The method will call :py:method:`~ping`
-                for each ID in the list. By default the list is [0, 255).
+        Parameters
+        ----------
+        range: range
+            the range of devices to be cheked if they
+            exist on the bus. The method will call :py:method:`~ping`
+            for each ID in the list. By default the list is [0, 253].
 
         Returns:
-            (list int): the list of IDs that have been successfully
-                identified on the bus. If none is found the list will be
-                empty.
+        list of int
+            The list of IDs that have been successfully
+            identified on the bus. If none is found the list will be
+            empty.
         """
         if not self.is_open:
             logger.error('scan invoked with a bus not opened')
         else:
             return [dxl_id for dxl_id in range if self.ping(dxl_id)]
 
-    def read(self, dev, reg):
+    def read(self, reg):
         """Depending on the size of the register calls the corresponding
         TxRx function from the packet handler.
         If the result is ok (communication error and dynamixel error are both
         0) then the obtained value is returned. Communication and data
         errors are logged and no exceptions are raised.
+
+        Parameters
+        ----------
+        reg: BaseRegister or subclass
+            The register to be read
+
+        Returns
+        -------
+        int:
+            The value read by calling the device.
         """
         if not self.is_open:
             logger.error(f'attempt to use closed bus {self.name}')
         else:
-
+            dev = reg.device
             # select the function by the size of register
             if reg.size == 1:
                 function = self.__packet_handler.read1ByteTxRx
@@ -208,16 +243,27 @@ class DynamixelBus(BaseBus):
                 else:
                     return res
 
-    def write(self, dev, reg, value):
+    def write(self, reg, value):
         """Depending on the size of the register calls the corresponding
         TxRx function from the packet handler.
         Communication and data errors are logged and no exceptions are
         raised.
+
+        Paramters
+        ---------
+        reg: BaseRegister or subclass
+            The register to write to
+
+        value: int
+            The value to write to the register. Please note that this is
+            in the internal format of the register and it is the
+            responsibility of the register class to provide conversion
+            between the internal and external format if they are different.
         """
         if not self.is_open:
             logger.error(f'attempt to use closed bus {self.name}')
         else:
-
+            dev = reg.device
             # select function by register size
             if reg.size == 1:
                 function = self.__packet_handler.write1ByteTxRx
@@ -259,8 +305,8 @@ class DynamixelBus(BaseBus):
 class SharedDynamixelBus(SharedBus):
     """A DynamixelBus that can be used in multithreaded environment.
 
-    Includes the functionality of a :py:class:`SharedBus` in a
-    :py:class:`DynamixelBus`. The :py:method:`~write` and :py:method:`~read`
+    Includes the functionality of a :py:class:`DynamixelBus` in a
+    :py:class:`SharedBus`. The :py:method:`~write` and :py:method:`~read`
     methods are wrapped around in :py:method:`~can_use` and
     :py:method:`~stop_using` to provide the exclusive access.
 
@@ -271,6 +317,8 @@ class SharedDynamixelBus(SharedBus):
     :py:method:DynamixelBus.`write` and :py:method:DynamixelBus.`read` from
     the :py:class:`DynamixelBus` class.
 
+    .. see also: :py:class:`SharedBus` class.
+
     .. warning::
 
         If you are using :py:method:`~naked_write` and :py:method:`~naked_read`
@@ -278,12 +326,34 @@ class SharedDynamixelBus(SharedBus):
         :py:method:`~stop_using` in the calling code.
 
     """
-    def __init__(self, init_dict):
-        super().__init__(DynamixelBus, init_dict)
+    def __init__(self, **kwargs):
+        super().__init__(DynamixelBus, **kwargs)
 
 
 class MockPacketHandler():
+    """A class used to simulate the Dynamixel communication without actually
+    using a real bus or devices. Used for testing in the CI environment.
+    The class includes deterministic behavior, for instance it will use the
+    existing values of the device to mock a response, as well as well as
+    stochastic behavior where with a certain probability we generate
+    communication errors in order to be able to test how the code deals with
+    these situations. Also, for read of registers that are read only the
+    class will introduce small random numbers to the numbers already in the
+    registers so to simulate values that change over time (ex. current
+    position).
 
+    Parameters
+    ----------
+    protocol: float
+        Dynamixel protocol to use. Should be 1.0 or 2.0
+
+    robot: BaseRobot
+        The robot for in order to *bootstrap* information.
+
+    err: float
+        A value that is used to generate random communication errors so that
+        we can test the parts of the code that deal with this.
+    """
     def __init__(self, protocol, robot, err=0.1):
         self.__robot = robot
         self.__err = err
@@ -291,13 +361,42 @@ class MockPacketHandler():
         self.__sync_data_length = None
 
     def getProtocolVersion(self):
+        """Returns the Dynamixel protocol used."""
         return self.__protocol
 
     def getTxRxResult(self, err):
+        """Used to get a string representation of a communication error.
+        Invokes the official function from ``PacketHandler`` in
+        ``dynamixel_sdk``.
+
+        Parameters
+        ----------
+        err: int
+            An error code as reported by the communication medium
+
+        Returns
+        -------
+        str:
+            A string representation of this error.
+        """
         ph = PacketHandler(self.__protocol)
         return ph.getTxRxResult(err)
 
     def getRxPacketError(self, err):
+        """Used to get a string representation of a device response error.
+        Invokes the official function from ``PacketHandler`` in
+        ``dynamixel_sdk``.
+
+        Parameters
+        ----------
+        err: int
+            An error code as reported by the Dynamixel device
+
+        Returns
+        -------
+        str:
+            A string representation of this error.
+        """
         ph = PacketHandler(self.__protocol)
         return ph.getRxPacketError(err)
 
@@ -314,12 +413,24 @@ class MockPacketHandler():
                 return 0, 0
 
     def write1ByteTxRx(self, ph, dev_id, address, value):
+        """Mocks a write of 1 byte to a device. In ``err`` percentage
+        time it will raise a communication error. From the remaning cases
+        again an ``err`` percentage will be raised with device error
+        (overheat).
+
+        The paramters are copied from the ``PacketHadler`` in
+        ``dynamixel_sdk``.
+
+        You would rarely need to use this.
+        """
         return self.__common_writeTxRx(ph, dev_id, address, value)
 
     def write2ByteTxRx(self, ph, dev_id, address, value):
+        """Same as :py:meth:`write1ByteTxRx` but for 2 Bytes registers."""
         return self.__common_writeTxRx(ph, dev_id, address, value)
 
     def write4ByteTxRx(self, ph, dev_id, address, value):
+        """Same as :py:meth:`write1ByteTxRx` but for 4 Bytes registers."""
         return self.__common_writeTxRx(ph, dev_id, address, value)
 
     def __common_readTxRx(self, ph, dev_id, address):
@@ -334,17 +445,24 @@ class MockPacketHandler():
                 return reg.int_value, 0, 0
 
     def read1ByteTxRx(self, ph, dev_id, address):
+        """Same as :py:meth:`write1ByteTxRx` but for reading 1 Bytes
+        registers."""
         return self.__common_readTxRx(ph, dev_id, address)
 
     def read2ByteTxRx(self, ph, dev_id, address):
+        """Same as :py:meth:`write1ByteTxRx` but for reading 2 Bytes
+        registers."""
         return self.__common_readTxRx(ph, dev_id, address)
 
     def read4ByteTxRx(self, ph, dev_id, address):
+        """Same as :py:meth:`write1ByteTxRx` but for reading 4 Bytes
+        registers."""
         return self.__common_readTxRx(ph, dev_id, address)
 
     def syncWriteTxOnly(self, port, start_address, data_length,
                         param, param_length):
-        """We return randomly an error or success."""
+        """Mocks a SyncWrite transmit package. We return randomly an error
+        or success."""
         if random.random() < self.__err:
             return -3001
         else:
@@ -352,7 +470,8 @@ class MockPacketHandler():
 
     def syncReadTx(self, port, start_address, data_length, param,
                    param_length):
-        """We return randomly an error or success."""
+        """Mocks a SyncWrite transmit package. We return randomly an error
+        or success."""
         if random.random() < self.__err:
             return -3001
         else:
@@ -364,7 +483,15 @@ class MockPacketHandler():
             return 0
 
     def readRx(self, port, dxl_id, length):
-        """Used by SyncRead and BulkRead"""
+        """Mocks a read package received. Used by SyncRead and BulkRead.
+        It will attempt to produce a response based on the data already
+        exiting in the registers. If the register is a read-only one, we
+        will add a random value between (-10, 10) to the exiting value and
+        then trim it to the ``min`` and ``max`` limits of the register. When
+        passing back the data, for registers that are more than 1 byte a
+        *low endian* conversion is executed (see
+        :py:meth:`DynamixelRegister.register_low_endian).
+        """
         if random.random() < self.__err:
             return 0, -3001, 0
 
@@ -385,20 +512,25 @@ class MockPacketHandler():
                 register = device.register_by_address(address)
                 assert register.size == length
 
-            value = register.int_value + random.randint(-10, 10)
-            value = max(register.min, min(register.max, value))
+            if register.access =='R':
+                value = register.int_value
+            else:
+                value = register.int_value + random.randint(-10, 10)
+                value = max(register.min, min(register.max, value))
             self.__index += 1
             return device.register_low_endian(value, register.size), 0, 0
 
     def bulkWriteTxOnly(self, port, param, param_length):
-        """We return randomly an error or success."""
+        """Simulate a BulkWrite transmit package. We return randomly an error
+        or success."""
         if random.random() < self.__err:
             return -3001
         else:
             return 0
 
     def bulkReadTx(self, port, param, param_length):
-        """We return randomly an error or success."""
+        """"Simulate a BulkWrite transmit of response request package. We
+        return randomly an error or success."""
         if random.random() < self.__err:
             return -3001
         else:
@@ -410,7 +542,7 @@ class MockPacketHandler():
             return 0
 
     def ping(self, ph, dxl_id):
-
+        """Simulates a ``ping`` on the Dynamixel bus."""
         for device in self.__robot.devices.values():
             if device.dev_id == dxl_id:
                 return device.model_number, 0, 0

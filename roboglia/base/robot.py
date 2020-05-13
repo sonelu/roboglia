@@ -34,31 +34,38 @@ class BaseRobot():
     :py:meth:`~BaseRobot.from_dict` class method. For instantiating from a
     YAML file use :py:meth:`~BaseRobot.from_yaml` class method.
 
-    Args:
-        name (str): the name of the robot; will default to **ROBOT**
-        buses (dict): a dictionary with buses definitions; the components
-            of the buses are defined by the attributes of the particular
-            class of the bus
-        devices (dict): a dictionary with the device definitions; the
-            components of devices are defined by the attributes of the
-            particular class of device
-        joints (dict): a dictionary with the joint definitions; the
-            components of the joints are defined by the attributes of the
-            particular class of joint
-        groups (dict): a dictionary with the group definitions; the groups
-            end up unwind in the robot as sets (eliminates duplication) and
-            they are defined by the following components (keys in the
-            dictionary defintion): ``devices``  a list of device names
-            in no particular order, ``joints`` a list of joint names in
-            no particular order, ``sensors`` a list of sensors in no
-            particular order and ``groups`` a list of sub-groups that were
-            previously defined and will be included in the current group.
-            Technically it is possible to mix and match the components of
-            a group (for instance create groups that contain devices, sensors,
-            and joints).
-        syncs (dict): a dictionary with sync loops definitions; the components
-            of syncs are defined by the attributes of the particular class of
-            sync.
+    Parameters
+    ----------
+    name: str
+        the name of the robot; will default to **ROBOT**
+    buses: dict
+        a dictionary with buses definitions; the components
+        of the buses are defined by the attributes of the particular
+        class of the bus
+    devices: dict
+        a dictionary with the device definitions; the
+        components of devices are defined by the attributes of the
+        particular class of device
+    joints: dict
+        a dictionary with the joint definitions; the
+        components of the joints are defined by the attributes of the
+        particular class of joint
+    groups: dict
+        a dictionary with the group definitions; the groups
+        end up unwind in the robot as sets (eliminates duplication) and
+        they are defined by the following components (keys in the
+        dictionary defintion): ``devices``  a list of device names
+        in no particular order, ``joints`` a list of joint names in
+        no particular order, ``sensors`` a list of sensors in no
+        particular order and ``groups`` a list of sub-groups that were
+        previously defined and will be included in the current group.
+        Technically it is possible to mix and match the components of
+        a group (for instance create groups that contain devices, sensors,
+        and joints).
+    syncs: dict
+        a dictionary with sync loops definitions; the components
+        of syncs are defined by the attributes of the particular class of
+        sync.
     """
     def __init__(self, name='ROBOT', buses={}, devices={}, joints={},
                  groups={}, syncs={}):
@@ -79,59 +86,6 @@ class BaseRobot():
         self.__init_syncs(syncs)
         logger.info('***** Initialization complete ********')
 
-    @classmethod
-    def from_dict(sls, init_dict):
-        """Constructs a robot from a description provided in a dictionary.
-        The dictionary should have a single top key, the name of the robot
-        and the value for that key should be a dictionary of components
-        as defined by the :py:class:`BaseRobot` constructor.
-
-        .. example::
-        
-            {my_robot: {
-                buses: {
-                    busA: {
-                        class: ...
-                        port: ...
-                        ...
-                    }
-                }
-                devices: {
-                    dev_1: {
-                        id: 23
-                        class: DynamixelDevice
-                        model: XL-320
-                        ...
-                    }
-                }
-                joints: {
-                    head_y: {
-                        device: dev_1
-                        ...
-                    }
-                }
-                ...
-            }
-        
-        If the dictionary contains more than one top level keys, only the
-        first one will be parsed and used. A warning will be issued in the
-        log.
-        """
-        if len(init_dict) > 1:
-            logger.warning('Only the first robot will be considered.')
-        name = list(init_dict)[0]
-        components = init_dict[name]
-        buses = components.get('buses', {})
-        devices = components.get('devices', {})
-        joints = components.get('joints', {})
-        groups = components.get('groups', {})
-        syncs = components.get('syncs', {})
-        return BaseRobot(name=name,
-                         buses=buses,
-                         devices=devices,
-                         joints=joints,
-                         groups=groups,
-                         syncs=syncs)
 
     @classmethod
     def from_yaml(cls, file_name):
@@ -140,14 +94,25 @@ class BaseRobot():
         then passes it to the :py:meth:`~BaseRobot.from_dict` class method
         to do further initialization.
 
-        Raises:
-            FileNotFoundError: in case the file is not available
+        Parameters
+        ----------
+        file_name: str
+            The name of the YAML file with the robot definition
+
+        Raises
+        ------
+        FileNotFoundError
+            in case the file is not available
 
         """
         logger.info(f'Instantiating robot from YAML file {file_name}')
         with open(file_name, 'r') as f:
-            info_dict = yaml.load(f, Loader=yaml.FullLoader)
-            return BaseRobot.from_dict(info_dict)
+            init_dict = yaml.load(f, Loader=yaml.FullLoader)
+            if len(init_dict) > 1:
+                logger.warning('Only the first robot will be considered.')
+            name = list(init_dict)[0]
+            components = init_dict[name]
+            return BaseRobot(name=name, **components)
 
     def __init_buses(self, buses):
         """Called by ``__init__`` to parse and instantiate buses."""
@@ -160,7 +125,7 @@ class BaseRobot():
             bus_info['robot'] = self
             check_key('class', bus_info, 'bus', bus_name, logger)
             bus_class = get_registered_class(bus_info['class'])
-            new_bus = bus_class(bus_info)
+            new_bus = bus_class(**bus_info)
             self.__buses[bus_name] = new_bus
             logger.debug(f'\tbus {bus_name} added')
 
@@ -181,9 +146,9 @@ class BaseRobot():
             dev_bus = self.buses[dev_info['bus']]
             dev_info['bus'] = dev_bus
             dev_class = get_registered_class(dev_info['class'])
-            new_dev = dev_class(dev_info)
+            new_dev = dev_class(**dev_info)
             self.__devices[dev_name] = new_dev
-            self.__dev_by_id[dev_info['id']] = new_dev
+            self.__dev_by_id[dev_info['dev_id']] = new_dev
             logger.debug(f'\tdevice {dev_name} added')
 
     def __init_joints(self, joints):
@@ -204,7 +169,7 @@ class BaseRobot():
             device = self.devices[dev_name]
             joint_info['device'] = device
             joint_class = get_registered_class(joint_info['class'])
-            new_joint = joint_class(joint_info)
+            new_joint = joint_class(**joint_info)
             self.__joints[joint_name] = new_joint
             logger.debug(f'\tjoint {joint_name} added')
 
@@ -269,13 +234,16 @@ class BaseRobot():
     def device_by_id(self, dev_id):
         """Returns a device by it's ID.
 
-        Args:
-            dev_id (int): the ID or device to be returned
+        Parameters
+        ----------
+        dev_id: int
+            the ID or device to be returned
 
-        Returns:
-            BaseRegister:
-                the register with that ID in the device. If no register 
-                with that ID exists, returns ``None``.
+        Returns
+        -------
+        BaseRegister
+            the register with that ID in the device. If no register 
+            with that ID exists, returns ``None``.
         """
         return self.__dev_by_id.get(dev_id, None)
 
@@ -309,31 +277,31 @@ class BaseRobot():
         logger.info('Opening buses...')
         for bus in self.buses.values():
             if bus.auto_open:
-                logger.debug(f'--> Opening bus: {bus.name}')
+                logger.info(f'--> Opening bus: {bus.name}')
                 bus.open()
             else:
-                logger.debug(f'--> Opening bus: {bus.name} - skipped')
+                logger.info(f'--> Opening bus: {bus.name} - skipped')
         logger.info('Opening devices...')
         for device in self.devices.values():
             if device.auto_open:
-                logger.debug(f'--> Opening device: {device.name}')
+                logger.info(f'--> Opening device: {device.name}')
                 device.open()
             else:
-                logger.debug(f'--> Opening device: {device.name} - skipped')
+                logger.info(f'--> Opening device: {device.name} - skipped')
         logger.info('Activating joints...')
         for joint in self.joints.values():
             if joint.auto_activate:
-                logger.debug(f'--> Activating joint: {joint.name}')
+                logger.info(f'--> Activating joint: {joint.name}')
                 joint.active = True
             else:
-                logger.debug(f'--> Activating joint: {joint.name} - skipped')
+                logger.info(f'--> Activating joint: {joint.name} - skipped')
         logger.info('Starting syncs...')
         for sync in self.syncs.values():
             if sync.auto_start:
-                logger.debug(f'--> Starting sync: {sync.name}')
+                logger.info(f'--> Starting sync: {sync.name}')
                 sync.start()
             else:
-                logger.debug(f'--> Starting sync: {sync.name} - skipped')
+                logger.info(f'--> Starting sync: {sync.name} - skipped')
         logger.info('***** Robot started ******************')
 
     def stop(self):

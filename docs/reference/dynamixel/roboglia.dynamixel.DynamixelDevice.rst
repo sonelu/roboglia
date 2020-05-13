@@ -18,6 +18,8 @@ roboglia.dynamixel.DynamixelDevice
       ~DynamixelDevice.get_model_path
       ~DynamixelDevice.open
       ~DynamixelDevice.read_register
+      ~DynamixelDevice.register_by_address
+      ~DynamixelDevice.register_low_endian
       ~DynamixelDevice.write_register
    
    
@@ -48,6 +50,8 @@ roboglia.dynamixel.DynamixelDevice
    .. automethod:: get_model_path
    .. automethod:: open
    .. automethod:: read_register
+   .. automethod:: register_by_address
+   .. automethod:: register_low_endian
    .. automethod:: write_register
    
    
