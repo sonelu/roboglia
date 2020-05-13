@@ -1,0 +1,23 @@
+# TLA202x - 12-Bit Delta-Sigma ADC w/ Voltage Reference, Oscillator, 
+# PGA, and I2C for Low-Cost Applications
+# 
+# Versions:
+# - TLA2021 - 1ch no PGA
+# - TLA2022 - 1ch with PGA
+# - TLA2024 = 4ch with PGA
+#
+# https://www.ti.com/product/TLA2021
+# https://www.ti.com/product/TLA2022
+# https://www.ti.com/product/TLA2024
+#
+registers:
+  data:
+    address: 0
+    size: 2
+    desc: contains the result of the last conversion in binary two's-complement format
+
+  configuration:
+    address: 1
+    size: 2
+    access: RW
+    desc: controls the operating mode, input selection, data rate, and full-scale range

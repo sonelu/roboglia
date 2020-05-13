@@ -1,0 +1,23 @@
+# TCA9538 - Low Voltage 8-Bit I2C and SMBus Low-Power I/O Expander with 
+# Interrupt Output, Reset, andConfigurationRegisters
+# https://www.ti.com/product/TCA9538
+#
+registers:
+  input_port:
+    address: 0
+    desc: reflects the incoming logic levels of the pins
+
+  output_port:
+    address: 1
+    access: RW
+    desc: shows the outgoing logic levels of the pins defined as outputs
+
+  polarity_inversion:
+    address: 2
+    access: RW
+    desc: allows polarity inversion of pins defined as inputs
+
+  configuration:
+    address: 3
+    access: RW
+    desc: configures the directions of the I/O pins
