@@ -339,12 +339,12 @@ class TestDynamixelRobot:
         })
 
     def test_dynamixel_robot(self, mock_robot_init):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         robot.start()
         robot.stop()
 
     def test_dynamixel_write(self, mock_robot_init):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         robot.start()
         dev = robot.devices['d11']
         for _ in range(100):           # so that we also hit some comm errors
@@ -403,7 +403,7 @@ class TestDynamixelRobot:
         assert 'attempt to write a non supported for XL baud' in caplog.text
 
     def test_open_device_with_sync_items(self, mock_robot_init):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         robot.start()
         dev = robot.devices['d11']
         dev.present_position_deg.sync = True
@@ -411,28 +411,28 @@ class TestDynamixelRobot:
         robot.stop()
 
     def test_dynamixel_syncwrite(self, mock_robot_init):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         robot.start()
         robot.syncs['syncwrite'].start()
         time.sleep(1)
         robot.stop()
 
     def test_dynamixel_syncread(self, mock_robot_init):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         robot.start()
         robot.syncs['syncread'].start()
         time.sleep(1)
         robot.stop()
 
     def test_dynamixel_bulkwrite(self, mock_robot_init):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         robot.start()
         robot.syncs['bulkwrite'].start()
         time.sleep(1)
         robot.stop()
 
     def test_dynamixel_bulkread(self, mock_robot_init):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         robot.start()
         robot.syncs['bulkread'].start()
         time.sleep(1)
@@ -443,7 +443,7 @@ class TestDynamixelRobot:
         # we remove the bulkwrite so that the error will refer to syncread
         del mock_robot_init['dynamixel']['syncs']['bulkwrite']
         with pytest.raises(ValueError) as excinfo:
-            _ = BaseRobot(mock_robot_init)
+            _ = BaseRobot.from_dict(mock_robot_init)
         assert 'SyncRead only supported for Dynamixel Protocol 2.0' \
             in str(excinfo.value)
 
@@ -452,12 +452,12 @@ class TestDynamixelRobot:
         # we remove the bulkwrite so that the error will refer to syncread
         del mock_robot_init['dynamixel']['syncs']['syncread']
         with pytest.raises(ValueError) as excinfo:
-            _ = BaseRobot(mock_robot_init)
+            _ = BaseRobot.from_dict(mock_robot_init)
         assert 'BulkWrite only supported for Dynamixel Protocol 2.0' \
             in str(excinfo.value)
 
     def test_dynamixel_scan(self, mock_robot_init):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         robot.start()
         ids = robot.buses['ttys1'].scan()
         assert 11 in ids
@@ -465,7 +465,7 @@ class TestDynamixelRobot:
         robot.stop()
 
     def test_dynamixel_ping(self, mock_robot_init):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         robot.start()
         assert robot.buses['ttys1'].ping(11) == True
         robot.stop()
@@ -487,12 +487,12 @@ class TestDynamixelRobot:
     #     robot.stop()
 
     def test_dynamixel_bus_baudrate(self, mock_robot_init):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         assert robot.buses['ttys1'].baudrate == 19200
         robot.stop()
 
     def test_dynamixel_bus_closed(self, mock_robot_init, caplog):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         bus = robot.buses['ttys1']
         # ping
         caplog.clear()
@@ -519,7 +519,7 @@ class TestDynamixelRobot:
 
 
     def test_dynamixel_bus_acquire(self, mock_robot_init, caplog):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         robot.start()
         dev = robot.devices['d11']
         bus = robot.buses['ttys1']
@@ -539,7 +539,7 @@ class TestDynamixelRobot:
         robot.stop()
 
     def test_dynamixel_register_low_endian(self, mock_robot_init, caplog):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         dev = robot.devices['d11']
         assert dev.register_low_endian(123, 4) == [123, 0, 0, 0]
         num = 12 * 256 + 42
@@ -565,7 +565,7 @@ class TestI2CRobot:
     def test_i2c_robot_bus_error(self, mock_robot_init, caplog):
         mock_robot_init['i2crobot']['buses']['i2c2']['mock'] = False
         mock_robot_init['i2crobot']['buses']['i2c2']['auto'] = False
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         caplog.clear()
         robot.buses['i2c2'].open()
         assert len(caplog.records) == 2
@@ -576,7 +576,7 @@ class TestI2CRobot:
         # assert 'failed to close I2C bus' in caplog.text
 
     def test_i2c_robot(self, mock_robot_init, caplog):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         robot.start()
         dev = robot.devices['imu']
         # 1 Byte registers
@@ -589,7 +589,7 @@ class TestI2CRobot:
         robot.stop()
 
     def test_i2c_bus_closed(self, mock_robot_init, caplog):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         dev = robot.devices['imu']
         # write to closed bus
         caplog.clear()
@@ -603,21 +603,21 @@ class TestI2CRobot:
         assert 'attempted to read from a closed bus' in caplog.text
 
     def test_i2c_read_loop(self, mock_robot_init):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         robot.start()
         robot.syncs['read_g'].start()
         time.sleep(1)
         robot.stop()
 
     def test_i2c_write_loop(self, mock_robot_init):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         robot.start()
         robot.syncs['write_xl'].start()
         time.sleep(1)
         robot.stop()
 
     def test_i2c_loop_failed_acquire(self, mock_robot_init, caplog):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         robot.start()
         # lock the bus
         robot.buses['i2c2'].can_use()
@@ -637,7 +637,7 @@ class TestI2CRobot:
         robot.syncs['read_g'].stop()    
 
     def test_i2c_sharedbus_closed(self, mock_robot_init, caplog):
-        robot = BaseRobot(mock_robot_init)
+        robot = BaseRobot.from_dict(mock_robot_init)
         # we haven't started the bus
         # read
         caplog.clear()

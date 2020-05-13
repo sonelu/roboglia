@@ -13,6 +13,8 @@ roboglia.base.BaseRobot
    .. autosummary::
    
       ~BaseRobot.__init__
+      ~BaseRobot.device_by_id
+      ~BaseRobot.from_dict
       ~BaseRobot.from_yaml
       ~BaseRobot.start
       ~BaseRobot.stop
@@ -29,6 +31,7 @@ roboglia.base.BaseRobot
       ~BaseRobot.devices
       ~BaseRobot.groups
       ~BaseRobot.joints
+      ~BaseRobot.name
       ~BaseRobot.syncs
    
    
@@ -40,6 +43,8 @@ roboglia.base.BaseRobot
 
    
    .. automethod:: __init__
+   .. automethod:: device_by_id
+   .. automethod:: from_dict
    .. automethod:: from_yaml
    .. automethod:: start
    .. automethod:: stop
