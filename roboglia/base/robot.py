@@ -86,7 +86,6 @@ class BaseRobot():
         self.__init_syncs(syncs)
         logger.info('***** Initialization complete ********')
 
-
     @classmethod
     def from_yaml(cls, file_name):
         """Initializes the robot from a YAML file. It will attempt to
@@ -242,7 +241,7 @@ class BaseRobot():
         Returns
         -------
         BaseRegister
-            the register with that ID in the device. If no register 
+            the register with that ID in the device. If no register
             with that ID exists, returns ``None``.
         """
         return self.__dev_by_id.get(dev_id, None)

@@ -30,12 +30,10 @@ class DynamixelDevice(BaseDevice):
     :py:class:`BaseDevice`.
 
     Differences are:
-    
+
     - different version of :py:meth:`get_model_path` that
       will point to the local ``device`` directory in the ``dynamixel``
       module
-
-    - 
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

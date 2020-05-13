@@ -17,8 +17,8 @@ import os
 import yaml
 import logging
 
-from ..utils import get_registered_class, check_key, \
-    check_options, check_not_empty, check_type
+from ..utils import get_registered_class, check_options, \
+    check_not_empty, check_type
 
 from .bus import BaseBus, SharedBus
 
@@ -46,12 +46,12 @@ class BaseDevice():
         you can indicate the directory where the file is located with the
         `path` paramters and the name of the file in the `model` parameter.
 
-    .. warning: If you plan to use ``auto`` in the device or have initializations
-        in `init` parameter you have to make sure that the associated bus
-        is also marked with ``auto: True``, otherwise the reads and writes
-        during the opening of the device will fail with ``attempt to
-        read(write) from(to) a closed bus.
- 
+    .. warning: If you plan to use ``auto`` in the device or have
+        initializations in `init` parameter you have to make sure that the
+        associated bus is also marked with ``auto: True``, otherwise the reads
+        and writes during the opening of the device will fail with ``attempt
+        to read(write) from(to) a closed bus.
+
     Parameters
     ----------
     name: str
@@ -132,7 +132,7 @@ class BaseDevice():
     @property
     def name(self):
         """Device name.
-        
+
         Returns
         -------
         str:
@@ -143,7 +143,7 @@ class BaseDevice():
     @property
     def registers(self):
         """Device registers as dict.
-        
+
         Returns
         -------
         dict:
@@ -166,7 +166,7 @@ class BaseDevice():
     @property
     def dev_id(self):
         """The device number.
-        
+
         Returns
         -------
         int:
@@ -177,7 +177,7 @@ class BaseDevice():
     @property
     def bus(self):
         """The bus where the device is connected to.
-        
+
         Returns
         -------
         BaseBus or SharedBus or subclass:
@@ -189,7 +189,7 @@ class BaseDevice():
     def auto_open(self):
         """Indicates that the device's :py:meth:`open` is supposed to be
         called by the robot's :py:meth:`Robot.start` method.
-        
+
         Returns
         -------
         bool
@@ -217,7 +217,7 @@ class BaseDevice():
 
         Subclasses of ``BaseDevice`` can overide the method to derive their
         own class.
-        
+
         ``BaseDevice`` suggests as default register :py:class:`BaseRegister`.
         """
         return 'BaseRegister'

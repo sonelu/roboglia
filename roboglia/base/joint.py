@@ -36,7 +36,7 @@ class Joint():
     ----------
     name: str
         The name of the joint
-    
+
     device: BaseDevice or subclass
         The device object connected to the joint
 
@@ -77,8 +77,8 @@ class Joint():
         self.__device = device
         check_not_empty(pos_read, 'pos_read', 'joint', self.name, logger)
         check_key(pos_read, device.__dict__, 'joint', self.name, logger,
-                 f'device {device.name} does not have a register '
-                 f'{pos_read}')
+                  f'device {device.name} does not have a register '
+                  f'{pos_read}')
         self.__pos_r = getattr(device, pos_read)
         check_not_empty(pos_read, 'pos_read', 'joint', self.name, logger)
         check_key(pos_write, device.__dict__, 'joint', self.name, logger,
@@ -178,7 +178,7 @@ class Joint():
     @property
     def range(self):
         """(read-only) Tuple (min, max) of joint limits.
-        
+
         Returns
         -------
         (min, max)

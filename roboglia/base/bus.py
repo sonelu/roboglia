@@ -16,7 +16,7 @@
 import logging
 import threading
 
-from ..utils import check_key, check_type, check_options, check_not_empty
+from ..utils import check_type, check_options, check_not_empty
 
 
 logger = logging.getLogger(__name__)
@@ -141,7 +141,7 @@ class BaseBus():
 
     def write(self, reg, val):
         """Writes one register information from the bus. Must be overridden.
-        
+
         Parameters
         ----------
         reg: BaseRegister or subclass
@@ -150,7 +150,7 @@ class BaseBus():
             in the ``device`` attribute and it is up to the subclass to
             determine the way the information must be processed before
             providing it actual device.
-        
+
         val: int
             The value needed to the written to the device.
         """
@@ -216,7 +216,7 @@ class FileBus(BaseBus):
             in the ``device`` attribute and it is up to the subclass to
             determine the way the information must be processed before
             providing it actual device.
-        
+
         value: int
             The value needed to the written to the device.
         """
@@ -307,11 +307,11 @@ class SharedBus():
     ----------
     BusClass: BaseBus subclass
         The class that will be wrapped by the ``SharedBus``
-    
+
     timeout: float
         A timeout for acquiring the lock that controls the access to the bus
-    
-    **kwargs: 
+
+    **kwargs:
         keyword arguments that are passed to the BusClass for
         instantiation
     """
@@ -358,7 +358,7 @@ class SharedBus():
         self.__lock.release()
 
     def naked_read(self, reg):
-        """Calls the main bus read without invoking the lock. This is 
+        """Calls the main bus read without invoking the lock. This is
         intended for those users that plan to use a series of read operations
         and they do not want to lock and release the bus every time, as this
         adds some overhead. Since the original bus' ``read`` method is
@@ -367,7 +367,7 @@ class SharedBus():
         in the scenario that the user wants to execute a series of quick
         reads the ``naked_read`` can be used as long as the user wraps the
         calls correctly for obtaining exclusive access::
-        
+
             if bus.can_use():
                 val1 = bus.naked_read(reg1)
                 val2 = bus.naked_read(reg2)
@@ -395,7 +395,7 @@ class SharedBus():
         return self.__main_bus.read(reg)
 
     def naked_write(self, reg, value):
-        """Calls the main bus write without invoking the lock. This is 
+        """Calls the main bus write without invoking the lock. This is
         intended for those users that plan to use a series of write operations
         and they do not want to lock and release the bus every time, as this
         adds some overhead. Since the original bus' ``write`` method is
@@ -404,7 +404,7 @@ class SharedBus():
         in the scenario that the user wants to execute a series of quick
         writes the ``naked_write`` can be used as long as the user wraps the
         calls correctly for obtaining exclusive access::
-        
+
             if bus.can_use():
                 val1 = bus.naked_write(reg1, val1)
                 val2 = bus.naked_write(reg2, val2)
@@ -432,7 +432,7 @@ class SharedBus():
         """Overrides the main bus' ``read`` method and
         performs a **safe** read by wrapping the main bus ``read`` call
         in a request to acquire the bus.
-        
+
         If the method is not able to acquire the bus in time (times out)
         it will log an error and return ``None``.
 
@@ -450,7 +450,7 @@ class SharedBus():
         int:
             The value read for this register or ``None`` is the call failed
             to secure with bus within the ``timeout``.
-        
+
         """
         if self.can_use():
             value = self.__main_bus.read(reg)
@@ -464,7 +464,7 @@ class SharedBus():
         """Overrides the main bus' ``write`` method and
         performs a **safe** write by wrapping the main bus ``write`` call
         in a request to acquire the bus.
-        
+
         If the method is not able to acquire the bus in time (times out)
         it will log an error.
 

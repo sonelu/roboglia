@@ -42,4 +42,3 @@ class I2CDevice(BaseDevice):
         """
         # return os.path.join(os.path.dirname(__file__), 'devices')
         return Path(__file__).parent / 'devices/'
-

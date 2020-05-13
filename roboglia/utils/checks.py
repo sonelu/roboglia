@@ -117,7 +117,9 @@ def check_options(value, options, context, context_id, logger, message=None):
         logger.critical(message)
         raise ValueError(message)
 
-def check_not_empty(value, descriptor, context, context_id, logger, message=None):
+
+def check_not_empty(value, descriptor, context, context_id, logger,
+                    message=None):
     """Checks if a value is not empty (``''`` or ``{}`` or ``[]`` or ``None``).
 
     Parameters
@@ -129,7 +131,7 @@ def check_not_empty(value, descriptor, context, context_id, logger, message=None
         a string identifying the value checked, for example 'name'
 
     context: str
-        a string indicating the context of the check, for example 'Bus' or 
+        a string indicating the context of the check, for example 'Bus' or
         'Device'
 
     context_id: str

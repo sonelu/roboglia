@@ -20,7 +20,7 @@ from dynamixel_sdk import PacketHandler, PortHandler
 from serial import rs485
 
 from ..base import BaseBus, SharedBus
-from ..utils import check_key, check_type, check_options, check_not_empty
+from ..utils import check_type, check_options, check_not_empty
 
 logger = logging.getLogger(__name__)
 
@@ -512,7 +512,7 @@ class MockPacketHandler():
                 register = device.register_by_address(address)
                 assert register.size == length
 
-            if register.access =='R':
+            if register.access == 'R':
                 value = register.int_value
             else:
                 value = register.int_value + random.randint(-10, 10)

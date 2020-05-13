@@ -147,7 +147,7 @@ class SharedI2CBus(SharedBus):
         ---------
         dev: BaseDevice or subclass
             The device for which the block read is performed
-        
+
         address: int
             The start address
 
@@ -190,7 +190,7 @@ class SharedI2CBus(SharedBus):
         ----------
         dev: BaseDevice or subclass
             The device for which the block read is performed
-            
+
         address: int
             The start address
 
@@ -249,7 +249,8 @@ class MockSMBus(SMBus):
         """
         if super().close():
             self.fd = None
-            # we do this so that the testing covers the error part of the branch
+            # we do this so that the testing covers
+            # the error part of the branch
             raise OSError('error closing the bus')
 
     def __common_read(self, dev_id, address):
