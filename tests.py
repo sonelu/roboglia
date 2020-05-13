@@ -4,7 +4,7 @@ import time
 import yaml
 
 from roboglia.utils import register_class, unregister_class, registered_classes, get_registered_class
-from roboglia.utils import check_key, check_options, check_type
+from roboglia.utils import check_key, check_options, check_type, check_not_empty
 
 from roboglia.base import BaseRobot, BaseDevice, BaseBus
 from roboglia.base import RegisterWithConversion, RegisterWithThreshold
@@ -318,6 +318,29 @@ class TestUtilsChecks:
         assert mess in str(excinfo.value)
         with pytest.raises(ValueError) as excinfo:
             check_options(10, ['a', 'b'], 'object', 10, logger, 'custom')
+        assert 'custom' in str(excinfo.value)
+
+    def test_check_not_empty(self):
+        mess = 'should not be empty'
+        # string
+        with pytest.raises(ValueError) as excinfo:
+            check_not_empty('', 'string', 'object', 10, logger)
+        assert mess in str(excinfo.value)
+        # number
+        with pytest.raises(ValueError) as excinfo:
+            check_not_empty(0, 'integer', 'object', 10, logger)
+        assert mess in str(excinfo.value)
+        # list
+        with pytest.raises(ValueError) as excinfo:
+            check_not_empty([], 'list', 'object', 10, logger)
+        assert mess in str(excinfo.value)
+        # dict
+        with pytest.raises(ValueError) as excinfo:
+            check_not_empty({}, 'dict', 'object', 10, logger)
+        assert mess in str(excinfo.value)
+        # custom message
+        with pytest.raises(ValueError) as excinfo:
+            check_not_empty('', 'string', 'object', 10, logger, 'custom')
         assert 'custom' in str(excinfo.value)
 
 
