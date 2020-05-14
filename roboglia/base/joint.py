@@ -230,8 +230,8 @@ class JointPV(Joint):
     It inherits all the paramters from :py:class:`Joint` and adds the
     following additional ones:
 
-    Paramters
-    ---------
+    Parameters
+    ----------
     vel_read: str
         The register name used to retrieve current velocity
 

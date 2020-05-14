@@ -30,10 +30,11 @@ class DynamixelBus(BaseBus):
 
     Uses ``dynamixel_sdk``.
 
-    .. note: The parameters listed bellow are only the specific ones
+    .. note:: The parameters listed bellow are only the specific ones
         introduced by the ``DynamixelBus`` class. Since this is a subclass
-        of :py:class:`BaseBus` and the constructor will call the ``super()``
-        constructor, all the paramters supported by :py:class:`BaseBus` are
+        of :py:class:`~roboglia.base.BaseBus` and the constructor will
+        call the ``super()`` constructor, all the paramters supported by
+        :py:class:`~roboglia.base.BaseBus` are
         also supported and checked when creating a ``DynamixelBus``. For
         instance the `name`, `robot` and `port` are validated.
 
@@ -57,7 +58,8 @@ class DynamixelBus(BaseBus):
         of the :py:class:`MockPacketHandler` to simulate the communication
         on a Dynamixel bus and allow to test the software in CI testing.
 
-    Raises:
+    Raises
+    ------
         KeyError: if any of the required keys are missing
         ValueError: if any of the required data is incorrect
     """
