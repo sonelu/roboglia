@@ -8,6 +8,7 @@ from roboglia.utils import check_key, check_options, check_type, check_not_empty
 
 from roboglia.base import BaseRobot, BaseDevice, BaseBus
 from roboglia.base import RegisterWithConversion, RegisterWithThreshold
+from roboglia.base import BaseThread
 
 from roboglia.dynamixel import DynamixelBus
 from roboglia.dynamixel import DynamixelAXBaudRateRegister
@@ -137,6 +138,7 @@ class TestMockRobot:
         read_sync.warning = 90
         assert read_sync.warning == 0.9
         assert read_sync.review == 1.0      # default
+        assert read_sync.frequency == 100
 
     # def test_sync_with_closed_bus(self, mock_robot, caplog):
     #     write_sync = mock_robot.syncs['write']
@@ -153,14 +155,6 @@ class TestMockRobot:
     #     # now set things back
     #     bus.open()
     #     assert bus.is_open
-
-    # def test_thread_crash(self, mock_robot):
-    #     read_sync = mock_robot.syncs['read']
-    #     # save the current setup() function
-    #     setup = read_sync.setup
-    #     read_sync.setup = 'text'
-    #     # now try to start; will raise error
-    #     read_sync.start()
 
     def test_joint_info(self, mock_robot):
         j = mock_robot.joints['pan']
@@ -253,6 +247,42 @@ class TestMockRobot:
         # release bus
         bus.stop_using()
         mock_robot.stop()
+
+    def test_thread_crash(self):
+        class CrashAtRun(BaseThread):
+            def run(self):
+                time.sleep(0.25)
+                raise OSError
+
+        class CrashAtSetup(BaseThread):
+            def setup(self):
+                time.sleep(.25)
+                raise OSError
+
+        class CrashLongSetup(BaseThread):
+            def setup(self):
+                time.sleep(1)
+                raise OSError
+
+        thread = CrashAtRun(name='my_thread')
+        thread.start()
+        time.sleep(0.5)
+        assert not thread.started
+        assert not thread.paused
+
+        thread = CrashAtSetup(name='my_thread', patience=0.3)
+        with pytest.raises(RuntimeError) as excinfo:
+            thread.start()
+            time.sleep(0.5)
+        assert not thread.started
+        assert not thread.paused       
+
+        thread = CrashLongSetup(name='my_thread', patience=0.3)
+        with pytest.raises(RuntimeError) as excinfo:
+            thread.start()
+            time.sleep(0.5)
+        assert not thread.started
+        assert not thread.paused      
 
 class TestUtilsFactory:
 
@@ -381,6 +411,8 @@ class TestDynamixelRobot:
             name='test',
             device=dummy_device,
             address=42,
+            minim=33,        # for testing branches
+            maxim=66,        # for testing branches
             sync=True,       # avoids calling read / write
             access='RW'      # so we can change it!
         )
@@ -399,6 +431,7 @@ class TestDynamixelRobot:
             name='test',
             device=dummy_device,
             address=42,
+            maxim=66,        # for testing branches
             sync=True,       # avoids calling read / write
             access='RW'      # so we can change it!
         )
@@ -412,6 +445,8 @@ class TestDynamixelRobot:
             name='test',
             device=dummy_device,
             address=42,
+            minim=33,        # for testing branches
+            maxim=66,        # for testing branches
             sync=True,       # avoids calling read / write
             access='RW'      # so we can change it!
         )
@@ -560,6 +595,66 @@ class TestDynamixelRobot:
         bus.stop_using()
         robot.stop()
 
+    def test_dynamixel_bus_acquire_syncwrite(self, mock_robot_init, caplog):
+        # syncs
+        robot = BaseRobot(**mock_robot_init['dynamixel'])
+        robot.start()
+        robot.buses['ttys1'].can_use()      # lock the bus
+        caplog.clear()
+        robot.syncs['syncwrite'].start()
+        time.sleep(1)
+        assert len(caplog.records) >= 1
+        assert 'failed to acquire bus ttys1' in caplog.text
+        robot.syncs['syncwrite'].stop()
+        # release bus
+        robot.buses['ttys1'].stop_using()
+        robot.stop()
+
+    def test_dynamixel_bus_acquire_syncread(self, mock_robot_init, caplog):
+        # syncs
+        robot = BaseRobot(**mock_robot_init['dynamixel'])
+        robot.start()
+        robot.buses['ttys1'].can_use()      # lock the bus
+        caplog.clear()
+        robot.syncs['syncread'].start()
+        time.sleep(1)
+        assert len(caplog.records) >= 1
+        assert 'failed to acquire bus ttys1' in caplog.text
+        robot.syncs['syncread'].stop()
+        # release bus
+        robot.buses['ttys1'].stop_using()
+        robot.stop()
+
+    def test_dynamixel_bus_acquire_bulkwrite(self, mock_robot_init, caplog):
+        # syncs
+        robot = BaseRobot(**mock_robot_init['dynamixel'])
+        robot.start()
+        robot.buses['ttys1'].can_use()      # lock the bus
+        caplog.clear()
+        robot.syncs['bulkwrite'].start()
+        time.sleep(1)
+        assert len(caplog.records) >= 1
+        assert 'failed to acquire bus ttys1' in caplog.text
+        robot.syncs['bulkwrite'].stop()
+        # release bus
+        robot.buses['ttys1'].stop_using()
+        robot.stop()
+
+    def test_dynamixel_bus_acquire_bulkread(self, mock_robot_init, caplog):
+        # syncs
+        robot = BaseRobot(**mock_robot_init['dynamixel'])
+        robot.start()
+        robot.buses['ttys1'].can_use()      # lock the bus
+        caplog.clear()
+        robot.syncs['bulkread'].start()
+        time.sleep(1)
+        assert len(caplog.records) >= 1
+        assert 'failed to acquire bus ttys1' in caplog.text
+        robot.syncs['bulkread'].stop()
+        # release bus
+        robot.buses['ttys1'].stop_using()
+        robot.stop()
+
     def test_dynamixel_register_low_endian(self, mock_robot_init, caplog):
         robot = BaseRobot(**mock_robot_init['dynamixel'])
         dev = robot.devices['d11']
@@ -574,7 +669,6 @@ class TestDynamixelRobot:
         _ = dev.register_low_endian(num, 6)
         assert len(caplog.records) == 1
         assert 'Unexpected register size' in caplog.text
-
 
 class TestI2CRobot:
 
@@ -672,4 +766,33 @@ class TestI2CRobot:
         robot.syncs['write_xl'].start()
         assert len(caplog.records) == 1
         assert 'attempt to start with a bus not open' in caplog.text
-        robot.syncs['read_g'].stop()    
+        robot.syncs['read_g'].stop()
+
+    def test_i2c_write2_with_errors(self, mock_robot_init, caplog):
+        robot = BaseRobot(**mock_robot_init['i2crobot'])
+        robot.start()
+        device = robot.devices['imu']
+        for _ in range(20):     # so that we also get some errors
+            device.word_control_2.value = 0x2121
+        assert device.word_control_2.value == 0x2121
+
+    def test_i2c_closed_bus(self, mock_robot_init, caplog):
+        robot = BaseRobot(**mock_robot_init['i2crobot'])
+        device = robot.devices['imu']
+        caplog.clear()
+        _ = device.word_control_2.value
+        assert len(caplog.records) == 1
+        assert 'attempted to read from a closed bus' in caplog.text
+        caplog.clear()
+        device.word_control_2.value = 0x4242
+        assert len(caplog.records) == 1
+        assert 'attempted to write to a closed bus' in caplog.text
+        bus = robot.buses['i2c2']
+        caplog.clear()
+        _ = bus.read_block_data(1, 1, 6)
+        assert len(caplog.records) == 1
+        assert 'attempted to read from a closed bus' in caplog.text
+        caplog.clear()
+        bus.write_block_data(1, 1, 6, [1,2,3,4,5,6])
+        assert len(caplog.records) == 1
+        assert 'attempted to write to a closed bus' in caplog.text

@@ -53,16 +53,11 @@ class I2CWriteLoop(BaseSync):
                     raise NotImplementedError
 
             # write
-            try:
-                self.bus.write_block_data(device,
-                                          self.start_address,
-                                          self.length,
-                                          data)
-            except Exception as e:
-                logger.error('failed to execute block data write on'
-                             f'I2C bus for I2CWriteLoop {self.name} '
-                             f'and device {device.name}')
-                logger.error(str(e))
+            # I2CSharedBus does to handling of exceptions
+            self.bus.write_block_data(device,
+                                      self.start_address,
+                                      self.length,
+                                      data)
             logger.debug(f'{self.name} written block data {data}')
 
 
@@ -86,16 +81,10 @@ class I2CReadLoop(BaseSync):
         """Executes a SyncRead."""
         for device in self.devices:
             # read one device
-            try:
-                data = self.bus.read_block_data(device,
-                                                self.start_address,
-                                                self.length)
-            except Exception as e:
-                logger.error(f'{self.name} failed to execute block data read '
-                             f'for device {device.name}')
-                logger.error(str(e))
-                continue
-
+            # I2CSharedBus does to handling of exceptions
+            data = self.bus.read_block_data(device,
+                                            self.start_address,
+                                            self.length)
             logger.debug(f'{self.name} read block data {data}')
             if data is not None:
                 for reg_name in self.registers:

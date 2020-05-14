@@ -79,9 +79,9 @@ class BaseDevice():
         The device should be opened automatically when the robot starts.
 
     init: dict
-        A dictionary of register: value pairs that the device should
+        A dictionary of {register: value} pairs that the device should
         initialize when the :py:meth:`~open` method is called. Please note
-        the initialization values should be provided in the **externa**
+        the initialization values should be provided in the **external**
         format of the register as they will be used as::
 
             register.value = dict_value

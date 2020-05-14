@@ -17,7 +17,7 @@ import threading
 import time
 import logging
 
-from ..utils import check_key, check_type
+from ..utils import check_type, check_not_empty
 
 logger = logging.getLogger(__name__)
 
@@ -36,10 +36,23 @@ class BaseThread():
 
     This becomes very handy for loops that normally prepare the work, then
     run for an indefinite time, and later are closed when the owner signals.
+
+    Parameters
+    ----------
+    name: str
+        The name of the thread.
+
+    patience: float
+        A duration in seconds that the main thread will wait for the
+        background thread to finish setup activities and indicate that it
+        is in ``started`` mode.
     """
-    def __init__(self, init_dict):
+    def __init__(self, name='THREAD', patience=1.0, **kwargs):
         # name should have been checked by the robot
-        self.__name = init_dict['name']
+        self.__name = name
+        check_not_empty(patience, 'patience', 'thread', self.name, logger)
+        check_type(patience, float, 'thread', self.name, logger)
+        self.__patience = patience
         self.__started = threading.Event()
         self.__paused = threading.Event()
         self.__crashed = False
@@ -47,7 +60,7 @@ class BaseThread():
 
     @property
     def name(self):
-        """Returns the name of the loop."""
+        """Returns the name of the thread."""
         return self.__name
 
     def setup(self):
@@ -120,10 +133,13 @@ class BaseThread():
         self.__thread.start()
 
         if wait and (threading.current_thread() != self.__thread):
-            self.__started.wait()
-            if self.__crashed:
+            if not self.__started.wait(self.__patience):
+                if self.__crashed:
+                    mess = f'Setup failed, for {self.__thread.name}.'
+                else:
+                    mess = f'Setup took longer than {self.__patience}s ' + \
+                           f'for {self.__thread.name}'
                 self.__thread.join()
-                mess = f'Setup failed, see {self.__thread.name} for details.'
                 logger.critical(mess)
                 raise RuntimeError(mess)
 
@@ -156,45 +172,51 @@ class BaseLoop(BaseThread):
     of checking the flags for `paused` and `stopped` so there is no need
     to do this in the `atomic` method.
 
-    Args:
-        init_dict (dict): The dictionary used to initialize the loop.
+    Parameters
+    ----------
+    name: str
+        The name of the loop
 
-    In addition to the keys required by the class :py:class:`BaseThread`
-    the following keys are expected in the dictionary:
+    frequency: float
+        The loop frequency in [Hz]
 
-    - ``frequency``: the loop frequency in [Hz]
+    warning: float
+        Indicates a threshold in range [0..1] indicating when
+        warnings should be logged to the logger in case the execution
+        frequency is bellow the target. A 0.8 value indicates the real
+        execution is less than 0.8 * target_frequency. The statistic is
+        calculated over a period of time specified by the parameter `review`.
 
-    The following keys are optional and can be omitted. They will be
-    defaulted with the values mentioned bellow:
+    throttle: float
+        Is a float (small) that is used by the monitoring of
+        execution statistics to adjust the wait time in order to produce
+        the desired processing frequency.
 
-    - ``warning``: indicates a threshold in range [0..1] indicating when
-      warnings should be logged to the logger in case the execution
-      frequency is bellow the target. A 0.8 value indicates the real
-      execution is less than 0.8 * target_frequency. The statistic is
-      calculated over a number of runs equal to the frequency (ex. if
-      the frequency is 10 Hz the statistics will be calculated after
-      10 execution cycles and then reset). If not provided the
-      value 0.9 (90%) will be used.
-    - ``throttle``: is a float (small) that is used by the monitoring of
-      execution statistics to adjust the wait time in order to produce
-      the desired processing frequency.
 
-    Raises:
+    review: float
+        The time in [s] to calculate the statistics for the frequency.
+
+    Raises
+    ------
         KeyError and ValueError if provided data in the initialization
         dictionary are incorrect or missing.
     """
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
-        check_key('frequency', init_dict, 'loop', self.name, logger)
-        self.__frequency = init_dict['frequency']
-        check_type(self.frequency, float, 'loop', self.name, logger)
+    def __init__(self, frequency=None, warning=0.90,
+                 throttle=0.02, review=1.0, **kwargs):
+        super().__init__(**kwargs)
+        check_not_empty(frequency, 'frequency', 'loop', self.name, logger)
+        check_type(frequency, float, 'loop', self.name, logger)
+        self.__frequency = frequency
         self.__period = 1.0 / self.__frequency
-        self.__warning = init_dict.get('warning', 0.90)
-        check_type(self.__warning, float, 'loop', self.name, logger)
-        self.__throttle = init_dict.get('throttle', 0.02)
-        check_type(self.__throttle, float, 'loop', self.name, logger)
-        self.__review = init_dict.get('review', 1.00)
-        check_type(self.__review, float, 'loop', self.name, logger)
+        check_not_empty(warning, 'warning', 'loop', self.name, logger)
+        check_type(warning, float, 'loop', self.name, logger)
+        self.__warning = warning
+        check_not_empty(throttle, 'throttle', 'loop', self.name, logger)
+        check_type(throttle, float, 'loop', self.name, logger)
+        self.__throttle = throttle
+        check_not_empty(review, 'review', 'loop', self.name, logger)
+        check_type(review, float, 'loop', self.name, logger)
+        self.__review = review
         # to keep statistics
         self.__exec_counts = 0
         self.__last_count_reset = None

@@ -211,7 +211,7 @@ class BaseRobot():
             group_name = sync_info['group']
             sync_info['group'] = self.groups[group_name]
             sync_class = get_registered_class(sync_info['class'])
-            new_sync = sync_class(sync_info)
+            new_sync = sync_class(**sync_info)
             self.__syncs[sync_name] = new_sync
             logger.debug(f'\tsync {sync_name} added')
 

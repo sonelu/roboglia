@@ -115,10 +115,7 @@ class I2CBus(BaseBus):
             elif reg.size == 2:
                 function = self.__i2cbus.write_word_data
             else:
-                mess = f'unexpected size {reg.size} ' + \
-                       f'for register {reg.name} ' + \
-                       f'of device {dev.name}'
-                raise ValueError(mess)
+                raise NotImplementedError
             try:
                 function(dev.dev_id, reg.address, value)
             except Exception as e:
@@ -160,7 +157,7 @@ class SharedI2CBus(SharedBus):
             a list of length ``length``
         """
         if not self.is_open:
-            logger.error(f'attempted to read form a closed bus: {self.name}')
+            logger.error(f'attempted to read from a closed bus: {self.name}')
             return None
 
         if not self.can_use():
@@ -247,11 +244,10 @@ class MockSMBus(SMBus):
         """Mock closes the bus. It raises a OSError at the end so that
         the code can be checked for this behavior too.
         """
-        if super().close():
-            self.fd = None
-            # we do this so that the testing covers
-            # the error part of the branch
-            raise OSError('error closing the bus')
+        self.fd = None
+        # we do this so that the testing covers
+        # the error part of the branch
+        raise OSError('error closing the bus')
 
     def __common_read(self, dev_id, address):
         if random.random() < self.__err:

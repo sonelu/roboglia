@@ -24,13 +24,13 @@ i2crobot:
     read_g:
       class: I2CReadLoop
       group: imu
-      registers: [word_g_x, word_g_y, word_g_z]
+      registers: [word_g_x, word_g_y, word_g_z, control_1]
       frequency: 50.0
       auto: False
 
     write_xl:
       class: I2CWriteLoop
       group: imu
-      registers: [word_xl_x, word_xl_y, word_xl_z]
+      registers: [word_xl_x, word_xl_y, word_xl_z, control_1]
       frequency: 50.0
       auto: False

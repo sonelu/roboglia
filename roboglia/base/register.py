@@ -311,7 +311,10 @@ class BoolRegister(BaseRegister):
     a bool value.
     """
     def __init__(self, **kwargs):
-        kwargs.pop('maxim', None)         # in case is there
+        if 'maxim' in kwargs:
+            logger.warning('parameter "maxim" for BoolRegister ignored, '
+                           'it will be defaulted to 1')
+            del kwargs['maxim']
         super().__init__(maxim=1, **kwargs)
 
     def value_to_external(self, value):
