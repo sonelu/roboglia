@@ -29,8 +29,8 @@ class I2CDevice(BaseDevice):
     ``i2c`` module and the method :py:method:`~open` that will attempt to
     read all the registers not marked as ``sync``.
     """
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def get_model_path(self):
         """Builds the path to the `.yml` documents.
@@ -42,12 +42,3 @@ class I2CDevice(BaseDevice):
         """
         # return os.path.join(os.path.dirname(__file__), 'devices')
         return Path(__file__).parent / 'devices/'
-
-    def open(self):
-        """Reads all registers of the device if not synced."""
-        for reg in self.registers.values():
-            # only registers that are not flagged for sync replication
-            if not reg.sync:
-                value = self.read_register(reg)
-                if value is not None:
-                    reg.int_value = value

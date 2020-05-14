@@ -15,7 +15,8 @@
 
 import logging
 from .thread import BaseLoop
-from ..utils import check_key, check_type, check_options
+from .bus import SharedBus
+from ..utils import check_key, check_type, check_options, check_not_empty
 
 logger = logging.getLogger(__name__)
 
@@ -29,46 +30,44 @@ class BaseSync(BaseLoop):
     It will check that the provided devices are on the same bus and that
     the provided registers exist in all devices.
 
-    Args:
+    .. note:: Please note that this class does not actually perform any sync.
+        Use the subclasses :py:class:`BaseReadSync` or
+        :py:class:`BaseWriteSync` that implement read or write syncs.
 
-        init_dict (dict): The dictionary used to initialize the sync.
+    ``BaseSync`` inherits the parameters from :py:class:`BaseLoop`. In
+    addition it includes the following parameters.
 
-    In addition to the keys expected by the :py:class:`BaseLoop` The following
-    keys are expected in the dictionary:
+    Parameters
+    ----------
+    group: set
+        The set with the devices used by sync; normally the robot
+        constructor replaces the name of the group from YAML file with the
+        actual set built earlier in the initialization.
 
-    - ``group``: the set with the devices used by sync; normally the robot
-      constructor replaces the name of the group from YAML file with the
-      actual set built earlier in the initialization.
-    - ``registers``: a list of register names (as strings) used by the sync
+    registers: list of str
+        A list of register names (as strings) used by the sync
 
-    Optionally the following parameters can be provided:
+    auto: bool
+        If the sync loop should start automatically when the robot
+        starts; defaults to ``True``
 
-    - ``auto``: the sync loop should start automatically when the robot
-      starts; defaults to ``True``
-
-    Please note that this class does not actually perform any sync. Use
-    the subclasses :py:class:`BaseReadSync` or :py:class:`BaseWriteSync` that
-    implement read or write syncs.
-    Raises:
+    Raises
+    ------
         KeyError: if mandatory parameters are not found
     """
 
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
-        check_key('group', init_dict, 'sync', self.name, logger)
-        # robot will replace the name of the group with the actual set
-        self.__devices = list(init_dict['group'])
+    def __init__(self, group=None, registers=[], auto=True, **kwargs):
+        super().__init__(**kwargs)
+        check_not_empty(group, 'group', 'sync', self.name, logger)
+        check_type(group, set, 'sync', self.name, logger)
+        self.__devices = list(group)
         self.__bus = self.process_devices()
-        check_options('can_use', dir(self.__bus), 'sync',
-                      self.name, logger,
-                      f'bus {self.__bus.name} must by Shareable '
-                      'to be used in a sync')
-        check_key('registers', init_dict, 'sync', self.name, logger)
-        self.__registers = init_dict['registers']
-        check_type(self.__registers, list, 'sync', self.name, logger)
-        self.__auto_start = init_dict.get('auto', True)
-        check_options(self.__auto_start, [True, False], 'sync',
-                      self.name, logger)
+        check_type(self.__bus, SharedBus, 'sync', self.name, logger)
+        check_not_empty(registers, 'registers', 'sync', self.name, logger)
+        check_type(registers, list, 'sync', self.name, logger)
+        self.__registers = registers
+        check_options(auto, [True, False], 'sync', self.name, logger)
+        self.__auto_start = auto
         self.process_registers()
 
     @property
@@ -168,10 +167,12 @@ class BaseSync(BaseLoop):
 
 
 class BaseReadSync(BaseSync):
+    """A SyncLoop that performs a naive read of the registers by sequentially
+    calling the ``read`` on each of them.
 
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
-
+    It wraps the processing between buses' ``can_use()`` and ``stop_using()``
+    methods and uses ``naked_read`` instead of the ``read`` method.
+    """
     def atomic(self):
         """Implements the read of the registers.
 
@@ -182,7 +183,7 @@ class BaseReadSync(BaseSync):
             for device in self.devices:
                 for register in self.registers:
                     reg = getattr(device, register)
-                    value = self.bus.naked_read(device, reg)
+                    value = self.bus.naked_read(reg)
                     if value is not None:
                         reg.int_value = value
                     else:
@@ -195,10 +196,12 @@ class BaseReadSync(BaseSync):
 
 
 class BaseWriteSync(BaseSync):
+    """A SyncLoop that performs a naive write of the registers by sequentially
+    calling the ``read`` on each of them.
 
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
-
+    It wraps the processing between buses' ``can_use()`` and ``stop_using()``
+    methods and uses ``naked_write`` instead of the ``write`` method.
+    """
     def atomic(self):
         """Implements the writing of the registers.
 
@@ -209,7 +212,7 @@ class BaseWriteSync(BaseSync):
             for device in self.devices:
                 for register in self.registers:
                     reg = getattr(device, register)
-                    self.bus.naked_write(device, reg, reg.int_value)
+                    self.bus.naked_write(reg, reg.int_value)
             self.bus.stop_using()
         else:
             logger.error(f'failed to acquire buss {self.bus.name}')

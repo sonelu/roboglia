@@ -14,6 +14,7 @@ roboglia.dynamixel.DynamixelBulkWriteLoop
    
       ~DynamixelBulkWriteLoop.__init__
       ~DynamixelBulkWriteLoop.atomic
+      ~DynamixelBulkWriteLoop.get_register_range
       ~DynamixelBulkWriteLoop.pause
       ~DynamixelBulkWriteLoop.process_devices
       ~DynamixelBulkWriteLoop.process_registers
@@ -56,6 +57,7 @@ roboglia.dynamixel.DynamixelBulkWriteLoop
    
    .. automethod:: __init__
    .. automethod:: atomic
+   .. automethod:: get_register_range
    .. automethod:: pause
    .. automethod:: process_devices
    .. automethod:: process_registers

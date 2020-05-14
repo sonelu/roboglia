@@ -26,8 +26,8 @@ various structural elements of a robot.
 
    BaseBus
    FileBus
-   ShareableBus
-   ShareableFileBus
+   SharedBus
+   SharedFileBus
 
 *Registers*
 

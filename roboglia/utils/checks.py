@@ -15,7 +15,7 @@
 
 
 def check_key(key, dict_info, context, context_id, logger, message=None):
-    """Checks if a `key` is in a dictionary `dict_info` and raises a cusomized
+    """Checks if a `key` is in a dictionary `dict_info` and raises a customized
     exception message with better context.
 
     Args:
@@ -28,7 +28,7 @@ def check_key(key, dict_info, context, context_id, logger, message=None):
             we will have to use the index of the item in the initialization
             dictionary)
         logger (logger object): where the logging will be written
-        message (str): if this is provided the fuction will use this message
+        message (str): if this is provided the function will use this message
             for logging and raise instead of building a message specific
             for the context.
 
@@ -46,7 +46,7 @@ def check_key(key, dict_info, context, context_id, logger, message=None):
 
 
 def check_type(value, to_type, context, context_id, logger, message=None):
-    """Checks if a value is of a certain type and raises a cusomized
+    """Checks if a value is of a certain type and raises a customized
     exception message with better context.
 
     Args:
@@ -59,21 +59,33 @@ def check_type(value, to_type, context, context_id, logger, message=None):
             we will have to use the index of the item in the initialization
             dictionary)
         logger (logger object): where the logging will be written
-        message (str): if this is provided the fuction will use this message
+        message (str): if this is provided the function will use this message
             for logging and raise instead of building a message specific
             for the context.
 
     Raises:
         ValueError: if the value is not of the type indicated
     """
-    if type(value) is not to_type:
-        if message is None:
-            message = f'value {value} should be of type {to_type} ' + \
-                      f'for {context}: {context_id}'
-        else:
-            message = f'{message} for {context}: {context_id}'
-        logger.critical(message)
-        raise ValueError(message)
+    if type(to_type) == list:
+        # we compare with a list of types
+        for one_type in to_type:
+            if isinstance(value, one_type):
+                # we are ok
+                return None
+    else:
+        # one value only
+        if isinstance(value, to_type):
+            # we are ol
+            return None
+    # if we are here it means that either in the one type or a list of types
+    # we could not find a match
+    if message is None:
+        message = f'value {value} should be of type {to_type} ' + \
+                    f'for {context}: {context_id}'
+    else:
+        message = f'{message} for {context}: {context_id}'
+    logger.critical(message)
+    raise ValueError(message)
 
 
 def check_options(value, options, context, context_id, logger, message=None):
@@ -81,7 +93,7 @@ def check_options(value, options, context, context_id, logger, message=None):
 
     Args:
         value (any): a value to be checked
-        options (list): the allowed options for the vlue
+        options (list): the allowed options for the value
         context (str): a string indicating the context of the check, for
             example 'Bus' or 'Device'
         context_id (str or int): indicates the precise context (the name
@@ -89,7 +101,7 @@ def check_options(value, options, context, context_id, logger, message=None):
             we will have to use the index of the item in the initialization
             dictionary)
         logger (logger object): where the logging will be written
-        message (str): if this is provided the fuction will use this message
+        message (str): if this is provided the function will use this message
             for logging and raise instead of building a message specific
             for the context.
 
@@ -99,6 +111,48 @@ def check_options(value, options, context, context_id, logger, message=None):
     if value not in options:
         if message is None:
             message = f'value {value} should be one of {options} ' + \
+                      f'for {context}: {context_id}'
+        else:
+            message = f'{message} for {context}: {context_id}'
+        logger.critical(message)
+        raise ValueError(message)
+
+
+def check_not_empty(value, descriptor, context, context_id, logger,
+                    message=None):
+    """Checks if a value is not empty (``''`` or ``{}`` or ``[]`` or ``None``).
+
+    Parameters
+    ----------
+    value: any
+        a value to be checked
+
+    descriptor: str
+        a string identifying the value checked, for example 'name'
+
+    context: str
+        a string indicating the context of the check, for example 'Bus' or
+        'Device'
+
+    context_id: str
+        indicates the precise context (the name of the object)
+
+    logger: logger object
+        where the logging will be written
+
+    message: str
+        if this is provided the function will use this message
+        for logging and raise instead of building a message specific
+        for the context.
+
+    Raises
+    ------
+    ValueError
+        if the value is empty
+    """
+    if not value:
+        if message is None:
+            message = f'parameter {descriptor} should not be empty ' + \
                       f'for {context}: {context_id}'
         else:
             message = f'{message} for {context}: {context_id}'

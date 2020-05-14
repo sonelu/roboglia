@@ -14,8 +14,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+import inspect
 
-from ..utils import check_key, check_type, check_options
+from ..utils import check_type, check_options, check_not_empty
+from .device import BaseDevice
+from .sync import BaseSync
 
 logger = logging.getLogger(__name__)
 
@@ -23,86 +26,256 @@ logger = logging.getLogger(__name__)
 class BaseRegister():
     """A minimal representation of a device register.
 
-    The `init_dict` must contain the following information, otherwise
-    a `KeyError` will be thrown:
+    Parameters
+    ----------
+    name: str
+        The name of the register
 
-    Args:
-        init_dict (dict): The dictionary used to initialize the register.
+    device: BaseDevice or subclass
+        The device where the register is attached to
 
-    The following keys are expected in the dictionary:
+    address: int (typpically but some devices might use other addressing)
+        The register address
 
-    - ``name``: the name of the register
-    - ``device``: the device where the register is attached to
-    - ``address``: the register address
+    size: int
+        The register size in bytes; defaults to 1
 
-    Optionally the following items can be provided or will be defaulted:
+    minim: int
+        Minimum value represented in register in internal format; defaults to 0
 
-    - ``size``: the register size in bytes; defaults to 1
-    - ``min``: min value represented in register; defaults to 0
-    - ``max``: max value represented in register; defaults to 2^size - 1
-        the setter method will check that the desired value is within the
-        [min, max] and trim it accordingly
-    - ``access``: read ('R') or read-write ('RW'); default 'R'
-    - ``sync``: True if the register will be updated from the real device
-        using a sync loop. If `sync` is False access to the register through
-        the value property will invoke reading / writing to the real register;
-        default 'False'
-    - ``default``: the default value for the register; implicit 0
+    maxim: int
+        Maximum value represented in register; defaults to 2^size - 1.
+        The setter method for internal value will check that the desired
+        value is within the [min, max] and trim it accordingly
+
+    access: str
+        Read ('R') or read-write ('RW'); default 'R'
+
+    sync: bool
+        ``True`` if the register will be updated from the real device
+        using a sync loop. If `sync` is ``False`` access to the register
+        through the value property will invoke reading / writing to the real
+        register; default ``False``
+
+    default: int
+        The default value for the register; implicit 0
 
     """
-    def __init__(self, init_dict):
+    def __init__(self, name='REGISTER', device=None, address=0, size=1,
+                 minim=0, maxim=None, access='R', sync=False, default=0,
+                 **kwargs):
         # these are already checked by the device
-        self.name = init_dict['name']
-        self.device = init_dict['device']
-        check_key('address', init_dict, 'register', self.name, logger)
-        self.address = init_dict['address']
-        # optionals
-        self.size = init_dict.get('size', 1)
-        check_type(self.size, int, 'register', self.name, logger)
-        self.min = init_dict.get('min', 0)
-        check_type(self.min, int, 'register', self.name, logger)
-        self.max = init_dict.get('max', pow(2, self.size * 8) - 1)
-        check_type(self.max, int, 'register', self.name, logger)
-        self.access = init_dict.get('access', 'R')
-        check_options(self.access, ['R', 'RW'], 'register', self.name, logger)
-        self.sync = init_dict.get('sync', False)
-        check_options(self.sync, [True, False], 'register', self.name, logger)
-        self.default = init_dict.get('default', 0)
-        check_type(self.default, int, 'register', self.name, logger)
-        self.int_value = self.default
+        self.__name = name
+        # device
+        check_not_empty(device, 'device', 'register', self.name, logger)
+        check_type(device, BaseDevice, 'register', self.name, logger)
+        self.__device = device
+        # address
+        # check_not_empty(address, 'address', 'register', self.name, logger)
+        self.__address = address
+        # size
+        check_not_empty(size, 'size', 'register', self.name, logger)
+        check_type(size, int, 'register', self.name, logger)
+        self.__size = size
+        # minim
+        check_type(minim, int, 'register', self.name, logger)
+        self.__minim = minim
+        # maxim
+        if maxim:
+            check_type(maxim, int, 'register', self.name, logger)
+            self.__maxim = maxim
+        else:
+            self.__maxim = pow(2, self.size * 8) - 1
+        # access
+        check_options(access, ['R', 'RW'], 'register', self.name, logger)
+        self.__access = access
+        # sync
+        check_options(sync, [True, False], 'register', self.name, logger)
+        self.__sync = sync
+        # default
+        check_type(default, int, 'register', self.name, logger)
+        self.__default = default
+        self.__int_value = self.default
 
-    def value_to_external(self):
+    @property
+    def name(self):
+        """Register's name."""
+        return self.__name
+
+    @property
+    def device(self):
+        """The device the register belongs to."""
+        return self.__device
+
+    @property
+    def address(self):
+        """The register's address in the device."""
+        return self.__address
+
+    @property
+    def size(self):
+        """The regster's size in Bytes."""
+        return self.__size
+
+    @property
+    def minim(self):
+        """The register's minimum value in internal format."""
+        return self.__minim
+
+    @property
+    def maxim(self):
+        """The register's maximum value in internal format."""
+        return self.__maxim
+
+    @property
+    def range(self):
+        """Tuple with (minim, maxim) values in internal format."""
+        return (self.__minim, self.__maxim)
+
+    @property
+    def min_ext(self):
+        """The register's minimum value in external format."""
+        return self.value_to_external(self.minim)
+
+    @property
+    def max_ext(self):
+        """The register's maximum value in external format."""
+        return self.value_to_external(self.maxim)
+
+    @property
+    def range_ext(self):
+        """Tuple with (minim, maxim) values in external format."""
+        return (self.min_ext, self.max_ext)
+
+    @property
+    def access(self):
+        """Register's access mode."""
+        return self.__access
+
+    @property
+    def sync(self):
+        """Register is subject to a sync loop update."""
+        return self.__sync
+
+    @sync.setter
+    def sync(self, value):
+        """Sets the register as being synced by a loop. Only subclasses
+        of :py:class:`BaseSync` are allowed to do this change."""
+        caller = inspect.stack()[1].frame.f_locals['self']
+        if isinstance(caller, BaseSync):
+            self.__sync = (value is True)
+        else:
+            logger.error('only BaseSync subclasses can chance the sync '
+                         'flag of a register')
+
+    @property
+    def default(self):
+        """The register's default value in internal format."""
+        return self.__default
+
+    @property
+    def int_value(self):
+        """The internal value of the register."""
+        return self.__int_value
+
+    @int_value.setter
+    def int_value(self, value):
+        """Allows only :py:class:`BaseSync` derrived classes to set the values
+        for the ``int_value``."""
+        caller = inspect.stack()[1].frame.f_locals['self']
+        if isinstance(caller, BaseSync):
+            self.__int_value = value
+        else:
+            logger.error('only BaseSync subclasses can chance the '
+                         'internal value ')
+
+    def value_to_external(self, value):
+        """Converts the presented value to external format according to
+        register's settings. This method should be overridden by subclasses
+        in case they have specific conversions to do.
+
+        .. see also: :py:class:`BoolRegister`,
+            :py:class:`RegisterWithConversion`,
+            :py:class:`RegisterWithThreshold`
+
+        Parameters
+        ----------
+        value: int
+            A value (internal representation) to be converted.
+
+        Returns
+        -------
+        int
+            For ``BaseRegister`` it returns the same value unchanged.
         """
-        The external representation of the register's value.
+        return value
 
-        The method will return external representation of the register.
-        If the register is not flagged as a sync registry it will also
-        try to invoke the `read()` method of the register to
-        get the most up to date value.
+    def value_to_internal(self, value):
+        """Converts the presented value to internal format according to
+        register's settings. This method should be overridden by subclasses
+        in case they have specific conversions to do.
+
+        .. see also: :py:class:`BoolRegister`,
+            :py:class:`RegisterWithConversion`,
+            :py:class:`RegisterWithThreshold`
+
+        Parameters
+        ----------
+        value: int
+            A value (external representation) to be converted.
+
+        Returns
+        -------
+        int
+            For ``BaseRegister`` it returns the same value unchanged.
+        """
+        return value
+
+    @property
+    def value(self):
+        """Provides the value of the register in external format. If the
+        register is not marked for ``sync`` then it requests the device
+        to perform a ``read`` in order to refresh the content of the
+        register.
+
+        Returns
+        -------
+        any
+            The value of the register in the external format. It invokes
+            :py:meth:`value_to_external` which can be overridden by
+            subclasses to provide different representations of the register's
+            value (hence the ``any`` return type).
         """
         if not self.sync:
             self.read()
-        return self.int_value
+        return self.value_to_external(self.int_value)
 
-    def value_to_internal(self, value):
-        """Updates the internal representation of the register's value.
+    @value.setter
+    def value(self, value):
+        """Updates the internal value of the register with a value provided
+        in external format. It invokes the :py:meth:`value_to_internal`
+        method to perform the conversion. If the register's ``sync`` is not
+        ``True`` it will ask the device to initiate a ``write`` of the data
+        to the device. The method also checks if the converted value sits in
+        the allowed range defined by the ``minim`` and ``maxim`` attributes
+        of the register before updating. If the register is with access 'R'
+        (read-only) it will ignore the request and log a warning.
 
-        It will trim the received value to the [min, max]
-        range before saving it in the `int_value` attribute. If the register
-        is not synced (`sync` is `False`) it will also invoke the `write`
-        method to write the content to the device.
+        Parameters
+        ----------
+        value: any
+            The value in external format needed to be stored.
         """
         # trim according to min and max for the register
         if self.access != 'R':
-            self.int_value = max(self.min, min(self.max, value))
+            int_value = self.value_to_internal(value)
+            self.__int_value = max(self.minim, min(self.maxim, int_value))
             if not self.sync:       # pragma: no branch
                 # direct sync
                 self.write()
         else:
             logging.warning(f'attempted to write in RO register {self.name} '
                             f'of device {self.device.name}')
-
-    value = property(value_to_external, value_to_internal)
 
     def write(self):
         """Performs the actual writing of the internal value of the register
@@ -113,9 +286,8 @@ class BaseRegister():
 
     def read(self):
         """Performs the actual reading of the internal value of the register
-        from the device. In `BaseDevice` the method doesn't do anything and
-        subclasses should overwrite this mehtod to actually invoke the
-        buses' methods for reading information from the device.
+        from the device. Calls the device's method to read the value of
+        register.
         """
         value = self.device.read_register(self)
         # only update the internal value if the read value from device
@@ -123,7 +295,7 @@ class BaseRegister():
         # a value of None indicates that there was an issue with readind
         # the data from the device
         if value is not None:       # pragma: no branch
-            self.int_value = value
+            self.__int_value = value
 
     def __str__(self):
         """Representation of the register [name]: value."""
@@ -133,30 +305,27 @@ class BaseRegister():
 class BoolRegister(BaseRegister):
     """A register with BOOL representation (true/false).
 
-    Inherits from `BaseRegister` all methods and defaults `max` to 1.
+    Inherits from :py:class:`BaseRegister` all methods and defaults ``max``
+    to 1.
     Overrides `value_to_external` and `value_to_internal` to process
     a bool value.
-    `value` property is updated to use the new setter / getter methods.
     """
-    def __init__(self, init_dict):
-        init_dict['max'] = 1
-        super().__init__(init_dict)
+    def __init__(self, **kwargs):
+        if 'maxim' in kwargs:
+            logger.warning('parameter "maxim" for BoolRegister ignored, '
+                           'it will be defaulted to 1')
+            del kwargs['maxim']
+        super().__init__(maxim=1, **kwargs)
 
-    def value_to_external(self):
-        """The external representation of the register's value.
-
-        Perform conversion to bool on top of the inherited method.
+    def value_to_external(self, value):
+        """The external representation of bool register.
         """
-        return bool(super().value_to_external())
+        return bool(value)
 
     def value_to_internal(self, value):
         """The internal representation of the register's value.
-
-        Perform conversion to bool on top of the inherited method.
         """
-        super().value_to_internal(bool(value))
-
-    value = property(value_to_external, value_to_internal)
+        return int(value)
 
 
 class RegisterWithConversion(BaseRegister):
@@ -166,50 +335,63 @@ class RegisterWithConversion(BaseRegister):
         external = (internal - offset) / factor
         internal = external * factor + offset
 
-    Args:
-        init_dict (dict): The dictionary used to initialize the register.
+    The ``RegisterWithConversion`` inherits all the paramters from
+    :py:class:`BaseRegister` and in addition includes the following
+    specific parameters that are used when converting the data from internal
+    to external format.
 
-    In addition to the fields used in :py:class:`BaseRegister`, the following
-    keys are expected in the dictionary:
+    Parameters
+    ----------
+    factor: float
+        A factor used for conversion. Defaults to 1.0.
 
-    - ``factor``: a factor used for conversion (float)
-
-    Optionally the following items can be provided or will be defaulted:
-
-    - ``offset``: the offset; defaults to 0 (int)
+    offset: int
+        The offset for the conversion; defaults to 0 (int)
 
     Raises:
-        KeyError: if any of the mandatory fields are not proviced
+        KeyError: if any of the mandatory fields are not provided
         ValueError: if value provided are wrong or the wrong type
     """
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
-        check_options('factor', init_dict, 'register', self.name, logger)
-        self.factor = init_dict['factor']
-        check_type(self.factor, float, 'register', self.name, logger)
-        self.offset = init_dict.get('offset', 0)
-        check_type(self.offset, int, 'register', self.name, logger)
+    def __init__(self, factor=1.0, offset=0, **kwargs):
+        super().__init__(**kwargs)
+        check_type(factor, float, 'register', self.name, logger)
+        self.__factor = factor
+        check_type(offset, int, 'register', self.name, logger)
+        self.__offset = offset
 
-    def value_to_external(self):
+    @property
+    def factor(self):
+        """The conversion factor for external value."""
+        return self.__factor
+
+    @property
+    def offset(self):
+        """The offset for external value."""
+        return self.__offset
+
+    def value_to_external(self, value):
         """
         The external representation of the register's value.
 
-        Performs the translation of the value after calling the inherited
-        method.
+        Performs the translation of the value according to::
+
+            external = (internal - offset) / factor
+
         """
-        return (float(super().value_to_external()) - self.offset) / self.factor
+        return (float(value) - self.offset) / self.factor
 
     def value_to_internal(self, value):
         """
         The internal representation of the register's value.
 
-        Performs the translation of the value before calling the inherited
-        method.
-        """
-        value = round(float(value) * self.factor + self.offset)
-        super().value_to_internal(value)
+        Performs the translation of the value according to::
 
-    value = property(value_to_external, value_to_internal)
+            internal = external * factor + offset
+
+        The resulting value is rounded to produce an integer suitable
+        to be stored in the register.
+        """
+        return round(float(value) * self.factor + self.offset)
 
 
 class RegisterWithThreshold(BaseRegister):
@@ -228,36 +410,52 @@ class RegisterWithThreshold(BaseRegister):
         else:
             internal = - external * factor
 
-    Args:
-        init_dict (dict): The dictionary used to initialize the register.
+    The ``RegisterWithThreshold`` inherits all the paramters from
+    :py:class:`BaseRegister` and in addition includes the following
+    specific parameters that are used when converting the data from internal
+    to external format.
 
-    In addition to the fields used in :py:class:`BaseRegister`, the following
-    keys are expected in the dictionary:
+    Parameters
+    ----------
+    factor: float
+        A factor used for conversion. Defaults to 1.0
 
-    - ``factor``: a factor used for conversion (float)
-    - ``threshold``: a threshold that separates the positive from negative
-      values (int)
+    threshold: int
+        A threshold that separates the positive from negative
+        values. Must be supplied.
 
     Raises:
         KeyError: if any of the mandatory fields are not proviced
         ValueError: if value provided are wrong or the wrong type
     """
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
-        check_key('factor', init_dict, 'register', self.name, logger)
-        self.factor = init_dict['factor']
-        check_type(self.factor, float, 'register', self.name, logger)
-        check_key('threshold', init_dict, 'register', self.name, logger)
-        self.threshold = init_dict['threshold']
-        check_type(self.threshold, int, 'register', self.name, logger)
+    def __init__(self, factor=1.0, threshold=None, **kwargs):
+        super().__init__(**kwargs)
+        check_type(factor, float, 'register', self.name, logger)
+        self.__factor = factor
+        check_not_empty(threshold, 'threshold', 'register', self.name, logger)
+        check_type(threshold, int, 'register', self.name, logger)
+        self.__threshold = threshold
 
-    def value_to_external(self):
+    @property
+    def factor(self):
+        """Conversion factor."""
+        return self.__factor
+
+    @property
+    def threshold(self):
+        """The threshold for conversion."""
+        return self.__threshold
+
+    def value_to_external(self, value):
         """The external representation of the register's value.
 
-        Performs the translation of the value after calling the inherited
-        method.
+        Performs the translation of the value according to::
+
+            if value < threshold:
+                external = value / factor
+            else:
+                external = (threshold - value) / factor
         """
-        value = super().value_to_external()
         if value < self.threshold:
             return value / self.factor
         else:
@@ -266,13 +464,14 @@ class RegisterWithThreshold(BaseRegister):
     def value_to_internal(self, value):
         """The internal representation of the register's value.
 
-        Performs the translation of the value before calling the inherited
-        method.
+        Performs the translation of the value according to::
+
+            if value > 0:
+                internal = value * factor
+            else:
+                internal = (-value) * factor + threshold
         """
         if value >= 0:
-            value = value * self.factor
+            return value * self.factor
         else:
-            value = (-value) * self.factor + self.threshold
-        super().value_to_internal(round(value))
-
-    value = property(value_to_external, value_to_internal)
+            return (-value) * self.factor + self.threshold

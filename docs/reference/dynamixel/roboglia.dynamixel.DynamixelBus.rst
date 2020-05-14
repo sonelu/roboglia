@@ -37,6 +37,7 @@ roboglia.dynamixel.DynamixelBus
       ~DynamixelBus.port_handler
       ~DynamixelBus.protocol
       ~DynamixelBus.robot
+      ~DynamixelBus.rs485
    
    
 

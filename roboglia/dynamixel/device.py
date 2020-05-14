@@ -24,9 +24,19 @@ logger = logging.getLogger(__name__)
 
 
 class DynamixelDevice(BaseDevice):
+    """Implements specific functionality for Dynamixel devices.
 
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
+    The initialization parameters are the same as for the class
+    :py:class:`BaseDevice`.
+
+    Differences are:
+
+    - different version of :py:meth:`get_model_path` that
+      will point to the local ``device`` directory in the ``dynamixel``
+      module
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def get_model_path(self):
         """Builds the path to the `.yml` documents.
@@ -61,13 +71,3 @@ class DynamixelDevice(BaseDevice):
         else:
             logger.error(f'Unexpected register size: {size}')
             return None
-
-    def open(self):
-        """Reads all registers of the device if not synced.
-        """
-        for reg in self.registers.values():
-            # only registers that are not flagged for sync replication
-            if not reg.sync:
-                value = self.read_register(reg)
-                if value is not None:
-                    reg.int_value

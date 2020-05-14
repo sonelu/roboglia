@@ -17,7 +17,10 @@ import os
 import yaml
 import logging
 
-from ..utils import get_registered_class, check_key, check_options
+from ..utils import get_registered_class, check_options, \
+    check_not_empty, check_type
+
+from .bus import BaseBus, SharedBus
 
 logger = logging.getLogger(__name__)
 
@@ -25,43 +28,89 @@ logger = logging.getLogger(__name__)
 class BaseDevice():
     """A base virtual class for all devices.
 
-    A BaseDevice is a surrogate representation of an actual device,
+    A ``BaseDevice`` is a surrogate representation of an actual device,
     characterized by a number of internal registers that can be read or
-    written to by the means of a coomunication bus.
-    Any device is based on a `model` that identifies the `.device` file
+    written to by the means of a comunication bus.
+    Any device is based on a ``model`` that identifies the ``.yml`` file
     describing the structure of the device (the registers).
 
-    Args:
-        init_dict (dict): The dictionary used to initialize the joint.
+    .. note: Device defintion files are searched in a path provided by
+        the method :py:meth:`get_model_path` unless a specific path is
+        provided in the `path` parameter. This way, if no `path` is provided
+        the specific device class can use different locations to place the
+        files. For instance `BaseDevice` will provide the location
+        ``roboglia/base/devices/``, ``DynamixelDevice`` will provide
+        ``roboglia/dynamixel/devices/``, ``I2CDevice`` will provide
+        ``roboglia/i2c/devices/``, etc. If you want to use a device that does
+        not exist in ``roboglia`` and for which you have created a YAML file
+        you can indicate the directory where the file is located with the
+        `path` paramters and the name of the file in the `model` parameter.
 
-    The following keys are expected in the dictionary:
+    .. warning: If you plan to use ``auto`` in the device or have
+        initializations in `init` parameter you have to make sure that the
+        associated bus is also marked with ``auto: True``, otherwise the reads
+        and writes during the opening of the device will fail with ``attempt
+        to read(write) from(to) a closed bus.
 
-    - ``name``: the name of the joint
-    - ``bus``: the bus object where the device is attached to
-    - ``id``: the device ID on the bus
-    - ``model``: the model of the device; used to identify the device template
+    Parameters
+    ----------
+    name: str
+        The name of the device
 
-    The following keys are optional and can be omitted. They will be
-    defaulted with the values mentioned bellow:
+    bus: BaseBus or subclass
+        The bus object where the device is attached to
 
-    - ``path``: a path to the model file; defaulted to `get_model_path`
-    - ``auto``: the device should open automatically when the robot
-      starts; defaults to ``True``
+    id: int
+        The device ID on the bus. Typically it is an ``int`` but some buses
+        may use a different identifier. The processing should still work
+        fine.
 
-    Raises:
-        KeyError: if mandatory parameters are not found
+    model: str
+        A string used to identify the device description. Please see the
+        note bellow regarding the position of the device description files.
+
+    path: str
+        A path to the model file in case you want to use custom defined
+        devices that are not available in the ``roboglia`` repository.
+        Please see the note bellow regarding the position of the device
+        description files.
+
+    auto: bool
+        The device should be opened automatically when the robot starts.
+
+    init: dict
+        A dictionary of {register: value} pairs that the device should
+        initialize when the :py:meth:`~open` method is called. Please note
+        the initialization values should be provided in the **external**
+        format of the register as they will be used as::
+
+            register.value = dict_value
+
+        As no syncs are currently implemented this will automatically
+        trigger a ``write`` call to store that value in the device.
+
+    Raises
+    ------
+        KeyError
+            if mandatory parameters are not found or unexpected values
+            are used (ex. for boolean)
     """
-    def __init__(self, init_dict):
+    def __init__(self, name='DEVICE', bus=None, dev_id=None, model=None,
+                 path=None, auto=True, init={}, **kwargs):
         # these are already checked by robot
-        self.__name = init_dict['name']
-        self.__bus = init_dict['bus']
-        check_key('id', init_dict, 'device', self.__name, logger)
-        check_key('model', init_dict, 'device', self.__name, logger)
-        self.__dev_id = init_dict['id']
-        self.__model = init_dict['model']
+        self.__name = name
+        check_not_empty(bus, 'bus', 'device', name, logger)
+        check_type(bus, [BaseBus, SharedBus], 'device', name, logger)
+        self.__bus = bus
+        check_not_empty(dev_id, 'dev_id', 'device', name, logger)
+        self.__dev_id = dev_id
+        check_not_empty(model, 'model', 'device', name, logger)
+        check_type(model, str, 'device', name, logger)
+        self.__model = model
         # registers
-        model_path = init_dict.get('path', self.get_model_path())
-        model_file = os.path.join(model_path, self.__model + '.yml')
+        if not path:
+            path = self.get_model_path()
+        model_file = os.path.join(path, model + '.yml')
         with open(model_file, 'r') as f:
             model_ini = yaml.load(f, Loader=yaml.FullLoader)
         self.__registers = {}
@@ -72,62 +121,105 @@ class BaseDevice():
             reg_class_name = reg_info.get('class', self.default_register())
             reg_class = get_registered_class(reg_class_name)
             reg_info['device'] = self
-            new_register = reg_class(reg_info)
-            self.__dict__[reg_info['name']] = new_register
-            self.__registers[reg_info['name']] = new_register
+            new_register = reg_class(**reg_info)
+            # we add as an attribute of the register too
+            self.__dict__[reg_name] = new_register
+            self.__registers[reg_name] = new_register
             self.__reg_by_addr[reg_info['address']] = new_register
-        self.__auto_open = init_dict.get('auto', True)
-        check_options(self.__auto_open, [True, False], 'device',
-                      self.name, logger)
+        check_options(auto, [True, False], 'device', name, logger)
+        self.__auto_open = auto
+        self.__init = init
 
     @property
     def name(self):
-        """Device name."""
+        """Device name.
+
+        Returns
+        -------
+        str:
+            The name of the device
+        """
         return self.__name
 
     @property
     def registers(self):
-        """Device registers as dict."""
+        """Device registers as dict.
+
+        Returns
+        -------
+        dict:
+            The dictionary of registers with the register name as key.
+        """
         return self.__registers
 
     def register_by_address(self, address):
+        """Returns the register identified by the given address. If the
+        address is not available in the device it will return ``None``.
+
+        Returns
+        -------
+        BaseDevice or subclass or ``None``:
+            The device at `address` or ``None`` if no register with that
+            address exits.
+        """
         return self.__reg_by_addr.get(address, None)
 
     @property
     def dev_id(self):
-        """The device number"""
+        """The device number.
+
+        Returns
+        -------
+        int:
+            The device number
+        """
         return self.__dev_id
 
     @property
     def bus(self):
-        """The bus where the device is connected to."""
+        """The bus where the device is connected to.
+
+        Returns
+        -------
+        BaseBus or SharedBus or subclass:
+            The bus object using this device.
+        """
         return self.__bus
 
     @property
     def auto_open(self):
-        """Indicates that the device's :py:method:`open` is supposed to be
-        called by the robot's :py:method:`Robot.start` method."""
+        """Indicates that the device's :py:meth:`open` is supposed to be
+        called by the robot's :py:meth:`Robot.start` method.
+
+        Returns
+        -------
+        bool
+            ``True`` if the device :py:meth:`~open` will be called when
+            robot is starting.
+        """
         return self.__auto_open
 
     def get_model_path(self):
-        """Builds the path to the `.device` documents.
+        """Builds the path to the device description documents.
 
-        By default it will return the path to the `devices/<model>.yml`
-        file in the current directory of the method being called.
+        By default it will return the path to the `roboglia/base/devices/`
+        directory.
 
         Returns
         -------
         str
-            A full document path including the name of the model and the
-            extension `.yml`.
+            A full document path.
         """
         return os.path.join(os.path.dirname(__file__), 'devices')
 
     def default_register(self):
         """Default register for the device in case is not explicitly
         provided in the device definition file.
-        Subclasses of `BaseDevice` can overide the method to derive their
+
+        Subclasses of ``BaseDevice`` can overide the method to derive their
         own class.
+
+        ``BaseDevice`` suggests as default register :py:class:`BaseRegister`.
         """
         return 'BaseRegister'
 
@@ -135,23 +227,47 @@ class BaseDevice():
         """Implements the read of a register using the associated bus.
         More complex devices should overwrite the method to provide
         specific functionality.
+
+        ``BaseDevice`` simply calls the bus's ``read`` function and returns
+        the value received.
         """
-        return self.bus.read(self, register)
+        return self.bus.read(register)
 
     def write_register(self, register, value):
         """Implements the write of a register using the associated bus.
         More complex devices should overwrite the method to provide
         specific functionality.
+
+        ``BaseDevice`` simply calls the bus's ``write`` function and returns
+        the value received.
         """
-        self.bus.write(self, register, value)
+        self.bus.write(register, value)
 
     def open(self):
-        """Performs initialization of the device by reading all registers."""
+        """Performs initialization of the device by reading all registers
+        that are not flagged for ``sync`` replication and, if ``init``
+        parameter provided initializes the indicated
+        registers with the values from the ``init`` paramters."""
+        logger.info('reading registers')
         for register in self.registers.values():
-            self.read_register(register)
+            if register.sync:
+                logger.debug(f'register {register.name} flagged for sync '
+                             'update -- skipping')
+            else:
+                logger.debug(f'reading register {register.name}')
+                self.read_register(register)
+        logger.info('initializing registers')
+        for reg_name, value in self.__init.items():
+            if reg_name in self.__registers:
+                logger.debug(f'initializing register {reg_name}')
+                self.__registers[reg_name].value = value
+            else:
+                logger.warning(f'register {reg_name} does not exist in '
+                               f'device {self.name}; skipping initialization')
 
     def close(self):
-        """Perform device closure."""
+        """Perform device closure. ``BaseDevice`` implementation does
+        nothing."""
         pass
 
     def __str__(self):

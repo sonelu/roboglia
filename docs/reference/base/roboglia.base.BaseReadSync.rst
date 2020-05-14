@@ -14,6 +14,7 @@ roboglia.base.BaseReadSync
    
       ~BaseReadSync.__init__
       ~BaseReadSync.atomic
+      ~BaseReadSync.get_register_range
       ~BaseReadSync.pause
       ~BaseReadSync.process_devices
       ~BaseReadSync.process_registers
@@ -56,6 +57,7 @@ roboglia.base.BaseReadSync
    
    .. automethod:: __init__
    .. automethod:: atomic
+   .. automethod:: get_register_range
    .. automethod:: pause
    .. automethod:: process_devices
    .. automethod:: process_registers

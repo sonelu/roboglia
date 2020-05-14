@@ -9,11 +9,11 @@ registers:
 
   firmware:
     address: 2
-    max: 254
+    maxim: 254
 
   id:
     address: 3
-    max: 252
+    maxim: 252
     default: 1
 # ID is technically RW but we don't support changing it from roboglia
 # use Dynamixel tools like DynamixelWizard
@@ -23,21 +23,21 @@ registers:
     address: 4
     access: RW
     default: 3
-    max: 207
+    maxim: 207
 
   return_delay_time:
     class: RegisterWithConversion
     address: 5
     access: RW
     default: 250
-    max: 254
+    maxim: 254
     factor: 0.5
 
   cw_angle_limit_deg:
     class: RegisterWithConversion
     address: 6
     size: 2
-    max: 1023
+    maxim: 1023
     access: RW
     factor: 3.41
     offset: 512
@@ -46,7 +46,7 @@ registers:
     class: RegisterWithConversion
     address: 6
     size: 2
-    max: 1023
+    maxim: 1023
     access: RW
     factor: 195.3786081396107
     offset: 512
@@ -55,7 +55,7 @@ registers:
     class: RegisterWithConversion
     address: 8
     size: 2
-    max: 1023
+    maxim: 1023
     access: RW
     factor: 3.41
     offset: 512
@@ -65,7 +65,7 @@ registers:
     class: RegisterWithConversion
     address: 8
     size: 2
-    max: 1023
+    maxim: 1023
     access: RW
     factor: 195.3786081396107
     offset: 512
@@ -74,21 +74,21 @@ registers:
     address: 11
     access: RW
     min: 1
-    max: 2
+    maxim: 2
     default: 2
 
   temperature_limit:
     address: 12
     access: RW
     default: 65
-    max: 150
+    maxim: 150
 
   min_voltage_limit:
     class: RegisterWithConversion
     address: 13
     access: RW
     min: 50
-    max: 250
+    maxim: 250
     factor: 10.0
     default: 60
 
@@ -97,7 +97,7 @@ registers:
     address: 14
     access: RW
     min: 50
-    max: 250
+    maxim: 250
     factor: 10.0
     default: 90
 
@@ -106,20 +106,20 @@ registers:
     address: 15
     size: 2
     access: RW
-    max: 1023
+    maxim: 1023
     factor: 10.23
     default: 1023
 
   status_return_level:
     address: 17
     access: RW
-    max: 2
+    maxim: 2
     default: 2
 
   shutdown:
     address: 18
     access: RW
-    max: 7
+    maxim: 7
     default: 3
 
   torque_enable:
@@ -130,27 +130,27 @@ registers:
   led:
     address: 25
     access: RW
-    max: 7
+    maxim: 7
 
   d_gain:
     class: RegisterWithConversion
     address: 27
     access: RW
-    max: 254
+    maxim: 254
     factor: 250.0
 
   i_gain:
     class: RegisterWithConversion
     address: 28
     access: RW
-    max: 254
+    maxim: 254
     factor: 2.048
 
   p_gain:
     class: RegisterWithConversion
     address: 29
     access: RW
-    max: 254
+    maxim: 254
     default: 32
     factor: 8.0
 
@@ -159,7 +159,7 @@ registers:
     address: 30
     size: 2
     access: RW
-    max: 1023
+    maxim: 1023
     factor: 3.41
     offset: 512
 
@@ -168,7 +168,7 @@ registers:
     address: 30
     size: 2
     access: RW
-    max: 1023
+    maxim: 1023
     factor: 195.3786081396107
     offset: 512
 
@@ -178,7 +178,7 @@ registers:
     address: 32
     size: 2
     access: RW
-    max: 1023
+    maxim: 1023
     factor: 8.973684210526316
 
     # in rad per second
@@ -187,7 +187,7 @@ registers:
     address: 32
     size: 2
     access: RW
-    max: 1023
+    maxim: 1023
     factor: 0.939722013047473  
 
   torque_limit:
@@ -195,7 +195,7 @@ registers:
     address: 35
     size: 2
     access: RW
-    max: 1023
+    maxim: 1023
     factor: 10.23
 
   present_position_deg:
@@ -203,7 +203,7 @@ registers:
     address: 37
     size: 2
     access: R
-    max: 1023
+    maxim: 1023
     factor: 3.41
     offset: 512
 
@@ -212,7 +212,7 @@ registers:
     address: 37
     size: 2
     access: R
-    max: 1023
+    maxim: 1023
     factor: 195.3786081396107
     offset: 512
 
@@ -222,7 +222,7 @@ registers:
     address: 39
     size: 2
     access: R
-    max: 2047
+    maxim: 2047
     factor: 8.973684210526316
     threshold: 1024
 
@@ -232,7 +232,7 @@ registers:
     address: 39
     size: 2
     access: R
-    max: 2047
+    maxim: 2047
     factor: 0.939722013047473
     threshold: 1024
 
@@ -241,7 +241,7 @@ registers:
     address: 41
     size: 2
     access: R
-    max: 2047
+    maxim: 2047
     factor: 10.23
     threshold: 1024
 
@@ -274,5 +274,5 @@ registers:
     size: 2
     access: RW
     min: 0
-    max: 1023
+    maxim: 1023
     default: 32

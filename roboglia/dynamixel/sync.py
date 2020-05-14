@@ -71,11 +71,11 @@ class DynamixelSyncWriteLoop(BaseSync):
                 logger.debug(f'[sync write {self.name}] for register '
                              f'{reg_name}, result: {error}')
                 if result != 0:
-                    logger.error(f'failed to execte SyncWrite {self.name}: '
+                    logger.error(f'failed to execute SyncWrite {self.name}: '
                                  f'cerr={error}')
             else:
                 logger.error(f'sync {self.name} '
-                             f'failed to aquire buss {self.name}')
+                             f'failed to acquire bus {self.bus.name}')
             # cleanup
             sync_write.clearParam()
 
@@ -94,8 +94,8 @@ class DynamixelSyncReadLoop(BaseSync):
     execute.
     Only works with Protocol 2.0.
     """
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         if self.bus.protocol != 2.0:
             mess = 'SyncRead only supported for Dynamixel Protocol 2.0.'
             logger.critical(mess)
@@ -121,10 +121,11 @@ class DynamixelSyncReadLoop(BaseSync):
         """Executes a SyncRead."""
         for index, reg_name in enumerate(self.registers):
             gsr = self.gsrs[index]
-            # aquire the bus
+            # acquire the bus
             if not self.bus.can_use():
                 logger.error(f'sync {self.name} '
-                             f'failed to aquire buss {self.name}')
+                             f'failed to acquire bus {self.bus.name}')
+                continue
             # execute read
             result = gsr.txRxPacket()
             self.bus.stop_using()       # !! as soon as possible
@@ -137,7 +138,7 @@ class DynamixelSyncReadLoop(BaseSync):
                 register = getattr(device, reg_name)
                 if not gsr.isAvailable(device.dev_id, register.address,
                                        register.size):
-                    logger.error(f'failed to retreve data in SyncRead '
+                    logger.error(f'failed to retrieve data in SyncRead '
                                  f'{self.name} for device {device.name} '
                                  f'and register {register.name}')
                 else:
@@ -150,7 +151,7 @@ class DynamixelBulkWriteLoop(BaseSync):
 
     The devices are provided in the `group` parameter and the registers
     in the `registers` as a list of register names. The registers do not need
-    tovbe sequential.
+    to be sequential.
     We will trigger as many  BulkWrite packets as registers as Dynamixel
     does not support multiple registers in one go and you cannot include
     the same device twice in a SyncRead.
@@ -159,8 +160,8 @@ class DynamixelBulkWriteLoop(BaseSync):
     execute.
     Only works with Protocol 2.0.
     """
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         if self.bus.protocol != 2.0:
             mess = 'BulkWrite only supported for Dynamixel Protocol 2.0.'
             logger.critical(mess)
@@ -198,11 +199,11 @@ class DynamixelBulkWriteLoop(BaseSync):
                 self.bus.stop_using()       # !! as soon as possible
                 error = gbw.ph.getTxRxResult(result)
                 if result != 0:
-                    logger.error(f'failed to execte BulkWrite {self.name}: '
+                    logger.error(f'failed to execute BulkWrite {self.name}: '
                                  f'cerr={error}')
             else:
                 logger.error(f'sync {self.name} '
-                             f'failed to aquire buss {self.name}')
+                             f'failed to acquire bus {self.bus.name}')
             # cleanup
             gbw.clearParam()
 
@@ -242,7 +243,7 @@ class DynamixelBulkReadLoop(BaseSync):
             gbr = self.gbrs[index]
             if not self.bus.can_use():
                 logger.error(f'sync {self.name} '
-                             f'failed to aquire buss {self.name}')
+                             f'failed to acquire bus {self.bus.name}')
             else:
                 result = gbr.txRxPacket()
                 self.bus.stop_using()       # !! as soon as possible

@@ -14,14 +14,14 @@ dynamixel:
     d11:
       class: DynamixelDevice
       bus: ttys1
-      id: 11
+      dev_id: 11
       model: XL-320
       auto: True
 
     d12:
       class: DynamixelDevice
       bus: ttys1
-      id: 12
+      dev_id: 12
       model: XL-320
       auto: True
 
