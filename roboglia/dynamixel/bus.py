@@ -505,7 +505,7 @@ class MockPacketHandler():
                 device = self.__robot.device_by_id(self.__param[self.__index])
                 register = device.register_by_address(self.__start_address)
 
-            elif self.__mode == 'bulk':
+            else:           # bulk
                 idx = self.__index * 5
                 dev_id = self.__param[idx]
                 device = self.__robot.device_by_id(dev_id)
@@ -514,7 +514,7 @@ class MockPacketHandler():
                 register = device.register_by_address(address)
                 assert register.size == length
 
-            if register.access == 'R':
+            if register.access == 'RW':
                 value = register.int_value
             else:
                 value = register.int_value + random.randint(-10, 10)
