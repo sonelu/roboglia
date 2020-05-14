@@ -429,8 +429,8 @@ class SharedBus():
         self.__main_bus.write(reg, value)
 
     def read(self, reg):
-        """Overrides the main bus' ``read`` method and
-        performs a **safe** read by wrapping the main bus ``read`` call
+        """Overrides the main bus' :py:meth:`~roboglia.base.BaseBus.read`
+        method and performs a **safe** read by wrapping the read call
         in a request to acquire the bus.
 
         If the method is not able to acquire the bus in time (times out)
@@ -461,8 +461,8 @@ class SharedBus():
             return None
 
     def write(self, reg, value):
-        """Overrides the main bus' ``write`` method and
-        performs a **safe** write by wrapping the main bus ``write`` call
+        """Overrides the main bus' `~roboglia.base.BaseBus.write` method and
+        performs a **safe** write by wrapping the main bus write call
         in a request to acquire the bus.
 
         If the method is not able to acquire the bus in time (times out)
@@ -505,6 +505,10 @@ class SharedFileBus(SharedBus):
     .. note:: You should always use a ``SharedFileBus`` class if you plan
         to use sync loops that run in separate threads and they will have
         access to the same bus.
+
+    ``SharedFileBus`` inherits all the paramters from :py:class:`FileBus`
+    as well as the ones from the meta-class :py:class:`SharedBus`. Please
+    refer to these for a detail documentation of the parameters.
     """
     def __init__(self, **kwargs):
         super().__init__(FileBus, **kwargs)

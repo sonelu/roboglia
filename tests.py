@@ -377,13 +377,13 @@ class TestDynamixelRobot:
         robot.stop()
 
     def test_dynamixel__AXBaudRateRegister(self, dummy_device, caplog):
-        reg = DynamixelAXBaudRateRegister({
-            'name': 'test',
-            'device': dummy_device,
-            'address': 42,
-            'sync': True,       # avoids calling read / write
-            'access': 'RW'      # so we can change it!
-        })
+        reg = DynamixelAXBaudRateRegister(
+            name='test',
+            device=dummy_device,
+            address=42,
+            sync=True,       # avoids calling read / write
+            access='RW'      # so we can change it!
+        )
         reg.value = 1000000
         assert reg.value == 1000000
         assert reg.int_value == 1
@@ -395,26 +395,26 @@ class TestDynamixelRobot:
 
 
     def test_dynamixel__AXComplianceSlopeRegister(self, dummy_device):
-        reg = DynamixelAXComplianceSlopeRegister({
-            'name': 'test',
-            'device': dummy_device,
-            'address': 42,
-            'sync': True,       # avoids calling read / write
-            'access': 'RW'      # so we can change it!
-        })
+        reg = DynamixelAXComplianceSlopeRegister(
+            name='test',
+            device=dummy_device,
+            address=42,
+            sync=True,       # avoids calling read / write
+            access='RW'      # so we can change it!
+        )
         reg.value = 7
         assert reg.value == 7
         assert reg.int_value == 128
 
 
     def test_dynamixel__XLBaudRateRegister(self, dummy_device, caplog):
-        reg = DynamixelXLBaudRateRegister({
-            'name': 'test',
-            'device': dummy_device,
-            'address': 42,
-            'sync': True,       # avoids calling read / write
-            'access': 'RW'      # so we can change it!
-        })
+        reg = DynamixelXLBaudRateRegister(
+            name='test',
+            device=dummy_device,
+            address=42,
+            sync=True,       # avoids calling read / write
+            access='RW'      # so we can change it!
+        )
         reg.value = 1000000
         assert reg.value == 1000000
         assert reg.int_value == 3

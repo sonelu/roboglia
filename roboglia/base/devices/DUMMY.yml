@@ -9,7 +9,7 @@ registers:
 
   revision:
     address: 10
-    max: 254
+    maxim: 254
     default: 16
 
   delay:
@@ -17,7 +17,7 @@ registers:
     address: 20
     access: RW
     default: 250
-    max: 254
+    maxim: 254
     factor: 0.5
 
   desired_pos:
@@ -25,7 +25,7 @@ registers:
     address: 30
     size: 2
     access: RW
-    max: 1023
+    maxim: 1023
     factor: 3.41
     offset: 512
 
@@ -34,7 +34,7 @@ registers:
     address: 40
     size: 2
     access: RW
-    max: 1023
+    maxim: 1023
     factor: 8.973684210526316
 
   desired_load:
@@ -42,7 +42,7 @@ registers:
     address: 50
     size: 2
     access: RW
-    max: 1023
+    maxim: 1023
     factor: 10.24
 
   enable_device:
@@ -55,7 +55,7 @@ registers:
     address: 70
     size: 2
     access: R
-    max: 1023
+    maxim: 1023
     factor: 3.41
     offset: 512
     default: 512
@@ -65,7 +65,7 @@ registers:
     address: 80
     size: 2
     access: R
-    max: 2047
+    maxim: 2047
     factor: 8.973684210526316
     threshold: 1024
     default: 512
@@ -75,7 +75,7 @@ registers:
     address: 90
     size: 2
     access: R
-    max: 2047
+    maxim: 2047
     factor: 10.24
     threshold: 1024
     default: 1536
@@ -87,7 +87,7 @@ registers:
     address: 95
     size: 2
     access: RW
-    max: 2047
+    maxim: 2047
     factor: 10.24
     threshold: 1024
     default: 1536

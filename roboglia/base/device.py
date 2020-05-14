@@ -89,7 +89,8 @@ class BaseDevice():
         As no syncs are currently implemented this will automatically
         trigger a ``write`` call to store that value in the device.
 
-    Raises:
+    Raises
+    ------
         KeyError
             if mandatory parameters are not found or unexpected values
             are used (ex. for boolean)
@@ -120,7 +121,7 @@ class BaseDevice():
             reg_class_name = reg_info.get('class', self.default_register())
             reg_class = get_registered_class(reg_class_name)
             reg_info['device'] = self
-            new_register = reg_class(reg_info)
+            new_register = reg_class(**reg_info)
             # we add as an attribute of the register too
             self.__dict__[reg_name] = new_register
             self.__registers[reg_name] = new_register
@@ -201,8 +202,8 @@ class BaseDevice():
     def get_model_path(self):
         """Builds the path to the device description documents.
 
-        By default it will return the path to the `devices/<model>.yml`
-        file in the current directory of the method being called.
+        By default it will return the path to the `roboglia/base/devices/`
+        directory.
 
         Returns
         -------
