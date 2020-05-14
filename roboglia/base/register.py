@@ -16,7 +16,7 @@
 import logging
 import inspect
 
-from ..utils import check_key, check_type, check_options, check_not_empty
+from ..utils import check_type, check_options, check_not_empty
 from .device import BaseDevice
 from .sync import BaseSync
 
@@ -30,10 +30,10 @@ class BaseRegister():
     ----------
     name: str
         The name of the register
-    
+
     device: BaseDevice or subclass
         The device where the register is attached to
-    
+
     address: int (typpically but some devices might use other addressing)
         The register address
 
@@ -53,9 +53,9 @@ class BaseRegister():
 
     sync: bool
         ``True`` if the register will be updated from the real device
-        using a sync loop. If `sync` is ``False`` access to the register through
-        the value property will invoke reading / writing to the real register;
-        default ``False``
+        using a sync loop. If `sync` is ``False`` access to the register
+        through the value property will invoke reading / writing to the real
+        register; default ``False``
 
     default: int
         The default value for the register; implicit 0
@@ -163,7 +163,7 @@ class BaseRegister():
         of :py:class:`BaseSync` are allowed to do this change."""
         caller = inspect.stack()[1].frame.f_locals['self']
         if isinstance(caller, BaseSync):
-            self.__sync = (value==True)
+            self.__sync = (value is True)
         else:
             logger.error('only BaseSync subclasses can chance the sync '
                          'flag of a register')
@@ -194,8 +194,8 @@ class BaseRegister():
         register's settings. This method should be overridden by subclasses
         in case they have specific conversions to do.
 
-        .. see also: :py:class:`BoolRegister`, 
-            :py:class:`RegisterWithConversion`, 
+        .. see also: :py:class:`BoolRegister`,
+            :py:class:`RegisterWithConversion`,
             :py:class:`RegisterWithThreshold`
 
         Parameters
@@ -215,8 +215,8 @@ class BaseRegister():
         register's settings. This method should be overridden by subclasses
         in case they have specific conversions to do.
 
-        .. see also: :py:class:`BoolRegister`, 
-            :py:class:`RegisterWithConversion`, 
+        .. see also: :py:class:`BoolRegister`,
+            :py:class:`RegisterWithConversion`,
             :py:class:`RegisterWithThreshold`
 
         Parameters
@@ -324,6 +324,7 @@ class BoolRegister(BaseRegister):
         """
         return int(value)
 
+
 class RegisterWithConversion(BaseRegister):
     """A register with an external representation that is produced by
     using a linear transformation::
@@ -334,7 +335,7 @@ class RegisterWithConversion(BaseRegister):
     The ``RegisterWithConversion`` inherits all the paramters from
     :py:class:`BaseRegister` and in addition includes the following
     specific parameters that are used when converting the data from internal
-    to external format. 
+    to external format.
 
     Parameters
     ----------
@@ -370,7 +371,7 @@ class RegisterWithConversion(BaseRegister):
         The external representation of the register's value.
 
         Performs the translation of the value according to::
-        
+
             external = (internal - offset) / factor
 
         """
@@ -409,13 +410,13 @@ class RegisterWithThreshold(BaseRegister):
     The ``RegisterWithThreshold`` inherits all the paramters from
     :py:class:`BaseRegister` and in addition includes the following
     specific parameters that are used when converting the data from internal
-    to external format. 
+    to external format.
 
     Parameters
     ----------
     factor: float
         A factor used for conversion. Defaults to 1.0
-    
+
     threshold: int
         A threshold that separates the positive from negative
         values. Must be supplied.

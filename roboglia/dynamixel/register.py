@@ -56,8 +56,8 @@ class DynamixelAXBaudRateRegister(BaseRegister):
     def value_to_internal(self, value):
         """Converts valid baud rates to internal codes."""
         int_value = {1000000: 1, 500000: 3, 400000: 4, 250000: 7,
-                      200000: 9, 115200: 16, 57600: 34, 19200: 103,
-                      9600: 207}.get(int(value), None)
+                     200000: 9, 115200: 16, 57600: 34, 19200: 103,
+                     9600: 207}.get(int(value), None)
         if int_value is None:
             logger.error(f'attempt to write a non supported for AX baud '
                          f'rate: {value}; ignored')
@@ -119,8 +119,8 @@ class DynamixelXLBaudRateRegister(BaseRegister):
     def value_to_internal(self, value):
         """Converts valid baud rates to internal codes."""
         int_value = {4500000: 7, 4000000: 6, 3000000: 5, 2000000: 4,
-                      1000000: 3, 115200: 2, 57600: 1,
-                      0: 9600}.get(int(value), None)
+                     1000000: 3, 115200: 2, 57600: 1,
+                     0: 9600}.get(int(value), None)
 
         if int_value is None:
             logger.error(f'attempt to write a non supported for XL baud '
