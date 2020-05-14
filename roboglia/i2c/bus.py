@@ -66,7 +66,7 @@ class I2CBus(BaseBus):
         it. If the bus is used in any sync loops, the close request might
         fail.
         """
-        if super().close():
+        if super().close():             # pragma: no branch
             try:
                 self.port_handler.close()
             except Exception as e:
@@ -259,7 +259,7 @@ class MockSMBus(SMBus):
             if reg.access == 'R':
                 # we randomize the read
                 plus = random.randint(-10, 10)
-                value = max(reg.min, min(reg.max, reg.int_value + plus))
+                value = max(reg.minim, min(reg.maxim, reg.int_value + plus))
                 return value
             else:
                 return reg.int_value

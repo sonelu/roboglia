@@ -311,7 +311,7 @@ class BoolRegister(BaseRegister):
     a bool value.
     """
     def __init__(self, **kwargs):
-        if 'maxim' in kwargs:
+        if 'maxim' in kwargs:           # pragma: no branch
             logger.warning('parameter "maxim" for BoolRegister ignored, '
                            'it will be defaulted to 1')
             del kwargs['maxim']

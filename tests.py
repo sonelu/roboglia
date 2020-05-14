@@ -6,7 +6,7 @@ import yaml
 from roboglia.utils import register_class, unregister_class, registered_classes, get_registered_class
 from roboglia.utils import check_key, check_options, check_type, check_not_empty
 
-from roboglia.base import BaseRobot, BaseDevice, BaseBus
+from roboglia.base import BaseRobot, BaseDevice, BaseBus, BaseRegister
 from roboglia.base import RegisterWithConversion, RegisterWithThreshold
 from roboglia.base import BaseThread
 
@@ -243,7 +243,7 @@ class TestMockRobot:
         caplog.clear()
         bus.write(dev.current_pos, 10)
         assert len(caplog.records) == 1
-        assert 'failed to acquire bus busA' in caplog.text
+        assert 'failed to acquire bus busA' in caplog.text        
         # release bus
         bus.stop_using()
         mock_robot.stop()
@@ -340,6 +340,8 @@ class TestUtilsChecks:
         with pytest.raises(ValueError) as excinfo:
             check_type('10', int, 'object', 10, logger, 'custom')
         assert 'custom' in str(excinfo.value)
+        with pytest.raises(ValueError) as excinfo:
+            check_type('10', [int, float], 'object', 10, logger)        
 
     def test_check_options(self):
         mess = 'should be one of'
@@ -405,6 +407,15 @@ class TestDynamixelRobot:
             dev.cw_angle_limit_deg.value = 10
             assert (dev.cw_angle_limit_deg.value - 10) < 0.2
         robot.stop()
+
+    def test_dynamixel_register_4Bytes(self, mock_robot_init):
+        robot = BaseRobot(**mock_robot_init['dynamixel'])
+        robot.start()
+        dev = robot.devices['d11']
+        register = BaseRegister(name='test', device=dev, address=150, size=4,
+                 access='RW')
+        register.value = 100
+        assert register.value == 100
 
     def test_dynamixel__AXBaudRateRegister(self, dummy_device, caplog):
         reg = DynamixelAXBaudRateRegister(
@@ -543,9 +554,10 @@ class TestDynamixelRobot:
     #     assert mess in str(excinfo.value)
     #     robot.stop()
 
-    def test_dynamixel_bus_baudrate(self, mock_robot_init):
+    def test_dynamixel_bus_params(self, mock_robot_init):
         robot = BaseRobot(**mock_robot_init['dynamixel'])
         assert robot.buses['ttys1'].baudrate == 19200
+        assert not robot.buses['ttys1'].rs485
         robot.stop()
 
     def test_dynamixel_bus_closed(self, mock_robot_init, caplog):

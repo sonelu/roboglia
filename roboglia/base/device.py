@@ -100,7 +100,7 @@ class BaseDevice():
         # these are already checked by robot
         self.__name = name
         check_not_empty(bus, 'bus', 'device', name, logger)
-        check_type(bus, [BaseBus, SharedBus], 'device', name, logger)
+        check_type(bus, [SharedBus, BaseBus], 'device', name, logger)
         self.__bus = bus
         check_not_empty(dev_id, 'dev_id', 'device', name, logger)
         self.__dev_id = dev_id
