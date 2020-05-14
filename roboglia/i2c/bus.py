@@ -259,7 +259,7 @@ class MockSMBus(SMBus):
             if reg.access == 'R':
                 # we randomize the read
                 plus = random.randint(-10, 10)
-                value = max(reg.min, min(reg.max, reg.int_value + plus))
+                value = max(reg.minim, min(reg.maxim, reg.int_value + plus))
                 return value
             else:
                 return reg.int_value

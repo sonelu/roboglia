@@ -518,7 +518,7 @@ class MockPacketHandler():
                 value = register.int_value
             else:
                 value = register.int_value + random.randint(-10, 10)
-                value = max(register.min, min(register.max, value))
+                value = max(register.minim, min(register.maxim, value))
             self.__index += 1
             return device.register_low_endian(value, register.size), 0, 0
 

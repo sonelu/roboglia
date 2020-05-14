@@ -43,11 +43,11 @@ class DynamixelAXBaudRateRegister(BaseRegister):
     +------+-----------+
     """
     def __init__(self, **kwargs):
-        if 'minim' in kwargs:
+        if 'minim' in kwargs:           # pragma: no branch
             logger.warning('parameter "minim" for AXBaudRateRegister ignored, '
                            'it will be defaulted to 1')
             del kwargs['minim']
-        if 'maxim' in kwargs:
+        if 'maxim' in kwargs:           # pragma: no branch
             logger.warning('parameter "maxim" for AXBaudRateRegister ignored, '
                            'it will be defaulted to 207')
             del kwargs['maxim']
@@ -81,8 +81,9 @@ class DynamixelAXComplianceSlopeRegister(BaseRegister):
         http://emanual.robotis.com/docs/en/dxl/ax/ax-12a/#cw-compliance-slope
     """
     def __init__(self, **kwargs):
-        if 'maxim' in kwargs:
-            logger.warning('parameter "maxim" for AXBaudRateRegister ignored, '
+        if 'maxim' in kwargs:           # pragma: no branch
+            logger.warning('parameter "maxim" for '
+                           'DynamixelAXComplianceSlopeRegister ignored, '
                            'it will be defaulted to 254')
             del kwargs['maxim']
         super().__init__(maxim=254, **kwargs)
@@ -115,12 +116,12 @@ class DynamixelXLBaudRateRegister(BaseRegister):
     +------+-----------+
     """
     def __init__(self, **kwargs):
-        if 'minim' in kwargs:
-            logger.warning('parameter "minim" for AXBaudRateRegister ignored, '
+        if 'minim' in kwargs:           # pragma: no branch
+            logger.warning('parameter "minim" for XLBaudRateRegister ignored, '
                            'it will be defaulted to 1')
             del kwargs['minim']
-        if 'maxim' in kwargs:
-            logger.warning('parameter "maxim" for AXBaudRateRegister ignored, '
+        if 'maxim' in kwargs:           # pragma: no branch
+            logger.warning('parameter "maxim" for XLBaudRateRegister ignored, '
                            'it will be defaulted to 7')
             del kwargs['maxim']
         super().__init__(minim=0, maxim=7, **kwargs)
