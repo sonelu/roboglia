@@ -66,7 +66,7 @@ class I2CBus(BaseBus):
         it. If the bus is used in any sync loops, the close request might
         fail.
         """
-        if super().close():             # pragma: no branch 
+        if super().close():             # pragma: no branch
             try:
                 self.port_handler.close()
             except Exception as e:
