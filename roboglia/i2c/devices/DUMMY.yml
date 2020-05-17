@@ -49,7 +49,8 @@ registers:
 
   temp:
     address: 12
-    access: R
+    access: RW
+    default: 10
     desc: Temperature
 
   word_g_x:
@@ -67,4 +68,22 @@ registers:
     size: 2
     desc: Gyro Z Word Register
 
-  
+  activate_g:
+    address: 20
+    class: BoolRegister
+    access: RW
+
+  activate_xl:
+    address: 21
+    class: BoolRegister
+    access: RW
+
+  activate_temp:
+    address: 22
+    class: BoolRegister
+    access: RW
+
+  status:
+    address: 23
+    access: RW
+    default: 0b01010101

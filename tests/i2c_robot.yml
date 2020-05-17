@@ -20,6 +20,7 @@ i2crobot:
     gyro:
       class: SensorXYZ
       device: imu
+      activate: activate_g
       x_read: word_g_x
       x_inverse: True
       y_read: word_g_y
@@ -27,6 +28,36 @@ i2crobot:
       z_read: word_g_z
       z_inverse: True
       z_offset: 1024.0
+
+    accel_byte:
+      class: SensorXYZ
+      device: imu
+      x_read: byte_xl_x
+      x_offset: 128.0
+      y_read: byte_xl_y
+      y_inverse: True
+      y_offset: -128.0
+      z_read: byte_xl_z
+      z_offset: 64.0
+
+    temp:
+      class: Sensor
+      device: imu
+      value_read: temp
+      inverse: True
+      activate: activate_temp
+
+    status0:
+      class: Sensor
+      device: imu
+      value_read: status
+      mask: 0b00000001
+
+    status1:
+      class:  Sensor
+      device: imu
+      value_read: status
+      mask: 0b00000010
 
   groups:
     imu:

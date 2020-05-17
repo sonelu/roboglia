@@ -108,7 +108,6 @@ class Sensor():
         """The devices associated with the sensor."""
         return self.__device
 
-
     @property
     def read_register(self):
         """The register used to access the sensor value."""
@@ -123,7 +122,8 @@ class Sensor():
     def active(self):
         """(read-write) Accessor for activating the senser. If the activation
         registry was not specified (``None``) the method will return
-        ``True`` (assumes the sensors are active by default if not controllable.
+        ``True`` (assumes the sensors are active by default if not
+        controllable.
 
         The setter will log a warning if you try to assign a value to this
         property if there is no register assigned to it.
@@ -185,7 +185,7 @@ class Sensor():
         reg_value = self.read_register.value
         if self.mask:
             # boolean value
-            return reg_value & self.mask != 0
+            return (reg_value & self.mask) != 0
         else:
             # float value
             if self.inverse:
@@ -251,7 +251,7 @@ class SensorXYZ():
 
     z_offset: float
         Indicates an offest to be adder to the value read from the register z
-        (after ``z_inverse`` if ``True``). Default is 0.0.      
+        (after ``z_inverse`` if ``True``). Default is 0.0.
 
     activate: str or None
         The name of the register used to activate the device. If ``None``
@@ -323,7 +323,6 @@ class SensorXYZ():
         """The devices associated with the sensor."""
         return self.__device
 
-
     @property
     def x_register(self):
         """The register used to access the sensor X value."""
@@ -384,7 +383,8 @@ class SensorXYZ():
     def active(self):
         """(read-write) Accessor for activating the senser. If the activation
         registry was not specified (``None``) the method will return
-        ``True`` (assumes the sensors are active by default if not controllable.
+        ``True`` (assumes the sensors are active by default if not
+        controllable.
 
         The setter will log a warning if you try to assign a value to this
         property if there is no register assigned to it.
