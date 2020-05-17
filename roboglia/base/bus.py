@@ -106,7 +106,11 @@ class BaseBus():
                     logger.<level>('message')
         """
         for sync in self.robot.syncs.values():
-            if sync.bus == self and sync.started:
+            # we need to compare by names and not by object ids because
+            # sync.bus == self will not work:
+            # sync.bus could be a SharedBus and
+            # self will be the base bus (ex. FileBus or Dynamixel Bus)
+            if sync.bus.name == self.name and sync.started:
                 logger.error(f'attempted to close bus {self.name} that is '
                              f'used by running syncs')
                 return False
@@ -262,7 +266,7 @@ class FileBus(BaseBus):
             handled by the caller.
         """
         if not self.is_open:
-            logger.error(f'attempt to read from a closed bus {self.name}')
+            logger.error(f'attempt to read from closed bus {self.name}')
             return None
         else:
             if (reg.device.dev_id, reg.address) not in self.__last:

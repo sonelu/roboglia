@@ -251,6 +251,31 @@ class TestMockRobot:
         bus.stop_using()
         mock_robot.stop()
 
+    def test_bus_small_branches(self, mock_robot, caplog):
+        bus = mock_robot.buses['busA']
+        # close bus used by syncs
+        caplog.clear()
+        bus.close()
+        assert len(caplog.records) == 1
+        assert 'attempted to close bus' in caplog.text
+        # open bus already open
+        caplog.clear()
+        bus.open()
+        assert len(caplog.records) == 1
+        assert 'bus busA already open' in caplog.text
+        # read from closed bus
+        device = mock_robot.devices['d04']
+        caplog.clear()
+        device.delay.write()
+        assert len(caplog.records) == 1
+        assert 'attempt to write to closed bus' in caplog.text
+        caplog.clear()
+        device.model.read()
+        assert len(caplog.records) == 1
+        assert 'attempt to read from closed bus' in caplog.text
+        # timeout
+        assert bus.timeout == 0.5
+
     def test_thread_crash(self):
         class CrashAtRun(BaseThread):
             def run(self):
