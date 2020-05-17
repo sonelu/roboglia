@@ -1,0 +1,95 @@
+# iNEMO inertial module: always-on 3D accelerometer and 3D gyroscope
+# this is only the gyro part of the device as they are accessed
+# as separate devices on the I2C bus with 
+# https://www.st.com/resource/en/datasheet/lsm6ds3.pdf
+#
+registers:
+  who_am_i:
+  # Who I am ID
+    address: 0x0f
+    access: R
+    default: 0b11010100
+
+  # Angular rate sensor control registers
+  ctrl_reg1:
+    address: 0x20
+    access: RW
+    default: 0b00000111
+
+  ctrl_reg2:
+    address: 0x21
+    access: RW
+
+  ctrl_reg3:
+    address: 0x22
+    access: RW
+
+  ctrl_reg4:
+    address: 0x23
+    access: RW
+
+  ctrl_reg5:
+    address: 0x24
+    access: RW
+
+  # Reference value for interrupt generation
+  reference:
+    address: 0x25
+    access: RW
+
+  # Temperature data output
+  out_temp:
+    address: 0x26
+
+  # Status register
+  status_reg:
+    address: 0x27
+
+  # Angular rate sensor output registers
+  out_x:
+    address: 0x28
+    size: 2
+
+  out_y:
+    address: 0x2a
+    size: 2
+
+  out_z:
+    address: 0x2c
+    size: 2
+
+  # Angular rate sensor FIFO registers
+  fifo_ctrl_reg:
+    address: 0x2e
+    access: RW
+
+  fifo_src_reg:
+    address: 0x2f
+
+  # Angular rate sensor interrupt registers
+  int1_cfg:
+    address: 0x30
+    access: RW
+
+  int1_src:
+    address: 0x31
+    access: RW
+
+  int1_ths_x:
+    address: 0x32
+    access: RW
+    size: 2
+
+  int1_ths_y:
+    address: 0x34
+    access: RW
+    size: 2
+
+  int1_ths_z:
+    address: 0x36
+    access: RW
+    size: 2
+
+  int1_duration:
+    address: 0x38
+    access: RW

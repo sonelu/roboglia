@@ -57,13 +57,32 @@ class BaseRegister():
         through the value property will invoke reading / writing to the real
         register; default ``False``
 
+    word: bool
+        Indicates that the register is a ``word`` register (16 bits) instead
+        of a usual 8 bits. Some I2C and SPI devices use 16bit registers
+        and need to use separate access functions to read them as opposed to
+        the 8 bit registers. Default is ``False`` which effectively makes it
+        an 8 bit register
+
+    order: ``LH`` or ``HL``
+        Applicable only for registers with size > 1 that represent a value
+        over succesive internal registers, but for convenience are groupped
+        as one single register with size 2 (or higher).
+        ``LH`` means low-high and indicates the bytes in the registry are
+        organized starting with the low byte first. ``HL`` indicates that
+        the registers are with the high byte first. Technically the ``read``
+        and ``write`` functions always read the bytes in the order they
+        are stored in the device and if the register is marked as ``HL`` the
+        list is reversed before being returned to the requester or processed
+        as a number in case the ``bulk`` is ``False``. Default is ``LH``.
+
     default: int
         The default value for the register; implicit 0
 
     """
     def __init__(self, name='REGISTER', device=None, address=0, size=1,
-                 minim=0, maxim=None, access='R', sync=False, default=0,
-                 **kwargs):
+                 minim=0, maxim=None, access='R', sync=False, word=False,
+                 bulk=True, order='LH', default=0, **kwargs):
         # these are already checked by the device
         self.__name = name
         # device
@@ -92,6 +111,15 @@ class BaseRegister():
         # sync
         check_options(sync, [True, False], 'register', self.name, logger)
         self.__sync = sync
+        # word
+        check_options(word, [True, False], 'register', self.name, logger)
+        self.__word = word
+        # bulk
+        check_options(bulk, [True, False], 'register', self.name, logger)
+        self.__bulk = bulk
+        # order
+        check_options(order, ['LH', 'HL'], 'register', self.name, logger)
+        self.__order = order
         # default
         check_type(default, int, 'register', self.name, logger)
         self.__default = default
@@ -167,6 +195,20 @@ class BaseRegister():
         else:
             logger.error('only BaseSync subclasses can chance the sync '
                          'flag of a register')
+
+    @property
+    def word(self):
+        """Indicates if the register is an 16 bit register (``True``) or
+        an 8 bit register.
+        """
+        return self.__word
+
+    @property
+    def order(self):
+        """Indicates the order of the data representartion; low-high (LH)
+        or high-low (HL)
+        """
+        return self.__order
 
     @property
     def default(self):

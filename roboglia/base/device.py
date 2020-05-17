@@ -95,6 +95,13 @@ class BaseDevice():
             if mandatory parameters are not found or unexpected values
             are used (ex. for boolean)
     """
+
+    cache = {}
+    """A chache of device models that is updated when a new model is
+    encountered and reused when the same model is requested during
+    device creation.
+    """
+
     def __init__(self, name='DEVICE', bus=None, dev_id=None, model=None,
                  path=None, auto=True, init={}, **kwargs):
         # these are already checked by robot
@@ -111,8 +118,12 @@ class BaseDevice():
         if not path:
             path = self.get_model_path()
         model_file = os.path.join(path, model + '.yml')
-        with open(model_file, 'r') as f:
-            model_ini = yaml.load(f, Loader=yaml.FullLoader)
+        if model_file not in BaseDevice.cache:
+            with open(model_file, 'r') as f:
+                model_ini = yaml.load(f, Loader=yaml.FullLoader)
+            BaseDevice.cache[model_file] = model_ini
+        else:
+            model_ini = BaseDevice.cache[model_file]
         self.__registers = {}
         self.__reg_by_addr = {}
         for reg_name, reg_info in model_ini['registers'].items():
@@ -248,21 +259,21 @@ class BaseDevice():
         that are not flagged for ``sync`` replication and, if ``init``
         parameter provided initializes the indicated
         registers with the values from the ``init`` paramters."""
-        logger.info('reading registers')
+        logger.info('\t\treading registers')
         for register in self.registers.values():
             if register.sync:
-                logger.debug(f'register {register.name} flagged for sync '
-                             'update -- skipping')
+                logger.debug(f'\t\t\tregister {register.name} flagged for '
+                             'sync update -- skipping')
             else:
-                logger.debug(f'reading register {register.name}')
+                logger.debug(f'\t\t\treading register {register.name}')
                 self.read_register(register)
-        logger.info('initializing registers')
+        logger.info('\t\tinitializing registers')
         for reg_name, value in self.__init.items():
             if reg_name in self.__registers:
-                logger.debug(f'initializing register {reg_name}')
+                logger.debug(f'\t\t\tinitializing register {reg_name}')
                 self.__registers[reg_name].value = value
             else:
-                logger.warning(f'register {reg_name} does not exist in '
+                logger.warning(f'\t\t\tregister {reg_name} does not exist in '
                                f'device {self.name}; skipping initialization')
 
     def close(self):

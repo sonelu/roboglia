@@ -1,150 +1,160 @@
 # robot defintion file for running automated tests
 #
-buses:
-  - name: ttyUSB0
-    class: ShareableDynamixelBus
-    port: /dev/ttyUSB0
-    baudrate: 1000000
-    protocol: 2.0
+MH2:
+  buses:
+    ttyUSB0:
+      class: SharedDynamixelBus
+      port: /dev/ttyUSB0
+      baudrate: 1000000
+      protocol: 2.0
 
-  - name: ttyUSB1
-    class: ShareableDynamixelBus
-    port: /dev/ttyUSB1
-    baudrate: 1000000
-    protocol: 2.0
+    ttyUSB1:
+      class: SharedDynamixelBus
+      port: /dev/ttyUSB1
+      baudrate: 1000000
+      protocol: 2.0
 
-  - name: ttyUSB2
-    class: ShareableDynamixelBus
-    port: /dev/ttyUSB2
-    baudrate: 1000000
-    protocol: 2.0
+    ttyUSB2:
+      class: SharedDynamixelBus
+      port: /dev/ttyUSB2
+      baudrate: 1000000
+      protocol: 2.0
 
-  - name: ttyUSB3
-    class: ShareableDynamixelBus
-    port: /dev/ttyUSB3
-    baudrate: 1000000
-    protocol: 2.0
+    ttyUSB3:
+      class: SharedDynamixelBus
+      port: /dev/ttyUSB3
+      baudrate: 1000000
+      protocol: 2.0
 
-devices:
-  - name: d11
-    class: DynamixelDevice
-    bus: ttyUSB2
-    id: 11
-    model: XL-320
-    auto: False
+    i2c0:
+      class: SharedI2CBus
+      port: /dev/i2c-0
 
-  - name: d12
-    class: DynamixelDevice
-    bus: ttyUSB2
-    id: 12
-    model: XL-320
+  devices:
+    d11:
+      class: DynamixelDevice
+      bus: ttyUSB2
+      dev_id: 11
+      model: XL-320
+      auto: False
 
-  - name: d13
-    class: DynamixelDevice
-    bus: ttyUSB2
-    id: 13
-    model: XL-320
+    d12:
+      class: DynamixelDevice
+      bus: ttyUSB2
+      dev_id: 12
+      model: XL-320
 
-  - name: d14
-    class: DynamixelDevice
-    bus: ttyUSB2
-    id: 14
-    model: XL-320
+    d13:
+      class: DynamixelDevice
+      bus: ttyUSB2
+      dev_id: 13
+      model: XL-320
 
-  - name: d15
-    class: DynamixelDevice
-    bus: ttyUSB2
-    id: 15
-    model: XL-320
+    d14:
+      class: DynamixelDevice
+      bus: ttyUSB2
+      dev_id: 14
+      model: XL-320
 
-  - name: d16
-    class: DynamixelDevice
-    bus: ttyUSB2
-    id: 16
-    model: XL-320
+    d15:
+      class: DynamixelDevice
+      bus: ttyUSB2
+      dev_id: 15
+      model: XL-320
 
-  - name: d21
-    class: DynamixelDevice
-    bus: ttyUSB1
-    id: 21
-    model: XL-320
-    auto: False
+    d16:
+      class: DynamixelDevice
+      bus: ttyUSB2
+      dev_id: 16
+      model: XL-320
 
-  - name: d22
-    class: DynamixelDevice
-    bus: ttyUSB1
-    id: 22
-    model: XL-320
+    d21:
+      class: DynamixelDevice
+      bus: ttyUSB1
+      dev_id: 21
+      model: XL-320
+      auto: False
 
-  - name: d23
-    class: DynamixelDevice
-    bus: ttyUSB1
-    id: 23
-    model: XL-320
+    d22:
+      class: DynamixelDevice
+      bus: ttyUSB1
+      dev_id: 22
+      model: XL-320
 
-  - name: d24
-    class: DynamixelDevice
-    bus: ttyUSB1
-    id: 24
-    model: XL-320
+    d23:
+      class: DynamixelDevice
+      bus: ttyUSB1
+      dev_id: 23
+      model: XL-320
 
-  - name: d25
-    class: DynamixelDevice
-    bus: ttyUSB1
-    id: 25
-    model: XL-320
+    d24:
+      class: DynamixelDevice
+      bus: ttyUSB1
+      dev_id: 24
+      model: XL-320
 
-  - name: d26
-    class: DynamixelDevice
-    bus: ttyUSB1
-    id: 26
-    model: XL-320
+    d25:
+      class: DynamixelDevice
+      bus: ttyUSB1
+      dev_id: 25
+      model: XL-320
 
-  - name: d36
-    class: DynamixelDevice
-    bus: ttyUSB3
-    id: 36
-    model: XL-320
+    d26:
+      class: DynamixelDevice
+      bus: ttyUSB1
+      dev_id: 26
+      model: XL-320
 
-  - name: d37
-    class: DynamixelDevice
-    bus: ttyUSB3
-    id: 37
-    model: XL-320
+    d36:
+      class: DynamixelDevice
+      bus: ttyUSB3
+      dev_id: 36
+      model: XL-320
 
-  # - name: d99
-  #   class: DynamixelDevice
-  #   bus: ttySC1
-  #   id: 99
-  #   model: AX-12A
+    d37:
+      class: DynamixelDevice
+      bus: ttyUSB3
+      dev_id: 37
+      model: XL-320
 
-groups:
+    imu_g:
+      class: I2CDevice
+      bus: i2c0
+      dev_id: 0x6a
+      model: LSM330G
 
-  - name: head
-    devices: [d36, d37]
+    # - name: d99
+    #   class: DynamixelDevice
+    #   bus: ttySC1
+    #   id: 99
+    #   model: AX-12A
 
-  - name: right_leg
-    devices: [d11, d12, d13, d14, d15, d16]
+  groups:
 
-  - name: left_leg
-    devices: [d21, d22, d23, d24, d25, d26]
+    head:
+      devices: [d36, d37]
 
-  - name: all_servos
-    groups: [head, right_leg, left_leg]
+    right_leg:
+      devices: [d11, d12, d13, d14, d15, d16]
 
-syncs:
+    left_leg:
+      devices: [d21, d22, d23, d24, d25, d26]
 
-  - name: leds
-    class: DynamixelSyncWriteLoop
-    group: right_leg
-    frequency: 10.0
-    registers: [led]
-    auto: False
+    all_servos:
+      groups: [head, right_leg, left_leg]
 
-  - name: volt_temp
-    class: DynamixelSyncReadLoop
-    group: left_leg
-    frequency: 10.0
-    registers: [present_voltage, present_temperature]
-    auto: False
+  syncs:
 
+    leds:
+      class: DynamixelSyncWriteLoop
+      group: right_leg
+      frequency: 10.0
+      registers: [led]
+      auto: False
+
+    volt_temp:
+      class: DynamixelSyncReadLoop
+      group: left_leg
+      frequency: 10.0
+      registers: [present_voltage, present_temperature]
+      auto: False
