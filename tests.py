@@ -220,12 +220,15 @@ class TestMockRobot:
     #     assert bus.is_open
  
     def test_bus_repr(self, mock_robot):
-        str_repr = str(mock_robot.buses['busA'])
         dev = mock_robot.devices['d01']
+        for register in dev.registers.values():
+            register.read()
+        str_repr = str(mock_robot.buses['busA'])
         assert f'Device {dev.dev_id}' in str_repr
         for register in dev.registers.values():
-            assert str(register.address) in str_repr
-            assert str(register.int_value) in str_repr
+            if not register.sync:
+                assert str(register.address) in str_repr
+                assert str(register.int_value) in str_repr
 
     def test_bus_acquire(self, mock_robot, caplog):
         dev = mock_robot.devices['d01']
