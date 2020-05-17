@@ -26,7 +26,23 @@ roboglia.dynamixel.DynamixelAXComplianceSlopeRegister
 
    .. autosummary::
    
+      ~DynamixelAXComplianceSlopeRegister.access
+      ~DynamixelAXComplianceSlopeRegister.address
+      ~DynamixelAXComplianceSlopeRegister.default
+      ~DynamixelAXComplianceSlopeRegister.device
+      ~DynamixelAXComplianceSlopeRegister.int_value
+      ~DynamixelAXComplianceSlopeRegister.max_ext
+      ~DynamixelAXComplianceSlopeRegister.maxim
+      ~DynamixelAXComplianceSlopeRegister.min_ext
+      ~DynamixelAXComplianceSlopeRegister.minim
+      ~DynamixelAXComplianceSlopeRegister.name
+      ~DynamixelAXComplianceSlopeRegister.order
+      ~DynamixelAXComplianceSlopeRegister.range
+      ~DynamixelAXComplianceSlopeRegister.range_ext
+      ~DynamixelAXComplianceSlopeRegister.size
+      ~DynamixelAXComplianceSlopeRegister.sync
       ~DynamixelAXComplianceSlopeRegister.value
+      ~DynamixelAXComplianceSlopeRegister.word
    
    
 

@@ -26,7 +26,23 @@ roboglia.base.BoolRegister
 
    .. autosummary::
    
+      ~BoolRegister.access
+      ~BoolRegister.address
+      ~BoolRegister.default
+      ~BoolRegister.device
+      ~BoolRegister.int_value
+      ~BoolRegister.max_ext
+      ~BoolRegister.maxim
+      ~BoolRegister.min_ext
+      ~BoolRegister.minim
+      ~BoolRegister.name
+      ~BoolRegister.order
+      ~BoolRegister.range
+      ~BoolRegister.range_ext
+      ~BoolRegister.size
+      ~BoolRegister.sync
       ~BoolRegister.value
+      ~BoolRegister.word
    
    
 

@@ -69,11 +69,14 @@ class BaseThread():
 
     def run(self):
         """ Run method of the thread.
-        .. note:: In order to be stoppable (resp. pausable), this method has to
-        check the running property - as often as possible to improve
-        responsiveness - and terminate when :meth:`should_stop` (resp.
-        :meth:`should_pause`) becomes True.
+
+        .. note: In order to be stoppable (resp. pausable), this method has
+            to check the running property - as often as possible to improve
+            responsiveness - and terminate when :meth:`should_stop` (resp.
+            :py:meth:`should_pause`) becomes True.
+
             For instance::
+
                 while <some condition for work>:
                     if not self.paused:
                         do_atom_work()

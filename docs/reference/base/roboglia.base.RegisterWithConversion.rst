@@ -26,7 +26,25 @@ roboglia.base.RegisterWithConversion
 
    .. autosummary::
    
+      ~RegisterWithConversion.access
+      ~RegisterWithConversion.address
+      ~RegisterWithConversion.default
+      ~RegisterWithConversion.device
+      ~RegisterWithConversion.factor
+      ~RegisterWithConversion.int_value
+      ~RegisterWithConversion.max_ext
+      ~RegisterWithConversion.maxim
+      ~RegisterWithConversion.min_ext
+      ~RegisterWithConversion.minim
+      ~RegisterWithConversion.name
+      ~RegisterWithConversion.offset
+      ~RegisterWithConversion.order
+      ~RegisterWithConversion.range
+      ~RegisterWithConversion.range_ext
+      ~RegisterWithConversion.size
+      ~RegisterWithConversion.sync
       ~RegisterWithConversion.value
+      ~RegisterWithConversion.word
    
    
 

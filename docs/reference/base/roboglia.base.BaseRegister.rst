@@ -26,7 +26,23 @@ roboglia.base.BaseRegister
 
    .. autosummary::
    
+      ~BaseRegister.access
+      ~BaseRegister.address
+      ~BaseRegister.default
+      ~BaseRegister.device
+      ~BaseRegister.int_value
+      ~BaseRegister.max_ext
+      ~BaseRegister.maxim
+      ~BaseRegister.min_ext
+      ~BaseRegister.minim
+      ~BaseRegister.name
+      ~BaseRegister.order
+      ~BaseRegister.range
+      ~BaseRegister.range_ext
+      ~BaseRegister.size
+      ~BaseRegister.sync
       ~BaseRegister.value
+      ~BaseRegister.word
    
    
 
