@@ -16,6 +16,18 @@ i2crobot:
       model: DUMMY
       auto: True
 
+  sensors:
+    gyro:
+      class: SensorXYZ
+      device: imu
+      x_read: word_g_x
+      x_inverse: True
+      y_read: word_g_y
+      y_offset: 256.0
+      z_read: word_g_z
+      z_inverse: True
+      z_offset: 1024.0
+
   groups:
     imu:
       devices: [imu]

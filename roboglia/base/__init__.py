@@ -17,6 +17,7 @@ from .joint import JointPV                      # noqa: 401
 from .joint import JointPVL                     # noqa: 401
 
 from .sensor import Sensor
+from .sensor import SensorXYZ
 
 from .thread import BaseThread                  # noqa: 401
 from .thread import BaseLoop                    # noqa: 401
@@ -42,6 +43,7 @@ register_class(JointPV)
 register_class(JointPVL)
 
 register_class(Sensor)
+register_class(SensorXYZ)
 
 register_class(BaseReadSync)
 register_class(BaseWriteSync)

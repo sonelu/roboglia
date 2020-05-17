@@ -761,6 +761,38 @@ class TestI2CRobot:
             assert dev.word_xl_x.value == 12345      
         robot.stop()
 
+    def test_i2c_sensorXYZ(self, mock_robot_init):
+        robot = BaseRobot(**mock_robot_init['i2crobot'])
+        robot.start()
+        s = robot.sensors['gyro']
+        d = robot.devices['imu']
+        assert s.device == d
+        assert s.x_register == d. word_g_x
+        assert s.y_register == d. word_g_y
+        assert s.z_register == d. word_g_z
+        assert s.activate_register is None
+        assert s.active
+        assert s.x_offset == 0
+        assert s.x_inverse
+        assert s.y_offset == 256
+        assert not s.y_inverse
+        assert s.z_offset == 1024
+        assert s.z_inverse        
+        assert s.auto_activate
+
+    def test_i2c_sensorXYZ_value(self, mock_robot_init):
+        robot = BaseRobot(**mock_robot_init['i2crobot'])
+        robot.start()
+        s = robot.sensors['gyro']
+        d = robot.devices['imu']
+        exp_x = - d.word_g_x.value
+        exp_y = d.word_g_y.value + 256
+        exp_z = - d.word_g_z.value + 1024
+        assert s.x == exp_x
+        assert s.y == exp_y
+        assert s.z == exp_z
+        assert s.value == (exp_x, exp_y, exp_z)
+
     def test_i2c_bus_closed(self, mock_robot_init, caplog):
         robot = BaseRobot(**mock_robot_init['i2crobot'])
         dev = robot.devices['imu']
