@@ -259,7 +259,6 @@ class BaseDevice():
                         logger.debug(f'register {reg_name} updated to {value}')
                         logger.debug(f'>>> int_value: {register.int_value}')
 
-
     def close(self):
         """Perform device closure. ``BaseDevice`` implementation does
         nothing."""
