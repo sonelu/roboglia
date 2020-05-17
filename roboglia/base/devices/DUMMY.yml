@@ -91,3 +91,10 @@ registers:
     factor: 10.24
     threshold: 1024
     default: 1536
+
+  current_voltage:
+    class: RegisterWithConversion
+    address: 96
+    maxim: 160
+    factor: 10.0
+    default: 120

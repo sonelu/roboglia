@@ -78,6 +78,12 @@ dummy:
       offset: 45.0
       auto: False
 
+  sensors:
+    bus_voltage:
+      class: Sensor
+      device: d01
+      value_read: current_voltage
+
   groups:
     devices:
       devices: [d01, d02]

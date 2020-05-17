@@ -200,6 +200,23 @@ class TestMockRobot:
         assert 'v=' in pan_str
         assert 'l=' in pan_str
 
+    def test_sensor_info(self, mock_robot):
+        s = mock_robot.sensors['bus_voltage']
+        d = mock_robot.devices['d01']
+        assert s.device == d
+        assert s.read_register == d.current_voltage
+        assert s.activate_register is None
+        assert s.active
+        assert s.mask is None
+        assert s.offset == 0
+        assert not s.inverse
+        assert s.auto_activate
+
+    def test_sensor_value(self, mock_robot):
+        s = mock_robot.sensors['bus_voltage']
+        d = mock_robot.devices['d01']
+        assert s.value == d.current_voltage.value
+
         """This doesn't work fine as closing a bus will crash a
         sync run that is using it."""
     # def test_bus_operate_on_close(self, mock_robot, caplog):

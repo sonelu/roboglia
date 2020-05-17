@@ -38,10 +38,12 @@ class BaseRobot():
     ----------
     name: str
         the name of the robot; will default to **ROBOT**
+
     buses: dict
         a dictionary with buses definitions; the components
         of the buses are defined by the attributes of the particular
         class of the bus
+
     inits: dict
         a dictionary of register initialization; should have the following
         form::
@@ -56,14 +58,22 @@ class BaseRobot():
 
         see also the :py:class:`BaseDevice` where the details of the
         initialization process are described
+
     devices: dict
         a dictionary with the device definitions; the
         components of devices are defined by the attributes of the
         particular class of device
+
     joints: dict
         a dictionary with the joint definitions; the
         components of the joints are defined by the attributes of the
         particular class of joint
+
+    sensors: dict
+        a dictionary with the sensors defintion; the components of the
+        sensor are defined by the attributes of the particular class of
+        sensor
+
     groups: dict
         a dictionary with the group definitions; the groups
         end up unwind in the robot as sets (eliminates duplication) and
@@ -76,13 +86,14 @@ class BaseRobot():
         Technically it is possible to mix and match the components of
         a group (for instance create groups that contain devices, sensors,
         and joints).
+
     syncs: dict
         a dictionary with sync loops definitions; the components
         of syncs are defined by the attributes of the particular class of
         sync.
     """
     def __init__(self, name='ROBOT', buses={}, inits={}, devices={},
-                 joints={}, groups={}, syncs={}):
+                 joints={}, sensors={}, groups={}, syncs={}):
         logger.info('***** Initializing robot *************')
         self.__name = name
         if not buses:
@@ -98,6 +109,7 @@ class BaseRobot():
             raise ValueError(message)
         self.__init_devices(devices)
         self.__init_joints(joints)
+        self.__init_sensors(sensors)
         self.__init_groups(groups)
         self.__init_syncs(syncs)
         logger.info('***** Initialization complete ********')
@@ -142,7 +154,7 @@ class BaseRobot():
             bus_class = get_registered_class(bus_info['class'])
             new_bus = bus_class(**bus_info)
             self.__buses[bus_name] = new_bus
-            logger.debug(f'\tbus {bus_name} added')
+            logger.debug(f'bus {bus_name} added')
 
     def __init_devices(self, devices):
         """Called by ``__init__`` to parse and instantiate devices."""
@@ -171,7 +183,7 @@ class BaseRobot():
             new_dev = dev_class(**dev_info)
             self.__devices[dev_name] = new_dev
             self.__dev_by_id[dev_info['dev_id']] = new_dev
-            logger.debug(f'\tdevice {dev_name} added')
+            logger.debug(f'device {dev_name} added')
 
     def __init_joints(self, joints):
         """Called by ``__init__`` to parse and instantiate joints."""
@@ -193,7 +205,29 @@ class BaseRobot():
             joint_class = get_registered_class(joint_info['class'])
             new_joint = joint_class(**joint_info)
             self.__joints[joint_name] = new_joint
-            logger.debug(f'\tjoint {joint_name} added')
+            logger.debug(f'joint {joint_name} added')
+
+    def __init_sensors(self, sensors):
+        """Called by ``__init__`` to parse and instantiate sensors."""
+        self.__sensors = {}
+        logger.info('Initializing sensors...')
+        for sensor_name, sensor_info in sensors.items():
+            # add the name in the joint_info
+            sensor_info['name'] = sensor_name
+            check_key('device', sensor_info, 'sensor',
+                      sensor_name, logger)
+            check_key(sensor_info['device'], self.devices, 'senor',
+                      sensor_name, logger,
+                      f'device {sensor_info["device"]} does not exist')
+            check_key('class', sensor_info, 'sensor', sensor_name, logger)
+            # convert device reference from name to object
+            dev_name = sensor_info['device']
+            device = self.devices[dev_name]
+            sensor_info['device'] = device
+            sensor_class = get_registered_class(sensor_info['class'])
+            new_sensor = sensor_class(**sensor_info)
+            self.__sensors[sensor_name] = new_sensor
+            logger.debug(f'sensor {sensor_name} added')
 
     def __init_groups(self, groups):
         """Called by ``__init__`` to parse and instantiate groups."""
@@ -217,7 +251,7 @@ class BaseRobot():
                           logger, f'group {sub_grp_name} does not exist')
                 new_grp.update(self.groups[sub_grp_name])
             self.__groups[grp_name] = new_grp
-            logger.debug(f'\tgroup {grp_name} added')
+            logger.debug(f'group {grp_name} added')
 
     def __init_syncs(self, syncs):
         """Called by ``__init__`` to parse and instantiate syncs."""
@@ -236,7 +270,7 @@ class BaseRobot():
             sync_class = get_registered_class(sync_info['class'])
             new_sync = sync_class(**sync_info)
             self.__syncs[sync_name] = new_sync
-            logger.debug(f'\tsync {sync_name} added')
+            logger.debug(f'sync {sync_name} added')
 
     @property
     def name(self):
@@ -278,6 +312,11 @@ class BaseRobot():
     def joints(self):
         """(read-only) The joints of the robot as a dict."""
         return self.__joints
+
+    @property
+    def sensors(self):
+        """The sensors of the robot as a dict."""
+        return self.__sensors
 
     @property
     def groups(self):
