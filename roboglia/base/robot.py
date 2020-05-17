@@ -16,7 +16,7 @@
 import yaml
 import logging
 
-from ..utils import get_registered_class, check_key
+from ..utils import get_registered_class, check_key, check_type
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,20 @@ class BaseRobot():
         a dictionary with buses definitions; the components
         of the buses are defined by the attributes of the particular
         class of the bus
+    inits: dict
+        a dictionary of register initialization; should have the following
+        form::
+
+            inits:
+                init_template_1:
+                    register_1: value
+                    register_2: None     # this indicates 'read initialization'
+                init_template_2:
+                    register_3: value
+                    register_4: value
+
+        see also the :py:class:`BaseDevice` where the details of the
+        initialization process are described
     devices: dict
         a dictionary with the device definitions; the
         components of devices are defined by the attributes of the
@@ -67,8 +81,8 @@ class BaseRobot():
         of syncs are defined by the attributes of the particular class of
         sync.
     """
-    def __init__(self, name='ROBOT', buses={}, devices={}, joints={},
-                 groups={}, syncs={}):
+    def __init__(self, name='ROBOT', buses={}, inits={}, devices={},
+                 joints={}, groups={}, syncs={}):
         logger.info('***** Initializing robot *************')
         self.__name = name
         if not buses:
@@ -76,6 +90,8 @@ class BaseRobot():
             logger.critical(message)
             raise ValueError(message)
         self.__init_buses(buses)
+        check_type(inits, dict, 'robot', name, logger)
+        self.__inits = inits
         if not devices:
             message = 'you need at least one device for the robot'
             logger.critical(message)
@@ -141,9 +157,16 @@ class BaseRobot():
                       'device', dev_name,
                       logger, f'bus {dev_info["bus"]} does not exist')
             check_key('class', dev_info, 'device', dev_name, logger)
-            # convert the parent to object reference
-            dev_bus = self.buses[dev_info['bus']]
+            # convert bus names to bus objects
+            bus_name = dev_info['bus']
+            dev_bus = self.buses[bus_name]
             dev_info['bus'] = dev_bus
+            # convert init names to objects
+            list_of_inits = dev_info.get('inits', [])
+            check_type(list_of_inits, list, 'device', dev_name, logger)
+            for index, init_name in enumerate(list_of_inits):
+                check_key(init_name, self.inits, 'device', dev_name, logger)
+                list_of_inits[index] = self.inits[init_name]
             dev_class = get_registered_class(dev_info['class'])
             new_dev = dev_class(**dev_info)
             self.__devices[dev_name] = new_dev
@@ -226,6 +249,11 @@ class BaseRobot():
         return self.__buses
 
     @property
+    def inits(self):
+        """The initialization templates defined for the robot."""
+        return self.__inits
+
+    @property
     def devices(self):
         """(read-only) The devices of the robot as a dict."""
         return self.__devices
@@ -282,11 +310,8 @@ class BaseRobot():
                 logger.info(f'--> Opening bus: {bus.name} - skipped')
         logger.info('Opening devices...')
         for device in self.devices.values():
-            if device.auto_open:
-                logger.info(f'--> Opening device: {device.name}')
-                device.open()
-            else:
-                logger.info(f'--> Opening device: {device.name} - skipped')
+            logger.info(f'--> Opening device: {device.name}')
+            device.open()
         logger.info('Activating joints...')
         for joint in self.joints.values():
             if joint.auto_activate:

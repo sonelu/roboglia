@@ -11,19 +11,30 @@ dummy:
       port: /tmp/busB.log
       auto: False
 
+  inits:
+    dummy_init:
+      model: null
+      revision: null
+      delay: 0
+      desired_load: 50
+
+    speed_init:
+      desired_speed: 30
+
   devices:
     d01:
       class: BaseDevice
       bus: busA
       dev_id: 1
       model: DUMMY
+      inits: [dummy_init, speed_init]
 
     d02:
       class: BaseDevice
       bus: busA
       dev_id: 2
       model: DUMMY
-      auto: False
+      inits: [dummy_init]
 
       # this is not in syncs
     d03:
@@ -31,6 +42,7 @@ dummy:
       bus: busA
       dev_id: 3
       model: DUMMY
+      inits: [dummy_init, speed_init]
 
     d04:
       class: BaseDevice

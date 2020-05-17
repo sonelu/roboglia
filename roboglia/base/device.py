@@ -17,8 +17,7 @@ import os
 import yaml
 import logging
 
-from ..utils import get_registered_class, check_options, \
-    check_not_empty, check_type
+from ..utils import get_registered_class, check_not_empty, check_type
 
 from .bus import BaseBus, SharedBus
 
@@ -75,12 +74,11 @@ class BaseDevice():
         Please see the note bellow regarding the position of the device
         description files.
 
-    auto: bool
-        The device should be opened automatically when the robot starts.
-
-    init: dict
-        A dictionary of {register: value} pairs that the device should
-        initialize when the :py:meth:`~open` method is called. Please note
+    inits: list
+        A list of init templates to be applied to the device's registers
+        when the :py:meth:`~open` method is called,
+        where template names were defined earier in the robot definition in the
+        ``inits`` section. Please note
         the initialization values should be provided in the **external**
         format of the register as they will be used as::
 
@@ -103,7 +101,7 @@ class BaseDevice():
     """
 
     def __init__(self, name='DEVICE', bus=None, dev_id=None, model=None,
-                 path=None, auto=True, init={}, **kwargs):
+                 path=None, inits=[], **kwargs):
         # these are already checked by robot
         self.__name = name
         check_not_empty(bus, 'bus', 'device', name, logger)
@@ -137,9 +135,7 @@ class BaseDevice():
             self.__dict__[reg_name] = new_register
             self.__registers[reg_name] = new_register
             self.__reg_by_addr[reg_info['address']] = new_register
-        check_options(auto, [True, False], 'device', name, logger)
-        self.__auto_open = auto
-        self.__init = init
+        self.__inits = inits
 
     @property
     def name(self):
@@ -197,19 +193,6 @@ class BaseDevice():
         """
         return self.__bus
 
-    @property
-    def auto_open(self):
-        """Indicates that the device's :py:meth:`open` is supposed to be
-        called by the robot's :py:meth:`Robot.start` method.
-
-        Returns
-        -------
-        bool
-            ``True`` if the device :py:meth:`~open` will be called when
-            robot is starting.
-        """
-        return self.__auto_open
-
     def get_model_path(self):
         """Builds the path to the device description documents.
 
@@ -258,23 +241,23 @@ class BaseDevice():
         """Performs initialization of the device by reading all registers
         that are not flagged for ``sync`` replication and, if ``init``
         parameter provided initializes the indicated
-        registers with the values from the ``init`` paramters."""
-        logger.info('\t\treading registers')
-        for register in self.registers.values():
-            if register.sync:
-                logger.debug(f'\t\t\tregister {register.name} flagged for '
-                             'sync update -- skipping')
-            else:
-                logger.debug(f'\t\t\treading register {register.name}')
-                self.read_register(register)
-        logger.info('\t\tinitializing registers')
-        for reg_name, value in self.__init.items():
-            if reg_name in self.__registers:
-                logger.debug(f'\t\t\tinitializing register {reg_name}')
-                self.__registers[reg_name].value = value
-            else:
-                logger.warning(f'\t\t\tregister {reg_name} does not exist in '
-                               f'device {self.name}; skipping initialization')
+        registers with the values from the ``init`` paramters.
+        """
+        for init in self.__inits:
+            for reg_name, value in init.items():
+                if reg_name not in self.registers:
+                    logger.warning(f'register {reg_name} does not exist in '
+                                   f'device {self.name}; '
+                                   'skipping initialization')
+                else:
+                    register = self.registers[reg_name]
+                    if value is None:
+                        register.read()
+                        logger.debug(f'register {reg_name} read')
+                    else:
+                        register.value = value
+                        logger.debug(f'register {reg_name} updated to {value}')
+                        logger.debug(f'>>> int_value: {register.int_value}')
 
     def close(self):
         """Perform device closure. ``BaseDevice`` implementation does
