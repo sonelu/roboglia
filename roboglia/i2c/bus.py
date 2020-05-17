@@ -31,6 +31,40 @@ class I2CBus(BaseBus):
 
     In addition there is an extra parameter `mock`.
 
+    At this mement the ``I2CBus`` supports devices with byte and word
+    registers and permits defining composed regsiters with ``size`` > 1
+    that are treated as a single register.
+
+    .. example:: A gyroscope sensor might have registers for the z, y and z
+        axes reading that are stored as pairs of registers like this::
+
+            gyro_x_l    #0x28
+            gyro_x_h    #0x29
+            gyro_y_l    #0x2A
+            gyro_y_h    #0x2B
+            gyro_z_l    #0x2C
+            gyro_z_h    #0x2D
+
+        For simplicity it is possible to define these registers like this
+        in the device template::
+
+            registers:
+                gyro_x:
+                    address: 0x28
+                    size: 2
+                gyro_y:
+                    address: 0x2A
+                    size: 2
+                gyro_z:
+                    address: 0x2C
+                    size: 2
+
+        By default the registers are ``Byte`` and the order of data is
+        low-high as described in the :py:class:roboglia.base.`BaseRegister`.
+        The bus will handle this by reading the two registers sequentially
+        and computing the register's value using the size of the register
+        and the order.
+
     Parameters
     ----------
     mock: bool
@@ -85,22 +119,31 @@ class I2CBus(BaseBus):
         if not self.is_open:
             logger.error(f'attempted to read from a closed bus: {self.name}')
             return None
+
+        dev = reg.device
+        if reg.word:
+            function = self.__i2cbus.read_word_data
+            base = 65536
         else:
-            dev = reg.device
-            if reg.size == 1:
-                function = self.__i2cbus.read_byte_data
-            elif reg.size == 2:
-                function = self.__i2cbus.read_word_data
-            else:
-                raise NotImplementedError
+            function = self.__i2cbus.read_byte_data
+            base = 256
+
+        values = [0] * reg.size
+        for pos in range(reg.size):
             try:
-                return function(dev.dev_id, reg.address)
+                values[pos] = function(dev.dev_id, reg.address + pos)
             except Exception as e:
                 logger.error(f'failed to execute read command on I2C bus '
                              f'{self.name} for device {dev.name} and '
                              f'register {reg.name}')
                 logger.error(str(e))
                 return None
+        if reg.order == 'HL':
+            values = values.reverse()
+        value = 0
+        for pos in range(reg.size):
+            value = value * base + values[-pos-1]
+        return value
 
     def write(self, reg, value):
         """Depending on the size of the register it calls the corresponding
@@ -108,21 +151,31 @@ class I2CBus(BaseBus):
         """
         if not self.is_open:
             logger.error(f'attempted to write to a closed bus: {self.name}')
+
+        dev = reg.device
+        if reg.word:
+            function = self.__i2cbus.write_word_data
+            base = 65536
         else:
-            dev = reg.device
-            if reg.size == 1:
-                function = self.__i2cbus.write_byte_data
-            elif reg.size == 2:
-                function = self.__i2cbus.write_word_data
-            else:
-                raise NotImplementedError
+            function = self.__i2cbus.write_byte_data
+            base = 256
+
+        values = [0] * reg.size
+        data = reg.int_value
+        for pos in range(reg.size):
+            values[pos] = data % base
+            data = data // base
+        if reg.order == 'HL':
+            values = values.reverse()
+        for pos, value in enumerate(values):
             try:
-                function(dev.dev_id, reg.address, value)
+                function(dev.dev_id, reg.address + pos, value)
             except Exception as e:
                 logger.error(f'failed to execute write command on I2C bus '
                              f'{self.name} for device {dev.name} and '
                              f'register {reg.name}')
                 logger.error(str(e))
+                return None
 
 
 class SharedI2CBus(SharedBus):

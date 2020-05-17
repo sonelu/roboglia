@@ -821,18 +821,18 @@ class TestI2CRobot:
         device = robot.devices['imu']
         caplog.clear()
         _ = device.word_control_2.value
-        assert len(caplog.records) == 1
+        assert len(caplog.records) >= 1
         assert 'attempted to read from a closed bus' in caplog.text
         caplog.clear()
         device.word_control_2.value = 0x4242
-        assert len(caplog.records) == 1
+        assert len(caplog.records) >= 1
         assert 'attempted to write to a closed bus' in caplog.text
         bus = robot.buses['i2c2']
         caplog.clear()
         _ = bus.read_block_data(1, 1, 6)
-        assert len(caplog.records) == 1
+        assert len(caplog.records) >= 1
         assert 'attempted to read from a closed bus' in caplog.text
         caplog.clear()
         bus.write_block_data(1, 1, 6, [1,2,3,4,5,6])
-        assert len(caplog.records) == 1
+        assert len(caplog.records) >= 1
         assert 'attempted to write to a closed bus' in caplog.text

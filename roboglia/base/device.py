@@ -93,6 +93,13 @@ class BaseDevice():
             if mandatory parameters are not found or unexpected values
             are used (ex. for boolean)
     """
+
+    cache = {}
+    """A chache of device models that is updated when a new model is
+    encountered and reused when the same model is requested during
+    device creation.
+    """
+
     def __init__(self, name='DEVICE', bus=None, dev_id=None, model=None,
                  path=None, inits=[], **kwargs):
         # these are already checked by robot
@@ -109,8 +116,12 @@ class BaseDevice():
         if not path:
             path = self.get_model_path()
         model_file = os.path.join(path, model + '.yml')
-        with open(model_file, 'r') as f:
-            model_ini = yaml.load(f, Loader=yaml.FullLoader)
+        if model_file not in BaseDevice.cache:
+            with open(model_file, 'r') as f:
+                model_ini = yaml.load(f, Loader=yaml.FullLoader)
+            BaseDevice.cache[model_file] = model_ini
+        else:
+            model_ini = BaseDevice.cache[model_file]
         self.__registers = {}
         self.__reg_by_addr = {}
         for reg_name, reg_info in model_ini['registers'].items():
@@ -230,7 +241,8 @@ class BaseDevice():
         """Performs initialization of the device by reading all registers
         that are not flagged for ``sync`` replication and, if ``init``
         parameter provided initializes the indicated
-        registers with the values from the ``init`` paramters."""
+        registers with the values from the ``init`` paramters.
+        """
         for init in self.__inits:
             for reg_name, value in init.items():
                 if reg_name not in self.registers:
@@ -246,6 +258,7 @@ class BaseDevice():
                         register.value = value
                         logger.debug(f'register {reg_name} updated to {value}')
                         logger.debug(f'>>> int_value: {register.int_value}')
+
 
     def close(self):
         """Perform device closure. ``BaseDevice`` implementation does

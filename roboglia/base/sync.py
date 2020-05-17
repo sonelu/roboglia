@@ -131,7 +131,7 @@ class BaseSync(BaseLoop):
                 reg_obj = getattr(device, register)
                 if not reg_obj.sync:
                     reg_obj.sync = True
-                    logger.debug(f'setting register {register} of device '
+                    logger.debug(f'\t\tsetting register {register} of device '
                                  f'{device.name} sync=True')
 
     def get_register_range(self):

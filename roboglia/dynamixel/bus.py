@@ -118,7 +118,7 @@ class DynamixelBus(BaseBus):
             self.__port_handler.setBaudRate(self.baudrate)
             if self.rs485:
                 self.__port_handler.ser.rs485_mode = rs485.RS485Settings()
-                logger.info(f'bus {self.name} set in rs485 mode')
+                logger.info(f'\tbus {self.name} set in rs485 mode')
             self.__packet_handler = PacketHandler(self.__protocol)
         logger.info(f'bus {self.name} opened')
 
