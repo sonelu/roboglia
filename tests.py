@@ -200,6 +200,23 @@ class TestMockRobot:
         assert 'v=' in pan_str
         assert 'l=' in pan_str
 
+    def test_sensor_info(self, mock_robot):
+        s = mock_robot.sensors['bus_voltage']
+        d = mock_robot.devices['d01']
+        assert s.device == d
+        assert s.read_register == d.current_voltage
+        assert s.activate_register is None
+        assert s.active
+        assert s.mask is None
+        assert s.offset == 0
+        assert not s.inverse
+        assert s.auto_activate
+
+    def test_sensor_value(self, mock_robot):
+        s = mock_robot.sensors['bus_voltage']
+        d = mock_robot.devices['d01']
+        assert s.value == d.current_voltage.value
+
         """This doesn't work fine as closing a bus will crash a
         sync run that is using it."""
     # def test_bus_operate_on_close(self, mock_robot, caplog):
@@ -744,18 +761,92 @@ class TestI2CRobot:
             assert dev.word_xl_x.value == 12345      
         robot.stop()
 
+    def test_i2c_sensor(self, mock_robot_init, caplog):
+        robot = BaseRobot(**mock_robot_init['i2crobot'])
+        robot.start()
+        s = robot.sensors['temp']
+        d = robot.devices['imu']
+        assert s.device == d
+        assert s.read_register == d.temp
+        assert s.activate_register == d.activate_temp
+        assert not s.active
+        assert s.mask is None
+        assert s.offset == 0
+        assert s.inverse
+        assert s.auto_activate
+        s.active = True
+        assert s.active
+        assert s.value == -10.0
+        # masks
+        assert robot.sensors['status0'].value 
+        assert not robot.sensors['status1'].value
+        # setting active for register w/o active register
+        caplog.clear()
+        robot.sensors['status0'].active = True
+        assert len(caplog.records) == 1
+        assert 'attempted to change activation of sensor' in caplog.text
+
+    def test_i2c_sensorXYZ(self, mock_robot_init):
+        robot = BaseRobot(**mock_robot_init['i2crobot'])
+        robot.start()
+        s = robot.sensors['gyro']
+        d = robot.devices['imu']
+        assert s.device == d
+        assert s.x_register == d. word_g_x
+        assert s.y_register == d. word_g_y
+        assert s.z_register == d. word_g_z
+        assert s.activate_register == d.activate_g
+        assert not s.active
+        assert s.x_offset == 0
+        assert s.x_inverse
+        assert s.y_offset == 256
+        assert not s.y_inverse
+        assert s.z_offset == 1024
+        assert s.z_inverse        
+        assert s.auto_activate
+        s.active = True
+        assert s.active
+
+    def test_i2c_sensorXYZ_value(self, mock_robot_init, caplog):
+        robot = BaseRobot(**mock_robot_init['i2crobot'])
+        robot.start()
+        s = robot.sensors['gyro']
+        d = robot.devices['imu']
+        exp_x = - d.word_g_x.value
+        exp_y = d.word_g_y.value + 256
+        exp_z = - d.word_g_z.value + 1024
+        assert s.x == exp_x
+        assert s.y == exp_y
+        assert s.z == exp_z
+        assert s.value == (exp_x, exp_y, exp_z)
+        # byte sensor
+        s = robot.sensors['accel_byte']
+        exp_x = d.byte_xl_x.value + 128
+        exp_y = - d.byte_xl_y.value -128
+        exp_z = d.byte_xl_z.value + 64
+        assert s.x == exp_x
+        assert s.y == exp_y
+        assert s.z == exp_z
+        assert s.value == (exp_x, exp_y, exp_z)
+        assert s.active
+        # activate w/o register
+        caplog.clear()
+        s.active = True
+        assert len(caplog.records) == 1
+        assert 'attempted to change activation of sensor' in caplog.text
+
     def test_i2c_bus_closed(self, mock_robot_init, caplog):
         robot = BaseRobot(**mock_robot_init['i2crobot'])
         dev = robot.devices['imu']
         # write to closed bus
         caplog.clear()
         dev.byte_xl_x.value = 20
-        assert len(caplog.records) == 1
+        assert len(caplog.records) >= 1
         assert 'attempted to write to a closed bus' in caplog.text
         # read from closed bus
         caplog.clear()
         _ = dev.byte_xl_x.value
-        assert len(caplog.records) == 1
+        assert len(caplog.records) >= 1
         assert 'attempted to read from a closed bus' in caplog.text
 
     def test_i2c_read_loop(self, mock_robot_init):
