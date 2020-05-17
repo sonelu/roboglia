@@ -26,7 +26,23 @@ roboglia.dynamixel.DynamixelXLBaudRateRegister
 
    .. autosummary::
    
+      ~DynamixelXLBaudRateRegister.access
+      ~DynamixelXLBaudRateRegister.address
+      ~DynamixelXLBaudRateRegister.default
+      ~DynamixelXLBaudRateRegister.device
+      ~DynamixelXLBaudRateRegister.int_value
+      ~DynamixelXLBaudRateRegister.max_ext
+      ~DynamixelXLBaudRateRegister.maxim
+      ~DynamixelXLBaudRateRegister.min_ext
+      ~DynamixelXLBaudRateRegister.minim
+      ~DynamixelXLBaudRateRegister.name
+      ~DynamixelXLBaudRateRegister.order
+      ~DynamixelXLBaudRateRegister.range
+      ~DynamixelXLBaudRateRegister.range_ext
+      ~DynamixelXLBaudRateRegister.size
+      ~DynamixelXLBaudRateRegister.sync
       ~DynamixelXLBaudRateRegister.value
+      ~DynamixelXLBaudRateRegister.word
    
    
 

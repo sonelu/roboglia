@@ -26,7 +26,25 @@ roboglia.base.RegisterWithThreshold
 
    .. autosummary::
    
+      ~RegisterWithThreshold.access
+      ~RegisterWithThreshold.address
+      ~RegisterWithThreshold.default
+      ~RegisterWithThreshold.device
+      ~RegisterWithThreshold.factor
+      ~RegisterWithThreshold.int_value
+      ~RegisterWithThreshold.max_ext
+      ~RegisterWithThreshold.maxim
+      ~RegisterWithThreshold.min_ext
+      ~RegisterWithThreshold.minim
+      ~RegisterWithThreshold.name
+      ~RegisterWithThreshold.order
+      ~RegisterWithThreshold.range
+      ~RegisterWithThreshold.range_ext
+      ~RegisterWithThreshold.size
+      ~RegisterWithThreshold.sync
+      ~RegisterWithThreshold.threshold
       ~RegisterWithThreshold.value
+      ~RegisterWithThreshold.word
    
    
 

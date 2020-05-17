@@ -4,7 +4,7 @@
 
 .. automodule:: roboglia.dynamixel
 
-This module contains classes that are specific for interation with dynamixel
+This module contains classes that are specific for interaction with dynamixel
 devices.
 
 *Buses*
@@ -14,9 +14,8 @@ devices.
    :toctree: dynamixel
 
    DynamixelBus
-   ShareableDynamixelBus
+   SharedDynamixelBus
    MockPacketHandler
-   MockDynamixelBus
 
 *Devices*
 
