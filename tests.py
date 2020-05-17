@@ -761,7 +761,7 @@ class TestI2CRobot:
             assert dev.word_xl_x.value == 12345      
         robot.stop()
 
-    def test_i2c_sensor(self, mock_robot_init):
+    def test_i2c_sensor(self, mock_robot_init, caplog):
         robot = BaseRobot(**mock_robot_init['i2crobot'])
         robot.start()
         s = robot.sensors['temp']
@@ -780,6 +780,11 @@ class TestI2CRobot:
         # masks
         assert robot.sensors['status0'].value 
         assert not robot.sensors['status1'].value
+        # setting active for register w/o active register
+        caplog.clear()
+        robot.sensors['status0'].active = True
+        assert len(caplog.records) == 1
+        assert 'attempted to change activation of sensor' in caplog.text
 
     def test_i2c_sensorXYZ(self, mock_robot_init):
         robot = BaseRobot(**mock_robot_init['i2crobot'])
