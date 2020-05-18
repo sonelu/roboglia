@@ -58,7 +58,7 @@ class BaseRegister():
         multiple represtnations of the same physical register (at a given
         address) with the purpose of having different external
         representations. For example:
-        
+
         - you can have a position register that can provide the external
           value in degrees or radians,
         - a velocity register that can provide the external value in degrees
@@ -102,7 +102,7 @@ class BaseRegister():
     """
     def __init__(self, name='REGISTER', device=None, address=0, clone=None,
                  size=1, minim=0, maxim=None, access='R', sync=False,
-                 word=False, bulk=True, order='LH', default=0, **kwargs):                 
+                 word=False, bulk=True, order='LH', default=0, **kwargs):
         # these are already checked by the device
         self.__name = name
         # device

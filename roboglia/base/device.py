@@ -149,7 +149,7 @@ class BaseDevice():
                       logger)
             check_key(reg_info['address'], self.__reg_by_addr, 'register',
                       reg_info['name'], logger,
-                      f'no main register with address {reg_info["address"]} '\
+                      f'no main register with address {reg_info["address"]} '
                       'defined')
             reg_info['clone'] = self.register_by_address(reg_info['address'])
             reg_name = reg_info['name']
