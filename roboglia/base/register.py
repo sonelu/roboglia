@@ -51,6 +51,26 @@ class BaseRegister():
     access: str
         Read ('R') or read-write ('RW'); default 'R'
 
+    clone: BaseRegister or subclass or ``None``
+        Indicates if the register is a clone; this value provides the
+        reference to the register object that acts as the main register
+        in interation with the communication bus. This allows you to define
+        multiple represtnations of the same physical register (at a given
+        address) with the purpose of having different external
+        representations. For example:
+        
+        - you can have a position register that can provide the external
+          value in degrees or radians,
+        - a velocity register that can provide the external value in degrees
+          per second, radians per second or rotations per minute,
+        - a byte register that reads 8 inputs and mask them each as a
+          :py:class:`BoolRegister` with a different bit mask
+
+        In the device definition YAML file use ``True`` to indicate if a
+        register is a clone. The device constructor will replace the reference
+        of the main register with the same address in the constructor of this
+        register.
+
     sync: bool
         ``True`` if the register will be updated from the real device
         using a sync loop. If `sync` is ``False`` access to the register
@@ -80,9 +100,9 @@ class BaseRegister():
         The default value for the register; implicit 0
 
     """
-    def __init__(self, name='REGISTER', device=None, address=0, size=1,
-                 minim=0, maxim=None, access='R', sync=False, word=False,
-                 bulk=True, order='LH', default=0, **kwargs):
+    def __init__(self, name='REGISTER', device=None, address=0, clone=None,
+                 size=1, minim=0, maxim=None, access='R', sync=False,
+                 word=False, bulk=True, order='LH', default=0, **kwargs):                 
         # these are already checked by the device
         self.__name = name
         # device
@@ -90,8 +110,13 @@ class BaseRegister():
         check_type(device, BaseDevice, 'register', self.name, logger)
         self.__device = device
         # address
-        # check_not_empty(address, 'address', 'register', self.name, logger)
+        if address != 0:
+            check_not_empty(address, 'address', 'register', self.name, logger)
         self.__address = address
+        # clone
+        if clone:
+            check_type(clone, BaseRegister, 'register', self.name, logger)
+        self.__clone = clone
         # size
         check_not_empty(size, 'size', 'register', self.name, logger)
         check_type(size, int, 'register', self.name, logger)
@@ -139,6 +164,11 @@ class BaseRegister():
     def address(self):
         """The register's address in the device."""
         return self.__address
+
+    @property
+    def clone(self):
+        """Indicates the register is a clone of another."""
+        return self.__clone
 
     @property
     def size(self):
@@ -217,16 +247,24 @@ class BaseRegister():
 
     @property
     def int_value(self):
-        """The internal value of the register."""
-        return self.__int_value
+        """Internal value of register, if a clone return the value of the
+        main register."""
+        if not self.clone:
+            return self.__int_value
+        else:
+            return self.clone.int_value
 
     @int_value.setter
     def int_value(self, value):
         """Allows only :py:class:`BaseSync` derrived classes to set the values
-        for the ``int_value``."""
+        for the ``int_value``. If clone, store the value in the main register.
+        """
         caller = inspect.stack()[1].frame.f_locals['self']
-        if isinstance(caller, BaseSync):
-            self.__int_value = value
+        if isinstance(caller, BaseSync) or isinstance(caller, BaseRegister):
+            if not self.clone:
+                self.__int_value = value
+            else:
+                self.clone.int_value = value
         else:
             logger.error('only BaseSync subclasses can chance the '
                          'internal value ')
