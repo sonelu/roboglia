@@ -15,10 +15,10 @@
 
 import yaml
 import logging
-# import statistics
+import threading
+import statistics
 
-from ..utils import get_registered_class, check_key, check_type
-# , check_options
+from ..utils import get_registered_class, check_key, check_type, check_options
 from .thread import BaseLoop
 from .joint import Joint
 
@@ -444,10 +444,15 @@ class JointManager(BaseLoop):
 
     function: str
         The function used to produce the blended command for the joints.
-        Allowed values are 'mean', 'median', 'weighted'.
+        Allowed values are 'mean' and 'median'.
+
+    timeout: float
+        Is a time in seconds an accessor will wait before issuing a timeout
+        when trying to submit data to the manager or the manager preparing
+        the data for the joints.
     """
     def __init__(self, name='JointManager', frequency=100.0, joints=[],
-                 group=None, function='mean', **kwargs):
+                 group=None, function='mean', timeout=0.5, **kwargs):
         super().__init__(name=name, frequency=frequency, **kwargs)
         temp_joints = []
         if joints:
@@ -459,32 +464,111 @@ class JointManager(BaseLoop):
         if len(self.__joints) == 0:
             logger.warning('joint manager does not have any joints '
                            'attached to it')
-        # check_options(function, ['mean', 'median', ])
-        self.__streams = []
-        self.__commands = [[]] * len(self.__joints)
+        check_options(function, ['mean', 'median'], 'JointManager', name,
+                      logger)
+        if function == 'mean':
+            self.__func = statistics.mean
+        elif function == 'median':
+            self.__func = statistics.median
+        else:
+            raise NotImplementedError
+        self.__submissions = {}
+        self.__adjustments = {}
+        self.__lock = threading.Lock()
 
     @property
     def joints(self):
         return self.__joints
 
-    def register_stream(self, stream):
-        """Used by a stream of commands to notify the Joint Manager that they
-        would like to submit commad data.
+    def submit(self, name, commands, adjustments=False):
+        """Used by a stream of commands to notify the Joint Manager they
+        joint commands they want.
 
         Paramters
         ---------
-        stream: :py:class:`Mover` or subclass
-            The class that will provide joint commands in the future.
+        name: str
+            The name of the stream providing the data. It is used to keep the
+            request separate and be able to merge later.
+
+        commands: dict
+            A dictionary with the commands requests in the format::
+
+                {joint_name: (values)}
+
+            Where ``values`` is a tuple with the command for that joint. It
+            is acceptable to send partial commands to a joint, for instance
+            you can send only (100,) (position 100) to a JointPVL. Submitting
+            more information to a joint will have no effect, for instance
+            (100, 20, 40) (position, velocity, load) to a Joint will only
+            use the position part of the request.
+
+        adjustments: bool
+            Indicates that the values are to be treated as adjustments to
+            the other requests instead of absolute requests. This is
+            convenient for streams that request postion correction like
+            an accelerometer based balance control. Internally the
+            JointManger keeps the commands separate between the absolute
+            and the adjustments ones and calculates separate averages then
+            adjusts the absolute results with the ones from the adjustments
+            to produce the final numbers.
 
         Returns
         -------
-        list of `Joint`
-            The method returns an ID for the stream to use in submission
-            and the list of joints that the stream must supply in order.
-            It is the responsibility of the stream to process this
-            information appropriately and make sure that the commads they
-            supply are suitable for the joints advertised by the manager.
+        bool:
+            ``True`` if the operation was successful. False if there was an
+            error (most likely the lock was not acquired). Caller needs to
+            review this and decide if they should retry to send data.
         """
+        if not self.__lock.acquire():
+            logger.error(f'failed to acquire manager for stream {name}')
+            return False
+        else:
+            if adjustments:
+                self.__adjustments[name] = commands
+            else:
+                self.__submissions[name] = commands
+            self.__lock.release()
+            return True
+
+    def stop_submit(self, name, adjustments=False):
+        """Notifies the ``JointManager`` that the stream has finished
+        sending data and as a result the data in the ``JointManager`` cache
+        should be removed.
+
+        .. warning:: If the stream does not call this method when it
+            finished with a routine the last submission will remain in
+            the cache and will continue to be averaged with the other
+            requests, creating problems. Don't forget to call this method
+            when your move finishes!
+
+        Parameters
+        ----------
+        name: str
+            The name of the move sending the data
+
+        adjustments: bool
+            Indicates the move submitted to the adjustment stream.
+
+        Returns
+        -------
+        bool:
+            ``True`` if the operation was successful. False if there was an
+            error (most likely the lock was not acquired). Caller needs to
+            review this and decide if they should retry to send data. In the
+            case of this method it is advisable to try resending the request,
+            otherwise stale data will stay in the cache.
+        """
+        if not self.__lock.acquire():
+            logger.error(f'failed to acquire manager for stream {name}')
+            return False
+        else:
+            if adjustments:
+                if name in self.__adjustments:      # pragma: no branch
+                    del self.__adjustments[name]
+            else:
+                if name in self.__submissions:      # pragma: no branch
+                    del self.__submissions[name]
+            return True
 
     def start(self):
         """Starts the JointManager. Before calling the
@@ -513,4 +597,51 @@ class JointManager(BaseLoop):
                 logger.info(f'--> Deactivating joint: {joint.name} - skipped')
 
     def atomic(self):
-        pass
+        if not self.__lock.acquire():
+            logger.error('failed to acquire lock for atomic processing')
+        else:
+            for joint in self.joints:
+                comm = self.__process_request(joint, self.__submissions)
+                adj = self.__process_request(joint, self.__adjustments)
+                joint.value = self.__add_with_none(comm, adj)
+        self.__lock.release()
+
+    def __process_request(self, joint, requests):
+        """Processes a list of requests and calculates averages."""
+        pos_req = []
+        vel_req = []
+        ld_req = []
+        for request in requests:
+            values = request.get(joint.name, None)
+            if not values:
+                continue
+            else:
+                pos_req.append(values[0])
+                if len(values) > 1:             # pragma: no branch
+                    vel_req.append(values[1])
+                    if len(values) > 2:         # pragma: no branch
+                        ld_req.append(values[2])
+        if len(pos_req) == 0:
+            return (None, None, None)
+        else:
+            pos = self.__func(pos_req)
+            vel = self.__func(vel_req) if len(vel_req) > 0 else None
+            ld = self.__func(ld_req) if len(ld_req) > 0 else None
+            return (pos, vel, ld)
+
+    def __add_with_none(self, val1, val2):
+        """Adds two numbers that could be ``None``."""
+        if val1 is None:
+            return val2
+        else:
+            if val2 is None:
+                return val1
+            else:
+                return val1 + val2
+
+    def __add_command_tuples(self, comm1, comm2):
+        c1_p, c1_v, c1_l = comm1
+        c2_p, c2_v, c2_l = comm2
+        return (self.__add_with_none(c1_p, c2_p),
+                self.__add_with_none(c1_v, c2_v),
+                self.__add_with_none(c1_l, c2_l))

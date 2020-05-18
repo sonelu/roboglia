@@ -220,6 +220,28 @@ class Joint():
         value += self.__offset
         return value
 
+    @property
+    def value(self):
+        """Generic accessor / setter that uses tuples to interact with the
+        joint. For position only joints it is a tuple with one element.
+        """
+        return (self.position,)
+
+    @value.setter
+    def value(self, values):
+        """``values`` should be a tuple in all circumstances. For position
+        only joints is a tuple with one element.
+        """
+        pos = values[0]
+        if pos is not None:
+            self.position = pos
+
+    def desired(self):
+        """Generic accessor for desired joint values. Always a tuple. For
+        position only joints is a tuple with one element.
+        """
+        return (self.desired_position, )
+
     def __repr__(self):
         return f'{self.name}: p={self.position:.3f}'
 
@@ -285,6 +307,32 @@ class JointPV(Joint):
         # should be absolute only
         return self.__vel_w.value
 
+    @property
+    def value(self):
+        """For a PV joint the value is a tuple with 2 values: (position,
+        velocity)."""
+        return (self.position, self.velocity)
+
+    @value.setter
+    def value(self, values):
+        """For a PV joint the value is a tuple with 2 values.
+
+        Parameters
+        ----------
+        values: tuple (position, velocity)
+        """
+        pos = values[0]
+        vel = values[1]
+        if pos is not None:
+            self.position = pos
+        if vel is not None:
+            self.velocity = vel
+
+    def desired(self):
+        """For PV joint the desired is a tuple of 2 values.
+        """
+        return (self.desired_position, self.desired_velocity)
+
     def __repr__(self):
         return f'{Joint.__repr__(self)}, v={self.velocity:.3f}'
 
@@ -349,6 +397,31 @@ class JointPVL(JointPV):
         register."""
         # should be absolute value!
         return self.__load_w.value
+
+    @property
+    def value(self):
+        """For a PVL joint the value is a tuple of 3 values (position,
+        velocity, load)
+        """
+        return (self.position, self.velocity, self.load)
+
+    @value.setter
+    def value(self, values):
+        """For a PVL joint the value is a tuple of 3 values.
+
+        Parameters
+        ----------
+        values: tuple (position, velocity, load)
+        """
+        pos = values[0]
+        vel = values[1]
+        load = values[2]
+        if pos is not None:
+            self.position = pos
+        if vel is not None:
+            self.velocity = vel
+        if vel is not None:
+            self.load = load
 
     def __repr__(self):
         return f'{JointPV.__repr__(self)}, l={self.load:.3f}'
