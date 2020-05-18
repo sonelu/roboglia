@@ -115,3 +115,7 @@ dummy:
       # we specifically want the loops not to start automatically
       # to control the test and make sure that they are no side
       # effects on more simple checks
+
+  manager:
+    group: joints
+    frequency: 50.0

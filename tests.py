@@ -641,12 +641,12 @@ class TestDynamixelRobot:
         # read
         caplog.clear()
         bus.read(dev.return_delay_time)
-        assert len(caplog.records) == 1
+        assert len(caplog.records) >= 1
         assert 'failed to acquire bus ttys1' in caplog.text
         # write
         caplog.clear()
         bus.write(dev.return_delay_time, 10)
-        assert len(caplog.records) == 1
+        assert len(caplog.records) >= 1
         assert 'failed to acquire bus ttys1' in caplog.text
         # release bus
         bus.stop_using()

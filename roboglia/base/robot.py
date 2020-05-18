@@ -15,8 +15,12 @@
 
 import yaml
 import logging
+# import statistics
 
 from ..utils import get_registered_class, check_key, check_type
+# , check_options
+from .thread import BaseLoop
+from .joint import Joint
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +97,7 @@ class BaseRobot():
         sync.
     """
     def __init__(self, name='ROBOT', buses={}, inits={}, devices={},
-                 joints={}, sensors={}, groups={}, syncs={}):
+                 joints={}, sensors={}, groups={}, syncs={}, manager={}):
         logger.info('***** Initializing robot *************')
         self.__name = name
         if not buses:
@@ -112,6 +116,7 @@ class BaseRobot():
         self.__init_sensors(sensors)
         self.__init_groups(groups)
         self.__init_syncs(syncs)
+        self.__init_manager(manager)
         logger.info('***** Initialization complete ********')
 
     @classmethod
@@ -132,7 +137,7 @@ class BaseRobot():
             in case the file is not available
 
         """
-        logger.info(f'Instantiating robot from YAML file {file_name}')
+        logger.info(f'Creating robot from YAML file {file_name}')
         with open(file_name, 'r') as f:
             init_dict = yaml.load(f, Loader=yaml.FullLoader)
             if len(init_dict) > 1:
@@ -144,7 +149,7 @@ class BaseRobot():
     def __init_buses(self, buses):
         """Called by ``__init__`` to parse and instantiate buses."""
         self.__buses = {}
-        logger.info('Initializing buses...')
+        logger.info('Settting up buses...')
         for bus_name, bus_info in buses.items():
             # add the name in the dict
             bus_info['name'] = bus_name
@@ -160,7 +165,7 @@ class BaseRobot():
         """Called by ``__init__`` to parse and instantiate devices."""
         self.__devices = {}
         self.__dev_by_id = {}
-        logger.info('Initializing devices...')
+        logger.info('Setting up devices...')
         for dev_name, dev_info in devices.items():
             # add the name in the dev_info
             dev_info['name'] = dev_name
@@ -188,7 +193,7 @@ class BaseRobot():
     def __init_joints(self, joints):
         """Called by ``__init__`` to parse and instantiate joints."""
         self.__joints = {}
-        logger.info('Initializing joints...')
+        logger.info('Setting up joints...')
         for joint_name, joint_info in joints.items():
             # add the name in the joint_info
             joint_info['name'] = joint_name
@@ -210,7 +215,7 @@ class BaseRobot():
     def __init_sensors(self, sensors):
         """Called by ``__init__`` to parse and instantiate sensors."""
         self.__sensors = {}
-        logger.info('Initializing sensors...')
+        logger.info('Setting up sensors...')
         for sensor_name, sensor_info in sensors.items():
             # add the name in the joint_info
             sensor_info['name'] = sensor_name
@@ -232,7 +237,7 @@ class BaseRobot():
     def __init_groups(self, groups):
         """Called by ``__init__`` to parse and instantiate groups."""
         self.__groups = {}
-        logger.info('Initializing groups...')
+        logger.info('Setting up groups...')
         for grp_name, grp_info in groups.items():
             new_grp = set()
             # groups of devices
@@ -256,7 +261,7 @@ class BaseRobot():
     def __init_syncs(self, syncs):
         """Called by ``__init__`` to parse and instantiate syncs."""
         self.__syncs = {}
-        logger.info('Initializing syncs...')
+        logger.info('Setting up syncs...')
         for sync_name, sync_info in syncs.items():
             sync_info['name'] = sync_name
             check_key('group', sync_info, 'sync', sync_name, logger)
@@ -271,6 +276,31 @@ class BaseRobot():
             new_sync = sync_class(**sync_info)
             self.__syncs[sync_name] = new_sync
             logger.debug(f'sync {sync_name} added')
+
+    def __init_manager(self, manager):
+        """Called by ``__init__`` to parse and instantiate the robot
+        manager."""
+        # process joints and replace names with objects
+        logger.info('Setting up manager...')
+        joints = manager.get('joints', [])
+        for index, joint_name in enumerate(joints):
+            check_key(joint_name, self.joints, 'manager', self.name, logger)
+            joints[index] = self.joints[joint_name]
+        group_name = manager.get('group', '')
+        if group_name:
+            check_key(group_name, self.groups, 'manager', self.name, logger)
+            group = self.groups[group_name]
+            for joint in group:
+                check_type(joint, Joint, 'manager', self.name, logger)
+        else:
+            group = set()
+        if 'joints' in manager:
+            del manager['joints']
+        if 'group' in manager:
+            del manager['group']
+        self.__manager = JointManager(name=self.name, joints=joints,
+                                      group=group, **manager)
+        logger.debug(f'manager {self.name} added')
 
     @property
     def name(self):
@@ -328,6 +358,11 @@ class BaseRobot():
         """(read-only) The syncs of the robot as a dict."""
         return self.__syncs
 
+    @property
+    def manager(self):
+        """The RobotManager of the robot."""
+        return self.__manager
+
     def start(self):
         """Starts the robot operation. It will:
 
@@ -351,13 +386,8 @@ class BaseRobot():
         for device in self.devices.values():
             logger.info(f'--> Opening device: {device.name}')
             device.open()
-        logger.info('Activating joints...')
-        for joint in self.joints.values():
-            if joint.auto_activate:
-                logger.info(f'--> Activating joint: {joint.name}')
-                joint.active = True
-            else:
-                logger.info(f'--> Activating joint: {joint.name} - skipped')
+        logger.info('Starting joint manager...')
+        self.manager.start()
         logger.info('Starting syncs...')
         for sync in self.syncs.values():
             if sync.auto_start:
@@ -380,8 +410,8 @@ class BaseRobot():
         for sync in self.syncs.values():
             logger.debug(f'--> Stopping sync: {sync.name}')
             sync.stop()
-        for joint in self.joints.values():
-            logger.debug(f'--> Deactivating joint: {joint.name}')
+        logger.info('Stopping joint manager...')
+        self.manager.stop()
         logger.info('Closing devices...')
         for device in self.devices.values():
             logger.debug(f'--> Closing device: {device.name}')
@@ -391,3 +421,96 @@ class BaseRobot():
             logger.debug(f'--> Closing bus: {bus.name}')
             bus.close()
         logger.info('***** Robot stopped ******************')
+
+
+class JointManager(BaseLoop):
+    """Implements the management of the joints by alowing multiple movement
+    streams to submit position commands to the robot.
+
+    The ``JointManager`` inherits the constructor paramters from
+    :py:class:`BaseLoop`. Please refer to that class for mote details.
+
+    In addition the class introduces the following additional paramters:
+
+    Parameters
+    ----------
+    joints: list of :py:class:roboglia.Base.`Joint` or subclass
+        The list of joints that the manager is having under control.
+        Alternatively you can use the parameter ``group`` (see below)
+
+    group: set of :py:class:roboglia.Base.`Joint` or subclass
+        A group of joints that was defined earlier with a ``group``
+        statement in the robot definition file.
+
+    function: str
+        The function used to produce the blended command for the joints.
+        Allowed values are 'mean', 'median', 'weighted'.
+    """
+    def __init__(self, name='JointManager', frequency=100.0, joints=[],
+                 group=None, function='mean', **kwargs):
+        super().__init__(name=name, frequency=frequency, **kwargs)
+        temp_joints = []
+        if joints:
+            temp_joints.extend(joints)
+        if group:
+            temp_joints.extend(group)
+        # eliminate duplicates
+        self.__joints = list(set(temp_joints))
+        if len(self.__joints) == 0:
+            logger.warning('joint manager does not have any joints '
+                           'attached to it')
+        # check_options(function, ['mean', 'median', ])
+        self.__streams = []
+        self.__commands = [[]] * len(self.__joints)
+
+    @property
+    def joints(self):
+        return self.__joints
+
+    def register_stream(self, stream):
+        """Used by a stream of commands to notify the Joint Manager that they
+        would like to submit commad data.
+
+        Paramters
+        ---------
+        stream: :py:class:`Mover` or subclass
+            The class that will provide joint commands in the future.
+
+        Returns
+        -------
+        list of `Joint`
+            The method returns an ID for the stream to use in submission
+            and the list of joints that the stream must supply in order.
+            It is the responsibility of the stream to process this
+            information appropriately and make sure that the commads they
+            supply are suitable for the joints advertised by the manager.
+        """
+
+    def start(self):
+        """Starts the JointManager. Before calling the
+        :py:meth:`BaseThread.start` it activates the joints if they
+        indicate they have the ``auto`` flag set.
+        """
+        for joint in self.joints:
+            if joint.auto_activate and not joint.active:
+                logger.info(f'--> Activating joint: {joint.name}')
+                joint.active = True
+            else:
+                logger.info(f'--> Activating joint: {joint.name} - skipped')
+        super().start()
+
+    def stop(self):
+        """Stops the JointManager. After calling the
+        :py:meth:`BaseThread.stop` it deactivates the joints if they
+        indicate they have the ``auto`` flag set.
+        """
+        super().stop()
+        for joint in self.joints:
+            if joint.auto_activate and joint.active:
+                logger.info(f'--> Deactivating joint: {joint.name}')
+                joint.active = False
+            else:
+                logger.info(f'--> Deactivating joint: {joint.name} - skipped')
+
+    def atomic(self):
+        pass
