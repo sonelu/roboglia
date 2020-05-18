@@ -465,16 +465,29 @@ class RegisterWithConversion(BaseRegister):
     offset: int
         The offset for the conversion; defaults to 0 (int)
 
+    sign_bit: int or None
+        If a number is given it means that the register is "signed" and that
+        bit represents the sign. Bits are numbered from 1 meaning that if
+        ``sign_bit`` is 1 the less significant bit is used and if we have
+        a 2 bytes register the most significant bit would be 16.
+        The convention is that numbers having 0 in this bit are positive
+        and the ones having 1 are negative numbers.
+
     Raises:
         KeyError: if any of the mandatory fields are not provided
         ValueError: if value provided are wrong or the wrong type
     """
-    def __init__(self, factor=1.0, offset=0, **kwargs):
+    def __init__(self, factor=1.0, offset=0, sign_bit=None, **kwargs):
         super().__init__(**kwargs)
         check_type(factor, float, 'register', self.name, logger)
         self.__factor = factor
         check_type(offset, int, 'register', self.name, logger)
         self.__offset = offset
+        if sign_bit:
+            check_type(sign_bit, int, 'register', self.name, logger)
+            self.__sign_bit = pow(2, sign_bit)
+        else:
+            self.__sign_bit = None
 
     @property
     def factor(self):
@@ -495,6 +508,9 @@ class RegisterWithConversion(BaseRegister):
             external = (internal - offset) / factor
 
         """
+        if self.__sign_bit and value > self.__sign_bit:
+            # negative number
+            value = value - self.__sign_bit
         return (float(value) - self.offset) / self.factor
 
     def value_to_internal(self, value):
@@ -508,7 +524,10 @@ class RegisterWithConversion(BaseRegister):
         The resulting value is rounded to produce an integer suitable
         to be stored in the register.
         """
-        return round(float(value) * self.factor + self.offset)
+        value = round(float(value) * self.factor + self.offset)
+        if value < 0 and self.__sign_bit:
+            value = value + self.__sign_bit
+        return value
 
 
 class RegisterWithThreshold(BaseRegister):
