@@ -66,7 +66,7 @@ class BaseRegister():
 
     order: ``LH`` or ``HL``
         Applicable only for registers with size > 1 that represent a value
-        over succesive internal registers, but for convenience are groupped
+        over successive internal registers, but for convenience are groupped
         as one single register with size 2 (or higher).
         ``LH`` means low-high and indicates the bytes in the registry are
         organized starting with the low byte first. ``HL`` indicates that
@@ -347,27 +347,64 @@ class BaseRegister():
 class BoolRegister(BaseRegister):
     """A register with BOOL representation (true/false).
 
-    Inherits from :py:class:`BaseRegister` all methods and defaults ``max``
-    to 1.
+    Inherits from :py:class:`BaseRegister` all methods.
     Overrides `value_to_external` and `value_to_internal` to process
     a bool value.
+
+    Parameters
+    ----------
+    mask: int or ``None``
+        An optional mask to use in the determination of the output of the
+        register. Default is None and in this case we simply compare the
+        internal value with 0.
+
+    mode: str ('all' or 'any')
+        Indicates how the mask should be used: 'all' means all the bits
+        in the mask must match  while 'any'
+        means any bit that matches the mask is enough to result in a ``True``
+        external value. Only used if mask is not ``None``. Default is 'any'.
     """
-    def __init__(self, **kwargs):
-        if 'maxim' in kwargs:           # pragma: no branch
-            logger.warning('parameter "maxim" for BoolRegister ignored, '
-                           'it will be defaulted to 1')
-            del kwargs['maxim']
-        super().__init__(maxim=1, **kwargs)
+    def __init__(self, mask=None, mode='any', **kwargs):
+        super().__init__(**kwargs)
+        if mask:
+            check_type(mask, int, 'register', self.name, logger)
+            check_options(mode, ['all', 'any'], 'register', self.name, logger)
+        self.__mask = mask
+        self.__mode = mode
+
+    @property
+    def mask(self):
+        """The mask used."""
+        return self.__mask
+
+    @property
+    def mode(self):
+        """The bitmasking mode ('all' or 'any')."""
+        return self.__mode
 
     def value_to_external(self, value):
         """The external representation of bool register.
         """
-        return bool(value)
+        if self.mask is None:
+            return bool(value)
+        else:
+            if self.mode == 'any':
+                return bool(value & self.mask)
+            elif self.mode == 'all':
+                return (value & self.mask) == self.mask
+            else:
+                raise NotImplementedError
 
     def value_to_internal(self, value):
         """The internal representation of the register's value.
         """
-        return int(value)
+        if value:
+            if self.mask:
+                return self.mask
+            else:
+                return 1
+        else:
+            return 0
 
 
 class RegisterWithConversion(BaseRegister):
