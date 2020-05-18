@@ -17,6 +17,8 @@ dummy:
       revision: null
       delay: 0
       desired_load: 50
+      # for test conditions
+      not_existing: 20
 
     speed_init:
       desired_speed: 30
@@ -78,6 +80,19 @@ dummy:
       offset: 45.0
       auto: False
 
+    no_activate:
+      class: JointPVL
+      device: d03
+      pos_read: current_pos
+      pos_write: desired_pos
+      vel_read: current_speed
+      vel_write: desired_speed
+      load_read: current_load
+      load_write: desired_load
+      inverse: True
+      offset: 45.0
+      auto: False    
+
   sensors:
     bus_voltage:
       class: Sensor
@@ -115,3 +130,12 @@ dummy:
       # we specifically want the loops not to start automatically
       # to control the test and make sure that they are no side
       # effects on more simple checks
+
+# another robot for testing warning message
+extra:
+  buses:
+    bus1:
+      class: Not Important
+  devices:
+    dev1:
+      class: Not Important

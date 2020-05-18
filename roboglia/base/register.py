@@ -51,6 +51,26 @@ class BaseRegister():
     access: str
         Read ('R') or read-write ('RW'); default 'R'
 
+    clone: BaseRegister or subclass or ``None``
+        Indicates if the register is a clone; this value provides the
+        reference to the register object that acts as the main register
+        in interation with the communication bus. This allows you to define
+        multiple represtnations of the same physical register (at a given
+        address) with the purpose of having different external
+        representations. For example:
+
+        - you can have a position register that can provide the external
+          value in degrees or radians,
+        - a velocity register that can provide the external value in degrees
+          per second, radians per second or rotations per minute,
+        - a byte register that reads 8 inputs and mask them each as a
+          :py:class:`BoolRegister` with a different bit mask
+
+        In the device definition YAML file use ``True`` to indicate if a
+        register is a clone. The device constructor will replace the reference
+        of the main register with the same address in the constructor of this
+        register.
+
     sync: bool
         ``True`` if the register will be updated from the real device
         using a sync loop. If `sync` is ``False`` access to the register
@@ -66,7 +86,7 @@ class BaseRegister():
 
     order: ``LH`` or ``HL``
         Applicable only for registers with size > 1 that represent a value
-        over succesive internal registers, but for convenience are groupped
+        over successive internal registers, but for convenience are groupped
         as one single register with size 2 (or higher).
         ``LH`` means low-high and indicates the bytes in the registry are
         organized starting with the low byte first. ``HL`` indicates that
@@ -80,9 +100,9 @@ class BaseRegister():
         The default value for the register; implicit 0
 
     """
-    def __init__(self, name='REGISTER', device=None, address=0, size=1,
-                 minim=0, maxim=None, access='R', sync=False, word=False,
-                 bulk=True, order='LH', default=0, **kwargs):
+    def __init__(self, name='REGISTER', device=None, address=0, clone=None,
+                 size=1, minim=0, maxim=None, access='R', sync=False,
+                 word=False, bulk=True, order='LH', default=0, **kwargs):
         # these are already checked by the device
         self.__name = name
         # device
@@ -90,8 +110,13 @@ class BaseRegister():
         check_type(device, BaseDevice, 'register', self.name, logger)
         self.__device = device
         # address
-        # check_not_empty(address, 'address', 'register', self.name, logger)
+        if address != 0:
+            check_not_empty(address, 'address', 'register', self.name, logger)
         self.__address = address
+        # clone
+        if clone:
+            check_type(clone, BaseRegister, 'register', self.name, logger)
+        self.__clone = clone
         # size
         check_not_empty(size, 'size', 'register', self.name, logger)
         check_type(size, int, 'register', self.name, logger)
@@ -139,6 +164,11 @@ class BaseRegister():
     def address(self):
         """The register's address in the device."""
         return self.__address
+
+    @property
+    def clone(self):
+        """Indicates the register is a clone of another."""
+        return self.__clone
 
     @property
     def size(self):
@@ -217,19 +247,27 @@ class BaseRegister():
 
     @property
     def int_value(self):
-        """The internal value of the register."""
-        return self.__int_value
+        """Internal value of register, if a clone return the value of the
+        main register."""
+        if not self.clone:
+            return self.__int_value
+        else:
+            return self.clone.int_value
 
     @int_value.setter
     def int_value(self, value):
         """Allows only :py:class:`BaseSync` derrived classes to set the values
-        for the ``int_value``."""
+        for the ``int_value``. If clone, store the value in the main register.
+        """
         caller = inspect.stack()[1].frame.f_locals['self']
-        if isinstance(caller, BaseSync):
-            self.__int_value = value
+        if isinstance(caller, BaseSync) or isinstance(caller, BaseRegister):
+            if not self.clone:
+                self.__int_value = value
+            else:
+                self.clone.int_value = value
         else:
             logger.error('only BaseSync subclasses can chance the '
-                         'internal value ')
+                         'internal value')
 
     def value_to_external(self, value):
         """Converts the presented value to external format according to
@@ -288,7 +326,7 @@ class BaseRegister():
             subclasses to provide different representations of the register's
             value (hence the ``any`` return type).
         """
-        if not self.sync:
+        if not self.sync and not self.clone:
             self.read()
         return self.value_to_external(self.int_value)
 
@@ -311,7 +349,7 @@ class BaseRegister():
         # trim according to min and max for the register
         if self.access != 'R':
             int_value = self.value_to_internal(value)
-            self.__int_value = max(self.minim, min(self.maxim, int_value))
+            self.int_value = max(self.minim, min(self.maxim, int_value))
             if not self.sync:       # pragma: no branch
                 # direct sync
                 self.write()
@@ -347,27 +385,64 @@ class BaseRegister():
 class BoolRegister(BaseRegister):
     """A register with BOOL representation (true/false).
 
-    Inherits from :py:class:`BaseRegister` all methods and defaults ``max``
-    to 1.
+    Inherits from :py:class:`BaseRegister` all methods.
     Overrides `value_to_external` and `value_to_internal` to process
     a bool value.
+
+    Parameters
+    ----------
+    mask: int or ``None``
+        An optional mask to use in the determination of the output of the
+        register. Default is None and in this case we simply compare the
+        internal value with 0.
+
+    mode: str ('all' or 'any')
+        Indicates how the mask should be used: 'all' means all the bits
+        in the mask must match  while 'any'
+        means any bit that matches the mask is enough to result in a ``True``
+        external value. Only used if mask is not ``None``. Default is 'any'.
     """
-    def __init__(self, **kwargs):
-        if 'maxim' in kwargs:           # pragma: no branch
-            logger.warning('parameter "maxim" for BoolRegister ignored, '
-                           'it will be defaulted to 1')
-            del kwargs['maxim']
-        super().__init__(maxim=1, **kwargs)
+    def __init__(self, mask=None, mode='any', **kwargs):
+        super().__init__(**kwargs)
+        if mask:
+            check_type(mask, int, 'register', self.name, logger)
+            check_options(mode, ['all', 'any'], 'register', self.name, logger)
+        self.__mask = mask
+        self.__mode = mode
+
+    @property
+    def mask(self):
+        """The mask used."""
+        return self.__mask
+
+    @property
+    def mode(self):
+        """The bitmasking mode ('all' or 'any')."""
+        return self.__mode
 
     def value_to_external(self, value):
         """The external representation of bool register.
         """
-        return bool(value)
+        if self.mask is None:
+            return bool(value)
+        else:
+            if self.mode == 'any':
+                return bool(value & self.mask)
+            elif self.mode == 'all':
+                return (value & self.mask) == self.mask
+            else:
+                raise NotImplementedError
 
     def value_to_internal(self, value):
         """The internal representation of the register's value.
         """
-        return int(value)
+        if value:
+            if self.mask:
+                return self.mask
+            else:
+                return 1
+        else:
+            return 0
 
 
 class RegisterWithConversion(BaseRegister):
@@ -390,16 +465,29 @@ class RegisterWithConversion(BaseRegister):
     offset: int
         The offset for the conversion; defaults to 0 (int)
 
+    sign_bit: int or None
+        If a number is given it means that the register is "signed" and that
+        bit represents the sign. Bits are numbered from 1 meaning that if
+        ``sign_bit`` is 1 the less significant bit is used and if we have
+        a 2 bytes register the most significant bit would be 16.
+        The convention is that numbers having 0 in this bit are positive
+        and the ones having 1 are negative numbers.
+
     Raises:
         KeyError: if any of the mandatory fields are not provided
         ValueError: if value provided are wrong or the wrong type
     """
-    def __init__(self, factor=1.0, offset=0, **kwargs):
+    def __init__(self, factor=1.0, offset=0, sign_bit=None, **kwargs):
         super().__init__(**kwargs)
         check_type(factor, float, 'register', self.name, logger)
         self.__factor = factor
         check_type(offset, int, 'register', self.name, logger)
         self.__offset = offset
+        if sign_bit:
+            check_type(sign_bit, int, 'register', self.name, logger)
+            self.__sign_bit = pow(2, sign_bit)
+        else:
+            self.__sign_bit = None
 
     @property
     def factor(self):
@@ -420,6 +508,9 @@ class RegisterWithConversion(BaseRegister):
             external = (internal - offset) / factor
 
         """
+        if self.__sign_bit and value > (self.__sign_bit / 2):
+            # negative number
+            value = value - self.__sign_bit
         return (float(value) - self.offset) / self.factor
 
     def value_to_internal(self, value):
@@ -433,7 +524,10 @@ class RegisterWithConversion(BaseRegister):
         The resulting value is rounded to produce an integer suitable
         to be stored in the register.
         """
-        return round(float(value) * self.factor + self.offset)
+        value = round(float(value) * self.factor + self.offset)
+        if value < 0 and self.__sign_bit:
+            value = value + self.__sign_bit
+        return value
 
 
 class RegisterWithThreshold(BaseRegister):
