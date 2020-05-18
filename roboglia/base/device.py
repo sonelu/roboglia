@@ -152,6 +152,7 @@ class BaseDevice():
                       f'no main register with address {reg_info["address"]} '\
                       'defined')
             reg_info['clone'] = self.register_by_address(reg_info['address'])
+            reg_name = reg_info['name']
             reg_class_name = reg_info.get('class', self.default_register())
             reg_class = get_registered_class(reg_class_name)
             new_register = reg_class(**reg_info)

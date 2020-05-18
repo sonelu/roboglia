@@ -267,7 +267,7 @@ class BaseRegister():
                 self.clone.int_value = value
         else:
             logger.error('only BaseSync subclasses can chance the '
-                         'internal value ')
+                         'internal value')
 
     def value_to_external(self, value):
         """Converts the presented value to external format according to
@@ -326,7 +326,7 @@ class BaseRegister():
             subclasses to provide different representations of the register's
             value (hence the ``any`` return type).
         """
-        if not self.sync:
+        if not self.sync and not self.clone:
             self.read()
         return self.value_to_external(self.int_value)
 
@@ -349,7 +349,7 @@ class BaseRegister():
         # trim according to min and max for the register
         if self.access != 'R':
             int_value = self.value_to_internal(value)
-            self.__int_value = max(self.minim, min(self.maxim, int_value))
+            self.int_value = max(self.minim, min(self.maxim, int_value))
             if not self.sync:       # pragma: no branch
                 # direct sync
                 self.write()

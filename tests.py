@@ -34,6 +34,19 @@ class TestMockRobot:
         yield robot
         robot.stop()
 
+    def test_incomplete_robot(self, caplog):
+        with pytest.raises(ValueError) as excinfo:
+            _ = BaseRobot.from_yaml('tests/no_buses.yml')
+        assert 'you need at least one bus for the robot' in str(excinfo.value)
+
+        with pytest.raises(ValueError) as excinfo:
+            _ = BaseRobot.from_yaml('tests/no_devices.yml')
+        assert 'you need at least one device for the robot' in str(excinfo.value)
+
+        caplog.clear()
+        _ = BaseRobot.from_yaml('tests/dummy_robot.yml')
+        assert 'Only the first robot will be considered' in caplog.text
+
     def test_robot_from_yaml(self, mock_robot):
         mock_robot.stop()       # to avoid conflicts on the bus
         new_robot = BaseRobot.from_yaml('tests/dummy_robot.yml')
@@ -42,6 +55,7 @@ class TestMockRobot:
         time.sleep(2)           # for loops to run
         new_robot.stop()
         mock_robot.start()      # restart for other cases
+        assert mock_robot.name == 'dummy'
 
     def test_device_str(self, mock_robot):
         rep = str(mock_robot.devices['d01'])
@@ -49,13 +63,45 @@ class TestMockRobot:
         assert 'busA' in rep
         assert 'enable_device' in rep
 
-    def test_register_with_conversion(self, mock_robot):
+    def test_register_bool(self, mock_robot):
+        device = mock_robot.devices['d03']
+        assert not device.status.clone
+        assert device.status_unmasked.clone
+        assert device.status_one.clone
+        assert device.status_2and3.clone
+        assert device.status_2or3.clone
+        # values
+        assert device.status_unmasked.value
+        assert device.status_one.value
+        assert not device.status_2and3.value
+        assert device.status_2or3.value
+        # setting
+        device.status_unmasked.value = False
+        assert not device.status_unmasked.value
+        device.status_2and3.value = True
+        assert device.status_2and3.value
+        assert device.status_2and3.int_value == 0b00000110
+
+    def test_register_with_conversion(self, mock_robot, caplog):
         reg = mock_robot.devices['d03'].desired_pos
         assert isinstance(reg, RegisterWithConversion)
         reg.value = 100
         assert abs(reg.value - 100) < 0.1
         exp_int = 100 * reg.factor + reg.offset
         assert (reg.int_value - exp_int) <=1
+        assert reg.range == (0,1023)
+        exp_min_ext = - 150.0
+        exp_max_ext = 150.0
+        assert (reg.min_ext - exp_min_ext) < 1
+        assert (reg.max_ext - exp_max_ext) < 1
+        ext_range = reg.range_ext
+        assert (ext_range[0] - exp_min_ext) < 1
+        assert (ext_range[1] - exp_max_ext) < 1
+        # try changing the internal value directly
+        caplog.clear()
+        reg.int_value = 1
+        assert len(caplog.records) >= 1
+        assert 'only BaseSync subclasses can chance' in caplog.text
 
     def test_register_with_threshold(self, mock_robot):
         reg = mock_robot.devices['d03'].writeable_current_load
@@ -70,7 +116,6 @@ class TestMockRobot:
         exp_int = 100 * reg.factor + reg.threshold
         assert (reg.int_value - exp_int) <=1
          
-
     def test_register_read_only(self, mock_robot, caplog):
         reg = mock_robot.devices['d03'].current_pos
         assert isinstance(reg, RegisterWithConversion)

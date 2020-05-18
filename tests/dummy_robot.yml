@@ -115,3 +115,12 @@ dummy:
       # we specifically want the loops not to start automatically
       # to control the test and make sure that they are no side
       # effects on more simple checks
+
+# another robot for testing warning message
+extra:
+  buses:
+    bus1:
+      class: Not Important
+  devices:
+    dev1:
+      class: Not Important
