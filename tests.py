@@ -228,6 +228,14 @@ class TestMockRobot:
         assert abs(tilt.desired_velocity - 20) < 0.2
         assert abs(tilt.desired_load - 50) < 0.2
 
+    def test_joint_no_activate(self, mock_robot, caplog):
+        joint = mock_robot.joints['no_activate']
+        assert joint.active
+        caplog.clear()
+        joint.active = True
+        assert len(caplog.records) >= 1
+        assert 'attempted to change activation of joint' in caplog.text
+
     def test_joint_min_max(self, mock_robot):
         # check min and max
         pan = mock_robot.joints['pan']
@@ -805,6 +813,25 @@ class TestI2CRobot:
             dev.word_xl_x.value = 12345
             assert dev.word_xl_x.value == 12345      
         robot.stop()
+
+    def test_i2c_register_with_sign(self, mock_robot_init):
+        robot = BaseRobot(**mock_robot_init['i2crobot'])
+        robot.start()
+        d = robot.devices['imu']
+        # no factor
+        d.word_xl_x.value = 10
+        assert d.word_xl_x.value == 10
+        assert d.word_xl_x.int_value == 10
+        d.word_xl_x.value = -10
+        assert d.word_xl_x.value == -10
+        assert d.word_xl_x.int_value == (65536 - 10)
+        # with factor
+        d.word_xl_y.value = 100
+        assert d.word_xl_y.value == 100
+        assert d.word_xl_y.int_value == 1000
+        d.word_xl_y.value = -100
+        assert d.word_xl_y.value == -100
+        assert d.word_xl_y.int_value == (65536 - 1000)
 
     def test_i2c_sensor(self, mock_robot_init, caplog):
         robot = BaseRobot(**mock_robot_init['i2crobot'])

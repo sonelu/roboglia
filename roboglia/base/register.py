@@ -508,7 +508,7 @@ class RegisterWithConversion(BaseRegister):
             external = (internal - offset) / factor
 
         """
-        if self.__sign_bit and value > self.__sign_bit:
+        if self.__sign_bit and value > (self.__sign_bit / 2):
             # negative number
             value = value - self.__sign_bit
         return (float(value) - self.offset) / self.factor

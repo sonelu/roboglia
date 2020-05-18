@@ -17,6 +17,8 @@ dummy:
       revision: null
       delay: 0
       desired_load: 50
+      # for test conditions
+      not_existing: 20
 
     speed_init:
       desired_speed: 30
@@ -77,6 +79,19 @@ dummy:
       activate: enable_device
       offset: 45.0
       auto: False
+
+    no_activate:
+      class: JointPVL
+      device: d03
+      pos_read: current_pos
+      pos_write: desired_pos
+      vel_read: current_speed
+      vel_write: desired_speed
+      load_read: current_load
+      load_write: desired_load
+      inverse: True
+      offset: 45.0
+      auto: False    
 
   sensors:
     bus_voltage:
