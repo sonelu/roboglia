@@ -170,7 +170,7 @@ class DynamixelBus(BaseBus):
         ----------
         range: range
             the range of devices to be cheked if they
-            exist on the bus. The method will call :py:method:`~ping`
+            exist on the bus. The method will call :py:meth:`~ping`
             for each ID in the list. By default the list is [0, 253].
 
         Returns:
@@ -251,8 +251,9 @@ class DynamixelBus(BaseBus):
         Communication and data errors are logged and no exceptions are
         raised.
 
-        Paramters
-        ---------
+        Parameters
+        ----------
+
         reg: BaseRegister or subclass
             The register to write to
 
@@ -308,24 +309,24 @@ class SharedDynamixelBus(SharedBus):
     """A DynamixelBus that can be used in multithreaded environment.
 
     Includes the functionality of a :py:class:`DynamixelBus` in a
-    :py:class:`SharedBus`. The :py:method:`~write` and :py:method:`~read`
-    methods are wrapped around in :py:method:`~can_use` and
-    :py:method:`~stop_using` to provide the exclusive access.
+    :py:class:`SharedBus`. The :py:meth:`~write` and :py:meth:`~read`
+    methods are wrapped around in :py:meth:`~can_use` and
+    :py:meth:`~stop_using` to provide the exclusive access.
 
-    In addition, two methods :py:method:`~naked_write` and
-    :py:method:`~naked_read` are provided so that classes that want sequence
+    In addition, two methods :py:meth:`~naked_write` and
+    :py:meth:`~naked_read` are provided so that classes that want sequence
     of read / writes can do that more efficiently without accessing the
     lock every time. They simply invoke the *unsafe* methods
-    :py:method:DynamixelBus.`write` and :py:method:DynamixelBus.`read` from
+    :py:meth:DynamixelBus.`write` and :py:meth:DynamixelBus.`read` from
     the :py:class:`DynamixelBus` class.
 
     .. see also: :py:class:`SharedBus` class.
 
     .. warning::
 
-        If you are using :py:method:`~naked_write` and :py:method:`~naked_read`
-        you **must** ensure that you wrap them in :py:method:`~can_use` and
-        :py:method:`~stop_using` in the calling code.
+        If you are using :py:meth:`~naked_write` and :py:meth:`~naked_read`
+        you **must** ensure that you wrap them in :py:meth:`~can_use` and
+        :py:meth:`~stop_using` in the calling code.
 
     """
     def __init__(self, **kwargs):
@@ -492,7 +493,7 @@ class MockPacketHandler():
         then trim it to the ``min`` and ``max`` limits of the register. When
         passing back the data, for registers that are more than 1 byte a
         *low endian* conversion is executed (see
-        :py:meth:`DynamixelRegister.register_low_endian).
+        :py:meth:`DynamixelRegister.register_low_endian`).
         """
         if random.random() < self.__err:
             return 0, -3001, 0

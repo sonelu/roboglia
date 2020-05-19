@@ -484,8 +484,8 @@ class JointManager(BaseLoop):
         """Used by a stream of commands to notify the Joint Manager they
         joint commands they want.
 
-        Paramters
-        ---------
+        Parameters
+        ----------
         name: str
             The name of the stream providing the data. It is used to keep the
             request separate and be able to merge later.

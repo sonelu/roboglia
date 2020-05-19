@@ -27,6 +27,7 @@ from .sync import BaseReadSync                  # noqa: 401
 from .sync import BaseWriteSync                 # noqa: 401
 
 from .robot import BaseRobot                    # noqa: 401
+from .robot import JointManager                 # noqa: 401
 
 register_class(FileBus)
 register_class(SharedFileBus)

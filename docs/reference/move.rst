@@ -14,3 +14,14 @@ allowing to store and execute predetermined routine movements.
    :toctree: move
 
    StepLoop
+
+*Scrips*
+
+.. autosummary::
+   :nosignatures:
+   :toctree: move
+
+   Script
+   Scene
+   Sequence
+   Frame

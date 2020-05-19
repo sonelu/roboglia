@@ -67,11 +67,12 @@ various structural elements of a robot.
    :toctree: base
 
    BaseRobot
+   JointManager
 
 **Upstream**
 
 The following classes from ``base`` module are provided for helping with
-the syncronisation of devices' values task.
+the synchronization of devices' values task.
 
 *Joints*
 
@@ -83,18 +84,11 @@ the syncronisation of devices' values task.
    JointPV
    JointPVL
 
-*Sonsors*
+*Sensors*
 
 .. autosummary::
    :nosignatures:
    :toctree: base
 
    Sensor
-
-*Controller*
-
-.. autosummary::
-   :nosignatures:
-   :toctree: base
-
-   Controller
+   SensorXYZ

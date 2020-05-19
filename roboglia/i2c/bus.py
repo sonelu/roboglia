@@ -31,11 +31,11 @@ class I2CBus(BaseBus):
 
     In addition there is an extra parameter `mock`.
 
-    At this mement the ``I2CBus`` supports devices with byte and word
+    At this moment the ``I2CBus`` supports devices with byte and word
     registers and permits defining composed regsiters with ``size`` > 1
     that are treated as a single register.
 
-    .. example:: A gyroscope sensor might have registers for the z, y and z
+    .. note:: A gyroscope sensor might have registers for the z, y and z
         axes reading that are stored as pairs of registers like this::
 
             gyro_x_l    #0x28
@@ -193,8 +193,9 @@ class SharedI2CBus(SharedBus):
 
         Does not raise any exceptions, but logs any errors.
 
-        Paramters
-        ---------
+        Parameters
+        ----------
+
         dev: BaseDevice or subclass
             The device for which the block read is performed
 
