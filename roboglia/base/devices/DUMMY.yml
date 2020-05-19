@@ -98,3 +98,36 @@ registers:
     maxim: 160
     factor: 10.0
     default: 120
+
+  status:
+    address: 99
+    default: 0b01010101
+
+  status_unmasked:
+    address: 99
+    clone: True
+    access: RW
+    class: BoolRegister
+
+
+  status_one:
+    address: 99
+    clone: True
+    class: BoolRegister
+    mask: 0b00000001
+
+
+  status_2and3:
+    address: 99
+    clone: True
+    access: RW
+    class: BoolRegister
+    mask: 0b00000110
+    mode: all
+
+  status_2or3:
+    address: 99
+    clone: True
+    class: BoolRegister
+    mask: 0b00000110
+    mode: any

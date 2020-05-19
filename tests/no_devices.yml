@@ -1,0 +1,12 @@
+# robot definition file for running automated tests
+#
+no_devices:
+  buses:
+    busA:
+      class: SharedFileBus
+      port: /tmp/busA.log
+
+    busB:
+      class: SharedFileBus
+      port: /tmp/busB.log
+      auto: False
