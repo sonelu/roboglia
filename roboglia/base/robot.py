@@ -15,8 +15,12 @@
 
 import yaml
 import logging
+import threading
+import statistics
 
-from ..utils import get_registered_class, check_key, check_type
+from ..utils import get_registered_class, check_key, check_type, check_options
+from .thread import BaseLoop
+from .joint import Joint
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +97,7 @@ class BaseRobot():
         sync.
     """
     def __init__(self, name='ROBOT', buses={}, inits={}, devices={},
-                 joints={}, sensors={}, groups={}, syncs={}):
+                 joints={}, sensors={}, groups={}, syncs={}, manager={}):
         logger.info('***** Initializing robot *************')
         self.__name = name
         if not buses:
@@ -112,6 +116,7 @@ class BaseRobot():
         self.__init_sensors(sensors)
         self.__init_groups(groups)
         self.__init_syncs(syncs)
+        self.__init_manager(manager)
         logger.info('***** Initialization complete ********')
 
     @classmethod
@@ -132,7 +137,7 @@ class BaseRobot():
             in case the file is not available
 
         """
-        logger.info(f'Instantiating robot from YAML file {file_name}')
+        logger.info(f'Creating robot from YAML file {file_name}')
         with open(file_name, 'r') as f:
             init_dict = yaml.load(f, Loader=yaml.FullLoader)
             if len(init_dict) > 1:
@@ -144,7 +149,7 @@ class BaseRobot():
     def __init_buses(self, buses):
         """Called by ``__init__`` to parse and instantiate buses."""
         self.__buses = {}
-        logger.info('Initializing buses...')
+        logger.info('Settting up buses...')
         for bus_name, bus_info in buses.items():
             # add the name in the dict
             bus_info['name'] = bus_name
@@ -160,7 +165,7 @@ class BaseRobot():
         """Called by ``__init__`` to parse and instantiate devices."""
         self.__devices = {}
         self.__dev_by_id = {}
-        logger.info('Initializing devices...')
+        logger.info('Setting up devices...')
         for dev_name, dev_info in devices.items():
             # add the name in the dev_info
             dev_info['name'] = dev_name
@@ -188,7 +193,7 @@ class BaseRobot():
     def __init_joints(self, joints):
         """Called by ``__init__`` to parse and instantiate joints."""
         self.__joints = {}
-        logger.info('Initializing joints...')
+        logger.info('Setting up joints...')
         for joint_name, joint_info in joints.items():
             # add the name in the joint_info
             joint_info['name'] = joint_name
@@ -210,7 +215,7 @@ class BaseRobot():
     def __init_sensors(self, sensors):
         """Called by ``__init__`` to parse and instantiate sensors."""
         self.__sensors = {}
-        logger.info('Initializing sensors...')
+        logger.info('Setting up sensors...')
         for sensor_name, sensor_info in sensors.items():
             # add the name in the joint_info
             sensor_info['name'] = sensor_name
@@ -232,7 +237,7 @@ class BaseRobot():
     def __init_groups(self, groups):
         """Called by ``__init__`` to parse and instantiate groups."""
         self.__groups = {}
-        logger.info('Initializing groups...')
+        logger.info('Setting up groups...')
         for grp_name, grp_info in groups.items():
             new_grp = set()
             # groups of devices
@@ -256,7 +261,7 @@ class BaseRobot():
     def __init_syncs(self, syncs):
         """Called by ``__init__`` to parse and instantiate syncs."""
         self.__syncs = {}
-        logger.info('Initializing syncs...')
+        logger.info('Setting up syncs...')
         for sync_name, sync_info in syncs.items():
             sync_info['name'] = sync_name
             check_key('group', sync_info, 'sync', sync_name, logger)
@@ -271,6 +276,31 @@ class BaseRobot():
             new_sync = sync_class(**sync_info)
             self.__syncs[sync_name] = new_sync
             logger.debug(f'sync {sync_name} added')
+
+    def __init_manager(self, manager):
+        """Called by ``__init__`` to parse and instantiate the robot
+        manager."""
+        # process joints and replace names with objects
+        logger.info('Setting up manager...')
+        joints = manager.get('joints', [])
+        for index, joint_name in enumerate(joints):
+            check_key(joint_name, self.joints, 'manager', self.name, logger)
+            joints[index] = self.joints[joint_name]
+        group_name = manager.get('group', '')
+        if group_name:
+            check_key(group_name, self.groups, 'manager', self.name, logger)
+            group = self.groups[group_name]
+            for joint in group:
+                check_type(joint, Joint, 'manager', self.name, logger)
+        else:
+            group = set()
+        if 'joints' in manager:
+            del manager['joints']
+        if 'group' in manager:
+            del manager['group']
+        self.__manager = JointManager(name=self.name, joints=joints,
+                                      group=group, **manager)
+        logger.debug(f'manager {self.name} added')
 
     @property
     def name(self):
@@ -328,6 +358,11 @@ class BaseRobot():
         """(read-only) The syncs of the robot as a dict."""
         return self.__syncs
 
+    @property
+    def manager(self):
+        """The RobotManager of the robot."""
+        return self.__manager
+
     def start(self):
         """Starts the robot operation. It will:
 
@@ -351,13 +386,8 @@ class BaseRobot():
         for device in self.devices.values():
             logger.info(f'--> Opening device: {device.name}')
             device.open()
-        logger.info('Activating joints...')
-        for joint in self.joints.values():
-            if joint.auto_activate:
-                logger.info(f'--> Activating joint: {joint.name}')
-                joint.active = True
-            else:
-                logger.info(f'--> Activating joint: {joint.name} - skipped')
+        logger.info('Starting joint manager...')
+        self.manager.start()
         logger.info('Starting syncs...')
         for sync in self.syncs.values():
             if sync.auto_start:
@@ -380,8 +410,8 @@ class BaseRobot():
         for sync in self.syncs.values():
             logger.debug(f'--> Stopping sync: {sync.name}')
             sync.stop()
-        for joint in self.joints.values():
-            logger.debug(f'--> Deactivating joint: {joint.name}')
+        logger.info('Stopping joint manager...')
+        self.manager.stop()
         logger.info('Closing devices...')
         for device in self.devices.values():
             logger.debug(f'--> Closing device: {device.name}')
@@ -391,3 +421,248 @@ class BaseRobot():
             logger.debug(f'--> Closing bus: {bus.name}')
             bus.close()
         logger.info('***** Robot stopped ******************')
+
+
+class JointManager(BaseLoop):
+    """Implements the management of the joints by alowing multiple movement
+    streams to submit position commands to the robot.
+
+    The ``JointManager`` inherits the constructor paramters from
+    :py:class:`BaseLoop`. Please refer to that class for mote details.
+
+    In addition the class introduces the following additional paramters:
+
+    Parameters
+    ----------
+    joints: list of :py:class:roboglia.Base.`Joint` or subclass
+        The list of joints that the manager is having under control.
+        Alternatively you can use the parameter ``group`` (see below)
+
+    group: set of :py:class:roboglia.Base.`Joint` or subclass
+        A group of joints that was defined earlier with a ``group``
+        statement in the robot definition file.
+
+    function: str
+        The function used to produce the blended command for the joints.
+        Allowed values are 'mean' and 'median'.
+
+    timeout: float
+        Is a time in seconds an accessor will wait before issuing a timeout
+        when trying to submit data to the manager or the manager preparing
+        the data for the joints.
+    """
+    def __init__(self, name='JointManager', frequency=100.0, joints=[],
+                 group=None, function='mean', timeout=0.5, **kwargs):
+        super().__init__(name=name, frequency=frequency, **kwargs)
+        temp_joints = []
+        if joints:
+            temp_joints.extend(joints)
+        if group:
+            temp_joints.extend(group)
+        # eliminate duplicates
+        self.__joints = list(set(temp_joints))
+        if len(self.__joints) == 0:
+            logger.warning('joint manager does not have any joints '
+                           'attached to it')
+        check_options(function, ['mean', 'median'], 'JointManager', name,
+                      logger)
+        if function == 'mean':
+            self.__func = statistics.mean
+        elif function == 'median':
+            self.__func = statistics.median
+        else:
+            raise NotImplementedError
+        self.__submissions = {}
+        self.__adjustments = {}
+        self.__lock = threading.Lock()
+
+    @property
+    def joints(self):
+        return self.__joints
+
+    def submit(self, name, commands, adjustments=False):
+        """Used by a stream of commands to notify the Joint Manager they
+        joint commands they want.
+
+        Paramters
+        ---------
+        name: str
+            The name of the stream providing the data. It is used to keep the
+            request separate and be able to merge later.
+
+        commands: dict
+            A dictionary with the commands requests in the format::
+
+                {joint_name: (values)}
+
+            Where ``values`` is a tuple with the command for that joint. It
+            is acceptable to send partial commands to a joint, for instance
+            you can send only (100,) meaning position 100 to a JointPVL.
+            Submitting more information to a joint will have no effect, for
+            instance (100, 20, 40) (position, velocity, load) to a Joint will
+            only use the position part of the request.
+
+        adjustments: bool
+            Indicates that the values are to be treated as adjustments to
+            the other requests instead of absolute requests. This is
+            convenient for streams that request postion correction like
+            an accelerometer based balance control. Internally the
+            JointManger keeps the commands separate between the absolute
+            and the adjustments ones and calculates separate averages then
+            adjusts the absolute results with the ones from the adjustments
+            to produce the final numbers.
+
+        Returns
+        -------
+        bool:
+            ``True`` if the operation was successful. False if there was an
+            error (most likely the lock was not acquired). Caller needs to
+            review this and decide if they should retry to send data.
+        """
+        if not self.__lock.acquire():
+            logger.error(f'failed to acquire manager for stream {name}')
+            return False
+        else:
+            if adjustments:
+                self.__adjustments[name] = commands
+            else:
+                self.__submissions[name] = commands
+            self.__lock.release()
+            return True
+
+    def stop_submit(self, name, adjustments=False):
+        """Notifies the ``JointManager`` that the stream has finished
+        sending data and as a result the data in the ``JointManager`` cache
+        should be removed.
+
+        .. warning:: If the stream does not call this method when it
+            finished with a routine the last submission will remain in
+            the cache and will continue to be averaged with the other
+            requests, creating problems. Don't forget to call this method
+            when your move finishes!
+
+        Parameters
+        ----------
+        name: str
+            The name of the move sending the data
+
+        adjustments: bool
+            Indicates the move submitted to the adjustment stream.
+
+        Returns
+        -------
+        bool:
+            ``True`` if the operation was successful. False if there was an
+            error (most likely the lock was not acquired). Caller needs to
+            review this and decide if they should retry to send data. In the
+            case of this method it is advisable to try resending the request,
+            otherwise stale data will stay in the cache.
+        """
+        if not self.__lock.acquire():
+            logger.error(f'failed to acquire manager for stream {name}')
+            return False
+        else:
+            if adjustments:
+                if name in self.__adjustments:      # pragma: no branch
+                    del self.__adjustments[name]
+            else:
+                if name in self.__submissions:      # pragma: no branch
+                    del self.__submissions[name]
+            return True
+
+    def start(self):
+        """Starts the JointManager. Before calling the
+        :py:meth:`BaseThread.start` it activates the joints if they
+        indicate they have the ``auto`` flag set.
+        """
+        for joint in self.joints:
+            if joint.auto_activate and not joint.active:
+                logger.info(f'--> Activating joint: {joint.name}')
+                joint.active = True
+            else:
+                logger.info(f'--> Activating joint: {joint.name} - skipped')
+        super().start()
+
+    def stop(self):
+        """Stops the JointManager. After calling the
+        :py:meth:`BaseThread.stop` it deactivates the joints if they
+        indicate they have the ``auto`` flag set.
+        """
+        if self.__lock.locked():
+            self.__lock.release()
+        super().stop()
+        for joint in self.joints:
+            if joint.auto_activate and joint.active:
+                logger.info(f'--> Deactivating joint: {joint.name}')
+                joint.active = False
+            else:
+                logger.info(f'--> Deactivating joint: {joint.name} - skipped')
+
+    def atomic(self):
+        if not self.__lock.acquire():
+            logger.error('failed to acquire lock for atomic processing')
+        else:
+            for joint in self.joints:
+                comm = self.__process_request(joint, self.__submissions)
+                adj = self.__process_request(joint, self.__adjustments)
+                value = self.__add_command_tuples(comm, adj)
+                logger.debug(f'Setting joint {joint.name}: value={value}')
+                joint.value = value
+        self.__lock.release()
+
+    def __process_request(self, joint, requests):
+        """Processes a list of requests and calculates averages.
+
+        Paramters
+        ---------
+        joint: Joint or subclass
+            The joint being processed
+
+        requests: dict
+            A dictionary that contains all the requests submitted by streams.
+            They are normally either the :py:class:`JointManager`'s
+            ``submissions`` or ``adjustments``, the two buffers with requests
+            for joint positions. The dictionary has as key the submitter's
+            name and the data is another dict of {joint : (pos, vel, load)}
+            records.
+        """
+        pos_req = []
+        vel_req = []
+        ld_req = []
+        for request in requests.values():
+            values = request.get(joint.name, None)
+            if not values:
+                continue
+            else:
+                if values[0] is not None:
+                    pos_req.append(values[0])
+                if len(values) > 1:             # pragma: no branch
+                    if values[1] is not None:
+                        vel_req.append(values[1])
+                    if len(values) > 2:         # pragma: no branch
+                        if values[2] is not None:
+                            ld_req.append(values[2])
+        if len(pos_req) == 0:
+            return (None, None, None)
+        else:
+            pos = self.__func(pos_req)
+            vel = self.__func(vel_req) if len(vel_req) > 0 else None
+            ld = self.__func(ld_req) if len(ld_req) > 0 else None
+            return (pos, vel, ld)
+
+    def __add_with_none(self, val1, val2):
+        """Adds two numbers that could be ``None``."""
+        if val1 is None:
+            return val2
+        else:
+            if val2 is None:
+                return val1
+            else:
+                return val1 + val2
+
+    def __add_command_tuples(self, comm1, comm2):
+        c1_p, c1_v, c1_l = comm1
+        c2_p, c2_v, c2_l = comm2
+        return (self.__add_with_none(c1_p, c2_p),
+                self.__add_with_none(c1_v, c2_v),
+                self.__add_with_none(c1_l, c2_l))

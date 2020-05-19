@@ -131,6 +131,11 @@ dummy:
       # to control the test and make sure that they are no side
       # effects on more simple checks
 
+
+  manager:
+    group: joints
+    frequency: 50.0
+
 # another robot for testing warning message
 extra:
   buses:

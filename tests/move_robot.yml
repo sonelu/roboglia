@@ -1,0 +1,80 @@
+dummy:
+  buses:
+    busA:
+      class: SharedFileBus
+      port: /tmp/busA.log
+
+  inits:
+    dummy_init:
+      model: null
+      revision: null
+      delay: 0
+      desired_load: 50
+
+    speed_init:
+      desired_speed: 30
+
+  devices:
+    d01:
+      class: BaseDevice
+      bus: busA
+      dev_id: 1
+      model: DUMMY
+      inits: [dummy_init, speed_init]
+
+    d02:
+      class: BaseDevice
+      bus: busA
+      dev_id: 2
+      model: DUMMY
+      inits: [dummy_init]
+
+    d03:
+      class: BaseDevice
+      bus: busA
+      dev_id: 3
+      model: DUMMY
+      inits: [dummy_init, speed_init]
+
+  joints:
+    j01:
+      class: Joint
+      device: d01
+      pos_read: current_pos
+      pos_write: desired_pos
+      activate: enable_device
+
+    j02:
+      class: JointPV
+      device: d02
+      pos_read: current_pos
+      pos_write: desired_pos
+      vel_read: current_speed
+      vel_write: desired_speed
+      activate: enable_device
+
+    j03:
+      class: JointPVL
+      device: d03
+      pos_read: current_pos
+      pos_write: desired_pos
+      vel_read: current_speed
+      vel_write: desired_speed
+      load_read: current_load
+      load_write: desired_load
+      activate: enable_device
+
+  groups:
+    devices:
+      devices: [d01, d02, d03]
+
+    joints:
+      joints: [j01, j02, j03]
+
+    all:
+      groups: [devices, joints]
+
+  manager:
+    group: joints
+    joints: [j01, j02]
+    frequency: 50.0
