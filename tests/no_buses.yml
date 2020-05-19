@@ -1,0 +1,5 @@
+# robot definition file for running automated tests
+#
+no_buses:
+  buses:
+ 

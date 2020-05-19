@@ -16,6 +16,13 @@ i2crobot:
       model: DUMMY
       auto: True
 
+    custom:
+      class: I2CDevice
+      bus: i2c2
+      dev_id: 15
+      path: 'tests/'
+      model: CUSTOM
+
   sensors:
     gyro:
       class: SensorXYZ

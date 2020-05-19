@@ -17,7 +17,8 @@ import os
 import yaml
 import logging
 
-from ..utils import get_registered_class, check_not_empty, check_type
+from ..utils import get_registered_class, check_not_empty, \
+                    check_type, check_key
 
 from .bus import BaseBus, SharedBus
 
@@ -124,17 +125,40 @@ class BaseDevice():
             model_ini = BaseDevice.cache[model_file]
         self.__registers = {}
         self.__reg_by_addr = {}
+        clones = []
         for reg_name, reg_info in model_ini['registers'].items():
             # add name to the dictionary
             reg_info['name'] = reg_name
+            reg_info['device'] = self
+            if reg_info.get('clone', False):
+                # we register clones at the end after we have the main
+                # registers so that we can refer to them
+                clones.append(reg_info)
+            else:
+                reg_class_name = reg_info.get('class', self.default_register())
+                reg_class = get_registered_class(reg_class_name)
+                new_register = reg_class(**reg_info)
+                # we add as an attribute of the register too
+                self.__dict__[reg_name] = new_register
+                self.__registers[reg_name] = new_register
+                self.__reg_by_addr[reg_info['address']] = new_register
+        # now the clones
+        for reg_info in clones:
+            # check that the register address is covered by a main register
+            check_key('address', reg_info, 'register', reg_info['name'],
+                      logger)
+            check_key(reg_info['address'], self.__reg_by_addr, 'register',
+                      reg_info['name'], logger,
+                      f'no main register with address {reg_info["address"]} '
+                      'defined')
+            reg_info['clone'] = self.register_by_address(reg_info['address'])
+            reg_name = reg_info['name']
             reg_class_name = reg_info.get('class', self.default_register())
             reg_class = get_registered_class(reg_class_name)
-            reg_info['device'] = self
             new_register = reg_class(**reg_info)
             # we add as an attribute of the register too
             self.__dict__[reg_name] = new_register
             self.__registers[reg_name] = new_register
-            self.__reg_by_addr[reg_info['address']] = new_register
         self.__inits = inits
 
     @property
