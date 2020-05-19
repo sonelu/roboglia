@@ -31,8 +31,9 @@ class Sensor():
     which case the sensor can also apply an ``inverse`` and and ``offset``
     to the values read from the device registry.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
+
     name: str
         The name of the sensor
 
@@ -203,8 +204,9 @@ class SensorXYZ():
     ``Z`` values that are floats where the sensor applies an ``inverse``
     and and ``offset`` to the values read from the device registry.
 
-    Parameter
-    ---------
+    Parameters
+    ----------
+
     name: str
         The name of the sensor
 

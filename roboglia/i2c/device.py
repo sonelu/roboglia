@@ -24,9 +24,9 @@ logger = logging.getLogger(__name__)
 class I2CDevice(BaseDevice):
     """Implements a representation of an I2C device.
 
-    It only adds an override for the :py:method:`~get_model_path` in order
+    It only adds an override for the :py:meth:`~get_model_path` in order
     to localize the device definitions in the ``device`` directory of the
-    ``i2c`` module and the method :py:method:`~open` that will attempt to
+    ``i2c`` module and the method :py:meth:`~open` that will attempt to
     read all the registers not marked as ``sync``.
     """
     def __init__(self, **kwargs):

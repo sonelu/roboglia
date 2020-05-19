@@ -61,7 +61,7 @@ class Joint():
         which is also the default
 
     maxim: float or ``None``
-        Introduces a maximum limit for the joint value; ignored if ``None
+        Introduces a maximum limit for the joint value; ignored if ``None``
         which is also the default
 
     auto: bool
@@ -343,8 +343,9 @@ class JointPVL(JointPV):
     It inherits all the paramters from :py:class:`JointPV` and adds the
     following additional ones:
 
-    Paramters
-    ---------
+    Parameters
+    ----------
+
     load_read: str
         The register name used to retrieve current load
 

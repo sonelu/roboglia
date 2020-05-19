@@ -13,6 +13,7 @@ roboglia.base.JointPVL
    .. autosummary::
    
       ~JointPVL.__init__
+      ~JointPVL.desired
    
    
 
@@ -39,6 +40,7 @@ roboglia.base.JointPVL
       ~JointPVL.position_read_register
       ~JointPVL.position_write_register
       ~JointPVL.range
+      ~JointPVL.value
       ~JointPVL.velocity
       ~JointPVL.velocity_read_register
       ~JointPVL.velocity_write_register
@@ -52,5 +54,6 @@ roboglia.base.JointPVL
 
    
    .. automethod:: __init__
+   .. automethod:: desired
    
    

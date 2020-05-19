@@ -13,6 +13,7 @@ roboglia.base.Joint
    .. autosummary::
    
       ~Joint.__init__
+      ~Joint.desired
    
    
 
@@ -34,6 +35,7 @@ roboglia.base.Joint
       ~Joint.position_read_register
       ~Joint.position_write_register
       ~Joint.range
+      ~Joint.value
    
    
 
@@ -44,5 +46,6 @@ roboglia.base.Joint
 
    
    .. automethod:: __init__
+   .. automethod:: desired
    
    

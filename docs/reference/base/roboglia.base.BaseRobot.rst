@@ -31,6 +31,7 @@ roboglia.base.BaseRobot
       ~BaseRobot.groups
       ~BaseRobot.inits
       ~BaseRobot.joints
+      ~BaseRobot.manager
       ~BaseRobot.name
       ~BaseRobot.sensors
       ~BaseRobot.syncs

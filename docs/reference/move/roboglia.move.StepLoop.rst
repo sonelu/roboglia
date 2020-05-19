@@ -15,6 +15,7 @@ roboglia.move.StepLoop
       ~StepLoop.__init__
       ~StepLoop.atomic
       ~StepLoop.pause
+      ~StepLoop.play
       ~StepLoop.resume
       ~StepLoop.run
       ~StepLoop.setup
@@ -35,6 +36,7 @@ roboglia.move.StepLoop
       ~StepLoop.running
       ~StepLoop.started
       ~StepLoop.stopped
+      ~StepLoop.times
    
    
 
@@ -47,6 +49,7 @@ roboglia.move.StepLoop
    .. automethod:: __init__
    .. automethod:: atomic
    .. automethod:: pause
+   .. automethod:: play
    .. automethod:: resume
    .. automethod:: run
    .. automethod:: setup
