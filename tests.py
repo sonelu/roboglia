@@ -17,6 +17,8 @@ from roboglia.dynamixel import DynamixelXLBaudRateRegister
 
 from roboglia.i2c import SharedI2CBus
 
+from roboglia.move import Script
+
 # format = '%(asctime)s %(levelname)-7s %(threadName)-18s %(name)-32s %(message)s'
 # logging.basicConfig(format=format, 
 #                     # file = 'test.log', 
@@ -927,3 +929,54 @@ class TestI2CRobot:
         bus.write_block_data(1, 1, 6, [1,2,3,4,5,6])
         assert len(caplog.records) >= 1
         assert 'attempted to write to a closed bus' in caplog.text
+
+
+class TestMove:
+
+    @pytest.fixture
+    def mock_robot(self):   
+        robot = BaseRobot.from_yaml('tests/move_robot.yml')
+        robot.start()
+        yield robot
+        robot.stop()
+
+    def test_move_load_robot(self, mock_robot):
+        manager = mock_robot.manager
+        assert len(manager.joints) == 3
+        p = (100, None, None)
+        pv = (100, 10, None)
+        pvl = (100, 10, 50)
+        all_comm = [p, pv, pvl]
+        for joint in manager.joints:
+            for comm in all_comm:
+                joint.value = comm
+
+    def test_move_load_script(self, mock_robot, caplog):
+        caplog.set_level(logging.DEBUG, logger='roboglia.move.moves')
+        caplog.clear()
+        script = Script.from_yaml(robot=mock_robot, file_name='tests/moves/sequence.yml')
+        assert len(script.joints) == 4
+        assert len(script.frames) == 6
+        assert len(script.sequences) == 4
+        c = list(script.scenes['greet'].play())
+        assert len(c) == 28
+        assert len(caplog.records) >= 49
+
+    def test_move_execute_script(self, mock_robot, caplog):
+        script = Script.from_yaml(robot=mock_robot, file_name='tests/moves/sequence.yml')
+        script.start()
+        time.sleep(1)
+        script.pause()
+        time.sleep(0.5)
+        script.resume()
+        while script.running:
+            time.sleep(0.5)
+        caplog.set_level(logging.DEBUG)
+
+    def test_move_execute_script_with_stop(self, mock_robot, caplog):
+        script = Script.from_yaml(robot=mock_robot, file_name='tests/moves/sequence.yml')
+        script.start()
+        time.sleep(1)
+        script.stop()
+        while script.running:
+            time.sleep(0.5)

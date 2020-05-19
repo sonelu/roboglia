@@ -8,45 +8,63 @@ logger = logging.getLogger(__name__)
 
 class StepLoop(BaseThread):
     """A thread that runs in the background and runs a sequence of steps.
+
+    Parameters
+    ----------
+    name: str
+        The name of the step loop
+
+    times: int
+        How many times the loop should be played. If a negative number is
+        given (ex. -1) the loop will play to infinite
     """
-    def __init__(self, init_dict):
-        super().__init__(init_dict)
-        self.steps = init_dict['steps']
-        self.loop = init_dict.get('loop', False)
-        self.index = 0
+    def __init__(self, name='STEPLOOP', times=1, **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.__times = times
+
+    @property
+    def times(self):
+        return self.__times
+
+    def play(self):
+        """Provides the step data. Should be overridden by subclasses and
+        implement a ``yield`` logic. :py:meth:`run` invokes ``next`` on this
+        method to get the data and the duration needed to perform one step.
+        """
+        yield None, 0                   # pragma: no cover
 
     def setup(self):
         """Resets the loop from the begining."""
-        self.index = 0
+        pass
 
     def run(self):
         """Wraps the execution between the duration provided and
-        increments index.
+        decrements iteration run.
         """
-        while not self.stopped:
-            if not self.paused:
+        iteration = self.times
+        while iteration != 0:
+            for data, duration in self.play():
+                logger.debug(f'data={data}, duration={duration}')
+                # handle stop requests
+                if self.stopped:
+                    logger.debug('Thread stopped')
+                    return None
+                # handle pause requests
+                while self.paused:
+                    time.sleep(0.001)          # 1ms
+                # process
                 start_time = time.time()
-                self.atomic()
+                self.atomic(data)
                 end_time = time.time()
-                step_duration = self.steps[self.index]['duration']
-                wait_time = step_duration - (end_time - start_time)
-                if wait_time > 0:
+                wait_time = duration - (end_time - start_time)
+                if wait_time > 0:               # pragma: no branch
                     time.sleep(wait_time)
-                self.index += 1
-                if self.index == len(self.steps):
-                    if self.loop:
-                        self.index = 0
-                    else:
-                        break
-            else:
-                time.sleep(0.001)          # 1ms
+            iteration -= 1
 
-    def atomic(self):
+    def atomic(self, data):
         """Executes the step.
 
-        Retrieves the execution method and the parameters from the steps
-        dictionary.
+        Must be overridden in subclass to perform the specific operation on
+        data.
         """
-        method = getattr(self, self.steps[self.index]['execute'])
-        params = self.steps[self.index]['parameters']
-        method(params)
+        raise NotImplementedError

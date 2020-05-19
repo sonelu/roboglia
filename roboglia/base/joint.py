@@ -420,7 +420,7 @@ class JointPVL(JointPV):
             self.position = pos
         if vel is not None:
             self.velocity = vel
-        if vel is not None:
+        if load is not None:
             self.load = load
 
     def __repr__(self):

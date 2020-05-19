@@ -1,0 +1,47 @@
+script_1:
+  joints: [j01, j02, j03, extra]
+  defaults:
+    duration: 0.2
+
+  frames:
+    start: 
+      positions: [0, 0, 0, 0]
+      velocities: [10, 10, 10, 0]
+      loads: [100, 100, 100, 0]
+
+    frame_01: [100, 100, 100, 0]
+    frame_02: [200, 200, 200, 0]
+    frame_03: [400, 400, 400, 0]
+    frame_04: [null, null, 300, 0]
+    frame_05: [null, null, 100, 0]
+
+  sequences:
+    move_1:
+      frames: [start, frame_01, frame_02, frame_03]
+      durations: [0.2, 0.1, 0.2, 0.1]
+      times: 1
+
+    move_2:
+      frames: [frame_04, frame_05, wrong]
+      durations: [0.2, 0.15, 0.2]
+      times: 3
+
+    empty:
+      times: 1
+
+    unequal:
+      frames: [frame_01, frame_02]
+      durations: [0.1, 0.2, 0.3]
+      times: 1
+
+  scenes:
+    greet:
+      sequences: [move_1, move_2, move_1.reverse, missing]
+      times: 2
+
+    empty:
+      times: 1
+
+  script: [greet, missing_scene]
+
+script_2: For test

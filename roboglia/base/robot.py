@@ -497,10 +497,10 @@ class JointManager(BaseLoop):
 
             Where ``values`` is a tuple with the command for that joint. It
             is acceptable to send partial commands to a joint, for instance
-            you can send only (100,) (position 100) to a JointPVL. Submitting
-            more information to a joint will have no effect, for instance
-            (100, 20, 40) (position, velocity, load) to a Joint will only
-            use the position part of the request.
+            you can send only (100,) meaning position 100 to a JointPVL.
+            Submitting more information to a joint will have no effect, for
+            instance (100, 20, 40) (position, velocity, load) to a Joint will
+            only use the position part of the request.
 
         adjustments: bool
             Indicates that the values are to be treated as adjustments to
@@ -588,6 +588,8 @@ class JointManager(BaseLoop):
         :py:meth:`BaseThread.stop` it deactivates the joints if they
         indicate they have the ``auto`` flag set.
         """
+        if self.__lock.locked():
+            self.__lock.release()
         super().stop()
         for joint in self.joints:
             if joint.auto_activate and joint.active:
@@ -603,24 +605,43 @@ class JointManager(BaseLoop):
             for joint in self.joints:
                 comm = self.__process_request(joint, self.__submissions)
                 adj = self.__process_request(joint, self.__adjustments)
-                joint.value = self.__add_with_none(comm, adj)
+                value = self.__add_command_tuples(comm, adj)
+                logger.debug(f'Setting joint {joint.name}: value={value}')
+                joint.value = value
         self.__lock.release()
 
     def __process_request(self, joint, requests):
-        """Processes a list of requests and calculates averages."""
+        """Processes a list of requests and calculates averages.
+
+        Paramters
+        ---------
+        joint: Joint or subclass
+            The joint being processed
+
+        requests: dict
+            A dictionary that contains all the requests submitted by streams.
+            They are normally either the :py:class:`JointManager`'s
+            ``submissions`` or ``adjustments``, the two buffers with requests
+            for joint positions. The dictionary has as key the submitter's
+            name and the data is another dict of {joint : (pos, vel, load)}
+            records.
+        """
         pos_req = []
         vel_req = []
         ld_req = []
-        for request in requests:
+        for request in requests.values():
             values = request.get(joint.name, None)
             if not values:
                 continue
             else:
-                pos_req.append(values[0])
+                if values[0] is not None:
+                    pos_req.append(values[0])
                 if len(values) > 1:             # pragma: no branch
-                    vel_req.append(values[1])
+                    if values[1] is not None:
+                        vel_req.append(values[1])
                     if len(values) > 2:         # pragma: no branch
-                        ld_req.append(values[2])
+                        if values[2] is not None:
+                            ld_req.append(values[2])
         if len(pos_req) == 0:
             return (None, None, None)
         else:

@@ -262,7 +262,12 @@ class BaseLoop(BaseThread):
         last_count_reset = time.time()
         factor = 1.0            # fine adjust the rate
         while not self.stopped:
-            if not self.paused:
+            if self.paused:
+                # paused; reset the statistics
+                exec_counts = 0
+                last_count_reset = time.time()
+                time.sleep(self.period)
+            else:
                 start_time = time.time()
                 self.atomic()
                 end_time = time.time()
@@ -290,11 +295,6 @@ class BaseLoop(BaseThread):
                     # reset counters
                     exec_counts = 0
                     last_count_reset = time.time()
-            else:
-                # paused; reset the statistics
-                exec_counts = 0
-                last_count_reset = time.time()
-                time.sleep(self.period)
 
     def atomic(self):
         """This method implements the periodic task that needs to be
