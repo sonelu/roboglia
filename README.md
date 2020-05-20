@@ -82,48 +82,9 @@ There is also an epub version that can be accessed
 
 ## Contribution
 
-We are very receptive for contributions. Please clone the repository and
-submit pull requests with the desired contribution. They will be moderated and,
-if they add values to the users, they will be integrated. Please note that
-the [Travis CI](https://travis-ci.com) integration will perform the following
-two tests on the pull requests:
-
-* it will run all automated tests located in ``tests/`` folder. Please make
-  sure that you also run them **before** submitting the pull request to avoid
-  it failing. You you should install first your version of the package on
-  your machine an then run the tests like this (you should be in the top
-  directory of the cloned repository):
-
-      sudo python setup.py install
-      cd tests
-      python all_tests.py
-
-  Make sure that there are no errors issued by the unit tests. If you created
-  new classes or new functions that are not covered by testing, then you will
-  also need to write a test class or add a test method in an exiting class
-  to test that functionality and submit those changes too.
-
-* it will check PEP8 on the Python code using flake8. You should install
-  (if you don't have it already) on your machine and run this (from the
-  top directory of the cloned repository):
-
-      flake8 roboglia --statistics --count
-
-  Make sure flake8 does not report any problems, and correct any issues
-  **before** submitting you are allowed to use ``# noqa`` directives if
-  justified.
-
-If you add classes or methods the documentation templates that produce
-the API Reference might need to be updated too, but this is something that
-will be moderated and can be performed centrally once the code is stable.
-If you know [sphinx](https://www.sphinx-doc.org/en/master/) then you can
-attempt modifying the files in ``docs/`` folder too and include the changes
-in the pull request.
-
-If you create new Python files please add the copyright comments as they are
-included in the other files. Make sure you update your name at the top, we want
-people to receive the credit for their work. Similarly, if you change an
-existing file feel free to add your name at the top of the file.
+We are very receptive for contributions. There are many ways you can
+contribute on ``roboglia``, so please check our dedicated [contributing page](Contribute.md)
+for details about the way you can do this.
 
 ## Showcasing your robot
 
