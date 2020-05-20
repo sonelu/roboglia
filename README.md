@@ -1,6 +1,6 @@
 # Roboglia
 
-[![Master Version](https://img.shields.io/badge/master-0.0.11-blue)](https://img.shields.io/badge/master-0.0.11-blue)
+[![Master Version](https://img.shields.io/badge/master-0.0.12-blue)](https://img.shields.io/badge/master-0.0.12-blue)
 [![PyPI version](https://badge.fury.io/py/roboglia.svg)](https://badge.fury.io/py/roboglia)
 ![GitHub issues](https://img.shields.io/github/issues/sonelu/roboglia)
 
