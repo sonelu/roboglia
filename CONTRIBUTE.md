@@ -156,7 +156,8 @@ code coverage of the solution remains in in 95%+ range.
 At this moment, the builds on branches other than ``master`` are performed
 on an ``AMD64`` platform using Ubuntu Xenial (16.04.6 LTS) and Python 3.6.
 
-All builds on ``master`` and ``PR``s are build using the following 8 systems:
+All builds on ``master`` and ``PR``s are build using the following 8 system
+combinations:
 
 - AMD64 and ARM64
 - Ubuntu 16.04 (Xenial) and 18.04 (Bionic)
