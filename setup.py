@@ -33,7 +33,7 @@ if sys.version_info >= (3,):
 """
 The following  are not included in the dependencies because otherwise it would
 make it impossible to use the framework on platforms where these
-libraries are not avaialble. Instead you should install the dependencies
+libraries are not available. Instead you should install the dependencies
 manually as needed.
  - if you want to use Dynamixel servos you need to install dynamixel_sdk
  - if you want to use I2C devices you need to install SMBus
@@ -67,7 +67,7 @@ setup(name='roboglia',
       zip_safe=False,
       author='Alex Sonea',
       author_email='alex.sonea@gmail.com',
-      description='Robotics Framework unsing Dynamixel SDK, I2C, SPI',
+      description='Robotics Framework using Dynamixel SDK, I2C, SPI',
       long_description=open('README.md', encoding='utf-8').read(),
       long_description_content_type='text/markdown',
       url='https://github.com/sonelu/roboglia',
