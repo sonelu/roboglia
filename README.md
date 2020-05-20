@@ -83,7 +83,7 @@ There is also an epub version that can be accessed
 ## Contribution
 
 We are very receptive for contributions. There are many ways you can
-contribute on ``roboglia``, so please check our dedicated [contributing page](CONTRIBUTE.md)
+contribute on ``roboglia``, so please check our dedicated [contributing page](CONTRIBUTING.md)
 for details about the way you can do this.
 
 ## Showcasing your robot
