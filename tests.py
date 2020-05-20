@@ -187,21 +187,29 @@ class TestMockRobot:
         assert read_sync.review == 1.0      # default
         assert read_sync.frequency == 100
 
-    # def test_sync_with_closed_bus(self, mock_robot, caplog):
-    #     write_sync = mock_robot.syncs['write']
-    #     assert write_sync.stopped
-    #     bus = write_sync.bus
-    #     if bus.is_open:
-    #         bus.close()
-    #     assert not bus.is_open
-    #     caplog.clear()
-    #     write_sync.start()
-    #     assert len(caplog.records) == 1
-    #     assert 'attempt to start with a bus not open' in caplog.text
-    #     assert write_sync.stopped
-    #     # now set things back
-    #     bus.open()
-    #     assert bus.is_open
+    def test_sync_with_closed_bus(self, mock_robot, caplog):
+        write_sync = mock_robot.syncs['write']
+        assert write_sync.stopped
+        bus = write_sync.bus
+        caplog.clear()
+        if bus.is_open:
+            bus.close()
+        assert len(caplog.records) >= 1
+        assert 'that is used by running syncs' in caplog.text
+        assert bus.is_open
+        read_sync = mock_robot.syncs['read']
+        read_sync.stop()
+        if bus.is_open:
+            bus.close()
+        assert not bus.is_open
+        caplog.clear()
+        write_sync.start()
+        assert len(caplog.records) == 1
+        assert 'attempt to start with a bus not open' in caplog.text
+        assert write_sync.stopped
+        # now set things back
+        bus.open()
+        assert bus.is_open
 
     def test_joint_info(self, mock_robot):
         j = mock_robot.joints['pan']
