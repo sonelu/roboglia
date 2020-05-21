@@ -9,7 +9,7 @@ from roboglia.utils import check_key, check_options, check_type, check_not_empty
 from roboglia.base import BaseRobot, BaseDevice, BaseBus, BaseRegister
 from roboglia.base import RegisterWithConversion, RegisterWithThreshold
 from roboglia.base import BaseThread
-from roboglia.base import PVL
+from roboglia.base import PVL, PVLList
 
 from roboglia.dynamixel import DynamixelBus
 from roboglia.dynamixel import DynamixelAXBaudRateRegister
@@ -1023,6 +1023,29 @@ class TestMove:
         yield robot
         robot.stop()
 
+    def test_pvl(self):
+        list1 = PVLList(p=[1,2,3], v=[None], ld=[None, 10, 10, None])
+        assert len(list1) == 4
+        list1.append(p=10, v=20, ld=None)
+        assert len(list1) == 5
+        assert list1.positions == [1, 2, 3, None, 10]
+        assert list1.velocities == [None, None, None, None, 20]
+        assert list1.loads == [None, 10, 10, None, None]
+        list1.append(p_list=[20, None], v_list=[None, None, None], l_list=[])
+        assert len(list1) == 8
+        list2 = PVLList(p=[3,4,5], v=[1,1,1], ld=[5,5,5])
+        list1.append(pvl_list=list2)
+        assert len(list1) == 11
+        list1.append(pvl=PVL(p=4, v=5, ld=6))
+        assert len(list1) == 12
+        assert list1.positions == [1, 2, 3, None, 10, 20, None, None, 3, 4, 5, 4]
+        # func with one item
+        list3 = PVLList()
+        list3.append(pvl=PVL(10,10,10))
+        avg = list3.process()
+        assert avg == PVL(10,10,10)
+        assert avg != 10
+
     def test_move_load_robot(self, mock_robot):
         manager = mock_robot.manager
         assert len(manager.joints) == 3
@@ -1033,11 +1056,14 @@ class TestMove:
         for joint in manager.joints:
             for comm in all_comm:
                 joint.value = comm
+        assert mock_robot.joints['j01'].value == PVL(0,None,None)
+        assert mock_robot.joints['j02'].value == PVL(0,57.05,None)
+        assert mock_robot.joints['j03'].value == PVL(0,57.05,-50.0)
 
     def test_move_load_script(self, mock_robot, caplog):
         caplog.set_level(logging.DEBUG, logger='roboglia.move.moves')
         caplog.clear()
-        script = Script.from_yaml(robot=mock_robot, file_name='tests/moves/sequence.yml')
+        script = Script.from_yaml(robot=mock_robot, file_name='tests/moves/script_1.yml')
         assert len(script.joints) == 4
         assert len(script.frames) == 6
         assert len(script.sequences) == 4
@@ -1046,7 +1072,7 @@ class TestMove:
         assert len(caplog.records) >= 49
 
     def test_move_execute_script(self, mock_robot, caplog):
-        script = Script.from_yaml(robot=mock_robot, file_name='tests/moves/sequence.yml')
+        script = Script.from_yaml(robot=mock_robot, file_name='tests/moves/script_1.yml')
         script.start()
         time.sleep(1)
         script.pause()
@@ -1057,9 +1083,28 @@ class TestMove:
         caplog.set_level(logging.DEBUG)
 
     def test_move_execute_script_with_stop(self, mock_robot, caplog):
-        script = Script.from_yaml(robot=mock_robot, file_name='tests/moves/sequence.yml')
+        script = Script.from_yaml(robot=mock_robot, file_name='tests/moves/script_1.yml')
         script.start()
         time.sleep(1)
         script.stop()
         while script.running:
             time.sleep(0.5)
+
+    def test_move_execute_two_scripts(self, mock_robot):
+        script1 = Script.from_yaml(robot=mock_robot, file_name='tests/moves/script_1.yml')
+        script2 = Script.from_yaml(robot=mock_robot, file_name='tests/moves/script_2.yml')
+        script1.start()
+        script2.start()
+        while script1.running and script2.running:
+            time.sleep(0.5)
+        time.sleep(0.5)
+        assert True
+
+    def test_move_execute_two_scripts_stop_robot(self, mock_robot):
+        script1 = Script.from_yaml(robot=mock_robot, file_name='tests/moves/script_1.yml')
+        script2 = Script.from_yaml(robot=mock_robot, file_name='tests/moves/script_2.yml')
+        script1.start()
+        script2.start()
+        time.sleep(0.5)
+        mock_robot.stop()
+        assert True     

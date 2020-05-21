@@ -17,6 +17,7 @@ import yaml
 import logging
 import threading
 import statistics
+import time
 
 from ..utils import get_registered_class, check_key, check_type, check_options
 from .thread import BaseLoop
@@ -386,8 +387,6 @@ class BaseRobot():
         for device in self.devices.values():
             logger.info(f'--> Opening device: {device.name}')
             device.open()
-        logger.info('Starting joint manager...')
-        self.manager.start()
         logger.info('Starting syncs...')
         for sync in self.syncs.values():
             if sync.auto_start:
@@ -395,6 +394,8 @@ class BaseRobot():
                 sync.start()
             else:
                 logger.info(f'--> Starting sync: {sync.name} - skipped')
+        logger.info('Starting joint manager...')
+        self.manager.start()
         logger.info('***** Robot started ******************')
 
     def stop(self):
@@ -406,12 +407,12 @@ class BaseRobot():
 
         """
         logger.info('***** Stopping robot *****************')
+        logger.info('Stopping joint manager...')
+        self.manager.stop()
         logger.info('Stopping syncs...')
         for sync in self.syncs.values():
             logger.debug(f'--> Stopping sync: {sync.name}')
             sync.stop()
-        logger.info('Stopping joint manager...')
-        self.manager.stop()
         logger.info('Closing devices...')
         for device in self.devices.values():
             logger.debug(f'--> Closing device: {device.name}')
@@ -474,20 +475,21 @@ class JointManager(BaseLoop):
             raise NotImplementedError
         self.__submissions = {}
         self.__adjustments = {}
+        self.__streams = {}
         self.__lock = threading.Lock()
 
     @property
     def joints(self):
         return self.__joints
 
-    def submit(self, name, commands, adjustments=False):
+    def submit(self, stream, commands, adjustments=False):
         """Used by a stream of commands to notify the Joint Manager they
         joint commands they want.
 
         Parameters
         ----------
-        name: str
-            The name of the stream providing the data. It is used to keep the
+        stream: BaseThread or subclass
+            The stream providing the data. It is used to keep the
             request separate and be able to merge later.
 
         commands: dict
@@ -519,18 +521,23 @@ class JointManager(BaseLoop):
             error (most likely the lock was not acquired). Caller needs to
             review this and decide if they should retry to send data.
         """
-        if not self.__lock.acquire():
-            logger.error(f'failed to acquire manager for stream {name}')
+        if not self.__lock.acquire(timeout=self.period):
+            logger.error(f'failed to acquire manager for stream {stream.name}')
             return False
         else:
+            # add the new stream
+            if stream.name not in self.__streams:
+                self.__streams[stream.name] = stream
+            # record adjustments request
             if adjustments:
-                self.__adjustments[name] = commands
+                self.__adjustments[stream.name] = commands
+            # record submission request
             else:
-                self.__submissions[name] = commands
+                self.__submissions[stream.name] = commands
             self.__lock.release()
             return True
 
-    def stop_submit(self, name, adjustments=False):
+    def stop_submit(self, stream, adjustments=False):
         """Notifies the ``JointManager`` that the stream has finished
         sending data and as a result the data in the ``JointManager`` cache
         should be removed.
@@ -543,7 +550,7 @@ class JointManager(BaseLoop):
 
         Parameters
         ----------
-        name: str
+        stream: BaseThread or subclass
             The name of the move sending the data
 
         adjustments: bool
@@ -558,16 +565,22 @@ class JointManager(BaseLoop):
             case of this method it is advisable to try resending the request,
             otherwise stale data will stay in the cache.
         """
-        if not self.__lock.acquire():
-            logger.error(f'failed to acquire manager for stream {name}')
+        if not self.__lock.acquire(timeout=self.period):
+            logger.error(f'failed to acquire manager for stream {stream.name}')
             return False
         else:
+            # delete the stream
+            if stream.name in self.__streams:              # pragma: no branch
+                del self.__streams[stream.name]
+            # remove any adjustment requests
             if adjustments:
-                if name in self.__adjustments:      # pragma: no branch
-                    del self.__adjustments[name]
+                if stream.name in self.__adjustments:      # pragma: no branch
+                    del self.__adjustments[stream.name]
+            # remove any submission requests
             else:
-                if name in self.__submissions:      # pragma: no branch
-                    del self.__submissions[name]
+                if stream.name in self.__submissions:      # pragma: no branch
+                    del self.__submissions[stream.name]
+            self.__lock.release()
             return True
 
     def start(self):
@@ -588,8 +601,13 @@ class JointManager(BaseLoop):
         :py:meth:`BaseThread.stop` it deactivates the joints if they
         indicate they have the ``auto`` flag set.
         """
-        if self.__lock.locked():
-            self.__lock.release()
+        # stop the streams
+        logger.info('Stopping streams...')
+        while self.__streams:
+            stream = list(self.__streams.values())[0]
+            stream.stop()
+            while stream.running:
+                time.sleep(0.1)
         super().stop()
         for joint in self.joints:
             if joint.auto_activate and joint.active:
@@ -608,7 +626,7 @@ class JointManager(BaseLoop):
                 value = self.__add_pvls(comm, adj)
                 logger.debug(f'Setting joint {joint.name}: value={value}')
                 joint.value = value
-        self.__lock.release()
+            self.__lock.release()
 
     def __process_request(self, joint, requests):
         """Processes a list of requests and calculates averages.
@@ -626,44 +644,22 @@ class JointManager(BaseLoop):
             name and the data is another dict of {joint : (pos, vel, load)}
             records.
         """
-        # pos_req = []
-        # vel_req = []
-        # ld_req = []
         req = PVLList()
         for request in requests.values():
             values = request.get(joint.name, None)
             if not values:
                 continue
             else:
-                # if values[0] is not None:
-                #     pos_req.append(values[0])
-                # if len(values) > 1:             # pragma: no branch
-                #     if values[1] is not None:
-                #         vel_req.append(values[1])
-                #     if len(values) > 2:         # pragma: no branch
-                #         if values[2] is not None:
-                #             ld_req.append(values[2])
                 req.append(pvl=values)
         if len(req) == 0:
             return PVL(None, None, None)
         if len(req) == 1:
             return req.items[0]
         else:
-            # pos = self.__func(pos_req)
-            # vel = self.__func(vel_req) if len(vel_req) > 0 else None
-            # ld = self.__func(ld_req) if len(ld_req) > 0 else None
-            # return (pos, vel, ld)
             return req.process(self.__func)
 
     def __add_with_none(self, val1, val2):
         """Adds two numbers that could be ``None``."""
-        # if val1 is None:
-        #     return val2
-        # else:
-        #     if val2 is None:
-        #         return val1
-        #     else:
-        #         return val1 + val2
         return val2 if val1 is None else val1 if val2 is None else val1 + val2
 
     def __add_pvls(self, pvl1, pvl2):

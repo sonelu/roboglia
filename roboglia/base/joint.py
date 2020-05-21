@@ -14,6 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+from statistics import mean
 
 from ..utils import check_key, check_type, check_options, check_not_empty
 from .device import BaseDevice
@@ -33,6 +34,71 @@ class PVL():
         self.__p = p
         self.__v = v
         self.__ld = ld
+
+    def __neg1(self, value):
+        return None if value is None else -value
+
+    def __add1(self, val1, val2):
+        """Adds two numbers that could be ``None``."""
+        return val2 if val1 is None else val1 if val2 is None else val1 + val2
+
+    def __diff1(self, val1, val2):
+        return self.__add1(val1, self.__neg1(val2))
+
+    def __eq1(self, val1, val2):
+        if val1 is None and val2 is None:
+            return True
+        if val1 is None or val2 is None:
+            return False
+        return abs(val1 - val2) < 0.01
+
+    def __eq__(self, other):
+        if isinstance(other, PVL):
+            return self.__eq1(self.p, other.p) and \
+                   self.__eq1(self.v, other.v) and \
+                   self.__eq1(self.ld, other.ld)
+        else:
+            return False
+
+    def __sub__(self, other):
+        if isinstance(other, PVL):
+            return PVL(p=self.__diff1(self.p, other.p),
+                       v=self.__diff1(self.v, other.v),
+                       ld=self.__diff1(self.ld, other.ld))
+        elif isinstance(other, float) or isinstance(other, int):
+            return PVL(p=(self.p - other),
+                       v=(self.v - other),
+                       ld=(self.ld - other))
+        elif isinstance(other, list) and len(other) == 3:
+            return PVL(p=(self.p - other[0]),
+                       v=(self.v - other[1]),
+                       ld=(self.ld - other[2]))
+        else:
+            raise RuntimeError(f'Incompatible __sub__ paramters for {other}')
+
+    def __add__(self, other):
+        if isinstance(other, PVL):
+            return PVL(p=self.__add1(self.p, other.p),
+                       v=self.__add1(self.v, other.v),
+                       ld=self.__add1(self.ld, other.ld))
+        elif isinstance(other, float) or isinstance(other, int):
+            return PVL(p=(self.p + other),
+                       v=(self.v + other),
+                       ld=(self.ld + other))
+        elif isinstance(other, list) and len(other) == 3:
+            return PVL(p=(self.p + other[0]),
+                       v=(self.v + other[1]),
+                       ld=(self.ld + other[2]))
+        else:
+            raise RuntimeError(f'Incompatible __add__ paramters for {other}')
+
+    def __neg__(self):
+        return PVL(p=self.__neg1(self.p),
+                   v=self.__neg1(self.v),
+                   ld=self.__neg1(self.ld))
+
+    def __repr__(self):
+        return f'PVL(p={self.p}, v={self.v}, l={self.ld})'
 
     @property
     def p(self):
@@ -71,6 +137,9 @@ class PVLList():
     def __getitem__(self, item):
         return self.__items[item]
 
+    def __repr__(self):
+        return self.items.__repr__()
+
     @property
     def positions(self):
         return [item.p for item in self.items]
@@ -102,21 +171,39 @@ class PVLList():
         if pvl is not None:
             self.__items.append(pvl)
         if p_list or v_list or l_list:
-            new_pvl_list = PVLList(p_list, v_list. l_list)
+            new_pvl_list = PVLList(p_list, v_list, l_list)
             self.__items.extend(new_pvl_list.items)
         if p is not None or v is not None or ld is not None:
             self.__items.append(PVL(p, v, ld))
 
     def pos_process(self, func):
-        return func([item.p for item in self.__items if item.p is not None])
+        items = [item.p for item in self.__items if item.p is not None]
+        if len(items) == 0:
+            return None
+        elif len(items) == 1:
+            return items[0]
+        else:
+            return func(items)
 
     def vel_process(self, func):
-        return func([item.v for item in self.__items if item.v is not None])
+        items = [item.v for item in self.__items if item.v is not None]
+        if len(items) == 0:
+            return None
+        elif len(items) == 1:
+            return items[0]
+        else:
+            return func(items)
 
     def load_process(self, func):
-        return func([item.ld for item in self.__items if item.ld is not None])
+        items = [item.ld for item in self.__items if item.ld is not None]
+        if len(items) == 0:
+            return None
+        elif len(items) == 1:
+            return items[0]
+        else:
+            return func(items)
 
-    def process(self, func, p_func=None, v_func=None, l_func=None):
+    def process(self, func=mean, p_func=None, v_func=None, l_func=None):
         p = self.pos_process(p_func if p_func is not None else func)
         v = self.vel_process(v_func if p_func is not None else func)
         ld = self.load_process(l_func if p_func is not None else func)

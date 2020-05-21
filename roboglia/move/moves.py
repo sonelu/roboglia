@@ -176,11 +176,16 @@ class Script(StepLoop):
             if joint:
                 commands[joint.name] = data[index]
         logger.debug(f'Submitting: {commands}')
-        self.robot.manager.submit(self.name, commands)
+        self.robot.manager.submit(self, commands)
 
     def teardown(self):
         """Informs the robot manager we are finished."""
-        self.robot.manager.stop_submit(self.name)
+        for _ in range(5):
+            if self.robot.manager.stop_submit(self):
+                logger.debug(f'Script {self.name} successfully unsubscribed')
+                return None
+        logger.warning(f'Script {self.name} failed to unsubscribe from '
+                       'Joint Manager')
 
 
 class Scene():
