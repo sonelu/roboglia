@@ -12,6 +12,8 @@ from .register import RegisterWithThreshold     # noqa: 401
 
 from .device import BaseDevice                  # noqa: 401
 
+from .joint import PVL                          # noqa: 401
+from .joint import PVLList                      # noqa: 401
 from .joint import Joint                        # noqa: 401
 from .joint import JointPV                      # noqa: 401
 from .joint import JointPVL                     # noqa: 401

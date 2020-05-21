@@ -3,6 +3,7 @@ import logging
 
 # from ..utils import check_key
 from .thread import StepLoop
+from ..base import PVLList
 
 logger = logging.getLogger(__name__)
 
@@ -335,10 +336,11 @@ class Frame():
     """
     def __init__(self, name='FRAME', positions=[], velocities=[], loads=[]):
         self.__name = name
-        p_len = len(positions)
-        self.__pos = positions
-        self.__vel = velocities + [None] * max(0, p_len - len(velocities))
-        self.__loads = loads + [None] * max(0, p_len - len(loads))
+        self.__pvl = PVLList(positions, velocities, loads)
+        # p_len = len(positions)
+        # self.__pos = positions
+        # self.__vel = velocities + [None] * max(0, p_len - len(velocities))
+        # self.__loads = loads + [None] * max(0, p_len - len(loads))
 
     @property
     def name(self):
@@ -347,21 +349,21 @@ class Frame():
     @property
     def positions(self):
         """Returns the positions of a frame."""
-        return self.__pos
+        return self.__pvl.positions
 
     @property
     def velocities(self):
         """Returns the (padded) velocities of a frame."""
-        return self.__vel
+        return self.__pvl.velocities
 
     @property
     def loads(self):
         """Returns the (padded) loads of a frame."""
-        return self.__loads
+        return self.__pvl.loads
 
     @property
     def commands(self):
         """Returns a list of tuples (pos, vel, load) for each joint in the
         frame.
         """
-        return list(zip(self.positions, self.velocities, self.loads))
+        return self.__pvl

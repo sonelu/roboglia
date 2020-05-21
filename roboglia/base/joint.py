@@ -14,10 +14,113 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+
 from ..utils import check_key, check_type, check_options, check_not_empty
 from .device import BaseDevice
 
 logger = logging.getLogger(__name__)
+
+
+# PVL = namedtuple('PVL', ['p', 'v', 'l'])
+#
+# We cannot use ``namedtuple`` as only from Python 3.7 is has default
+# values for the members and we cannot afford to introduce such a dependency
+# just for this functionality.
+# So, we implemented with an old-fashioned class.
+class PVL():
+
+    def __init__(self, p=None, v=None, ld=None):
+        self.__p = p
+        self.__v = v
+        self.__ld = ld
+
+    @property
+    def p(self):
+        return self.__p
+
+    @property
+    def v(self):
+        return self.__v
+
+    @property
+    def ld(self):
+        return self.__ld
+
+
+class PVLList():
+
+    def __init__(self, p=[], v=[], ld=[]):
+        length = max(len(p), len(v), len(ld))
+        # pads the short lists
+        if len(p) < length:
+            p = p + [None] * (length - len(p))
+        if len(v) < length:
+            v = v + [None] * (length - len(v))
+        if len(ld) < length:
+            ld = ld + [None] * (length - len(ld))
+        self.__items = [PVL(p[index], v[index], ld[index])
+                        for index in range(length)]
+
+    @property
+    def items(self):
+        return self.__items
+
+    def __len__(self):
+        return len(self.__items)
+
+    def __getitem__(self, item):
+        return self.__items[item]
+
+    @property
+    def positions(self):
+        return [item.p for item in self.items]
+
+    @property
+    def velocities(self):
+        return [item.v for item in self.items]
+
+    @property
+    def loads(self):
+        return [item.ld for item in self.items]
+
+    def append(self,
+               p=None, v=None, ld=None,
+               p_list=[], v_list=[], l_list=[],
+               pvl=None,
+               pvl_list=[]):
+        """Appends items to the PVL List. Depending on the way you call it
+        you can:
+        - append one item defined by parameters ``p``, ``v`` and ``l``
+        - append a list of items defined by paramters ``p_list``, ``v_list``
+          and ``l_list``; this works similar with the constructor by padding
+          the lists if they have unequal length
+        - append one PVL object is provided as ``pvl``
+        - append a list of PVL objects provided as ``pvl_list``
+        """
+        if pvl_list:
+            self.__items.extend(pvl_list)
+        if pvl is not None:
+            self.__items.append(pvl)
+        if p_list or v_list or l_list:
+            new_pvl_list = PVLList(p_list, v_list. l_list)
+            self.__items.extend(new_pvl_list.items)
+        if p is not None or v is not None or ld is not None:
+            self.__items.append(PVL(p, v, ld))
+
+    def pos_process(self, func):
+        return func([item.p for item in self.__items if item.p is not None])
+
+    def vel_process(self, func):
+        return func([item.v for item in self.__items if item.v is not None])
+
+    def load_process(self, func):
+        return func([item.ld for item in self.__items if item.ld is not None])
+
+    def process(self, func, p_func=None, v_func=None, l_func=None):
+        p = self.pos_process(p_func if p_func is not None else func)
+        v = self.vel_process(v_func if p_func is not None else func)
+        ld = self.load_process(l_func if p_func is not None else func)
+        return PVL(p, v, ld)
 
 
 class Joint():
@@ -223,24 +326,23 @@ class Joint():
     @property
     def value(self):
         """Generic accessor / setter that uses tuples to interact with the
-        joint. For position only joints it is a tuple with one element.
+        joint. For position only joints only position is set.
         """
-        return (self.position,)
+        return PVL(self.position, None, None)
 
     @value.setter
-    def value(self, values):
+    def value(self, pvl):
         """``values`` should be a tuple in all circumstances. For position
-        only joints is a tuple with one element.
+        only joints only position is used.
         """
-        pos = values[0]
-        if pos is not None:
-            self.position = pos
+        if pvl.p is not None:
+            self.position = pvl.p
 
     def desired(self):
         """Generic accessor for desired joint values. Always a tuple. For
-        position only joints is a tuple with one element.
+        position only joints only position attribute is used.
         """
-        return (self.desired_position, )
+        return PVL(self.desired_position, None, None)
 
     def __repr__(self):
         return f'{self.name}: p={self.position:.3f}'
@@ -309,29 +411,27 @@ class JointPV(Joint):
 
     @property
     def value(self):
-        """For a PV joint the value is a tuple with 2 values: (position,
-        velocity)."""
-        return (self.position, self.velocity)
+        """For a PV joint the value is a tuple with only 2 values used:
+        (position, velocity)."""
+        return PVL(self.position, self.velocity, None)
 
     @value.setter
-    def value(self, values):
-        """For a PV joint the value is a tuple with 2 values.
+    def value(self, pvl):
+        """For a PV joint the value is a tuple with only 2 values used.
 
         Parameters
         ----------
-        values: tuple (position, velocity)
+        values: PVL (position, velocity, None)
         """
-        pos = values[0]
-        vel = values[1]
-        if pos is not None:
-            self.position = pos
-        if vel is not None:
-            self.velocity = vel
+        if pvl.p is not None:
+            self.position = pvl.p
+        if pvl.v is not None:
+            self.velocity = pvl.v
 
     def desired(self):
-        """For PV joint the desired is a tuple of 2 values.
+        """For PV joint the desired is a tuple with only 2 values used.
         """
-        return (self.desired_position, self.desired_velocity)
+        return PVL(self.desired_position, self.desired_velocity, None)
 
     def __repr__(self):
         return f'{Joint.__repr__(self)}, v={self.velocity:.3f}'
@@ -404,25 +504,28 @@ class JointPVL(JointPV):
         """For a PVL joint the value is a tuple of 3 values (position,
         velocity, load)
         """
-        return (self.position, self.velocity, self.load)
+        return PVL(self.position, self.velocity, self.load)
 
     @value.setter
-    def value(self, values):
+    def value(self, pvl):
         """For a PVL joint the value is a tuple of 3 values.
 
         Parameters
         ----------
         values: tuple (position, velocity, load)
         """
-        pos = values[0]
-        vel = values[1]
-        load = values[2]
-        if pos is not None:
-            self.position = pos
-        if vel is not None:
-            self.velocity = vel
-        if load is not None:
-            self.load = load
+        if pvl.p is not None:
+            self.position = pvl.p
+        if pvl.v is not None:
+            self.velocity = pvl.v
+        if pvl.ld is not None:
+            self.load = pvl.ld
+
+    def desired(self):
+        """For PV joint the desired is a tuple with all 3 values used."""
+        return PVL(self.desired_position,
+                   self.desired_velocity,
+                   self.desired_load)
 
     def __repr__(self):
         return f'{JointPV.__repr__(self)}, l={self.load:.3f}'

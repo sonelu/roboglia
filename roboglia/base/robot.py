@@ -20,7 +20,7 @@ import statistics
 
 from ..utils import get_registered_class, check_key, check_type, check_options
 from .thread import BaseLoop
-from .joint import Joint
+from .joint import Joint, PVL, PVLList
 
 logger = logging.getLogger(__name__)
 
@@ -605,7 +605,7 @@ class JointManager(BaseLoop):
             for joint in self.joints:
                 comm = self.__process_request(joint, self.__submissions)
                 adj = self.__process_request(joint, self.__adjustments)
-                value = self.__add_command_tuples(comm, adj)
+                value = self.__add_pvls(comm, adj)
                 logger.debug(f'Setting joint {joint.name}: value={value}')
                 joint.value = value
         self.__lock.release()
@@ -626,43 +626,47 @@ class JointManager(BaseLoop):
             name and the data is another dict of {joint : (pos, vel, load)}
             records.
         """
-        pos_req = []
-        vel_req = []
-        ld_req = []
+        # pos_req = []
+        # vel_req = []
+        # ld_req = []
+        req = PVLList()
         for request in requests.values():
             values = request.get(joint.name, None)
             if not values:
                 continue
             else:
-                if values[0] is not None:
-                    pos_req.append(values[0])
-                if len(values) > 1:             # pragma: no branch
-                    if values[1] is not None:
-                        vel_req.append(values[1])
-                    if len(values) > 2:         # pragma: no branch
-                        if values[2] is not None:
-                            ld_req.append(values[2])
-        if len(pos_req) == 0:
-            return (None, None, None)
+                # if values[0] is not None:
+                #     pos_req.append(values[0])
+                # if len(values) > 1:             # pragma: no branch
+                #     if values[1] is not None:
+                #         vel_req.append(values[1])
+                #     if len(values) > 2:         # pragma: no branch
+                #         if values[2] is not None:
+                #             ld_req.append(values[2])
+                req.append(pvl=values)
+        if len(req) == 0:
+            return PVL(None, None, None)
+        if len(req) == 1:
+            return req.items[0]
         else:
-            pos = self.__func(pos_req)
-            vel = self.__func(vel_req) if len(vel_req) > 0 else None
-            ld = self.__func(ld_req) if len(ld_req) > 0 else None
-            return (pos, vel, ld)
+            # pos = self.__func(pos_req)
+            # vel = self.__func(vel_req) if len(vel_req) > 0 else None
+            # ld = self.__func(ld_req) if len(ld_req) > 0 else None
+            # return (pos, vel, ld)
+            return req.process(self.__func)
 
     def __add_with_none(self, val1, val2):
         """Adds two numbers that could be ``None``."""
-        if val1 is None:
-            return val2
-        else:
-            if val2 is None:
-                return val1
-            else:
-                return val1 + val2
+        # if val1 is None:
+        #     return val2
+        # else:
+        #     if val2 is None:
+        #         return val1
+        #     else:
+        #         return val1 + val2
+        return val2 if val1 is None else val1 if val2 is None else val1 + val2
 
-    def __add_command_tuples(self, comm1, comm2):
-        c1_p, c1_v, c1_l = comm1
-        c2_p, c2_v, c2_l = comm2
-        return (self.__add_with_none(c1_p, c2_p),
-                self.__add_with_none(c1_v, c2_v),
-                self.__add_with_none(c1_l, c2_l))
+    def __add_pvls(self, pvl1, pvl2):
+        return PVL(self.__add_with_none(pvl1.p, pvl2.p),
+                   self.__add_with_none(pvl1.v, pvl2.v),
+                   self.__add_with_none(pvl1.ld, pvl2.ld))

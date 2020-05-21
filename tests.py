@@ -9,6 +9,7 @@ from roboglia.utils import check_key, check_options, check_type, check_not_empty
 from roboglia.base import BaseRobot, BaseDevice, BaseBus, BaseRegister
 from roboglia.base import RegisterWithConversion, RegisterWithThreshold
 from roboglia.base import BaseThread
+from roboglia.base import PVL
 
 from roboglia.dynamixel import DynamixelBus
 from roboglia.dynamixel import DynamixelAXBaudRateRegister
@@ -16,6 +17,8 @@ from roboglia.dynamixel import DynamixelAXComplianceSlopeRegister
 from roboglia.dynamixel import DynamixelXLBaudRateRegister
 
 from roboglia.i2c import SharedI2CBus
+
+
 
 from roboglia.move import Script
 
@@ -1023,9 +1026,9 @@ class TestMove:
     def test_move_load_robot(self, mock_robot):
         manager = mock_robot.manager
         assert len(manager.joints) == 3
-        p = (100, None, None)
-        pv = (100, 10, None)
-        pvl = (100, 10, 50)
+        p = PVL(100)
+        pv = PVL(100, 10)
+        pvl = PVL(100, 10, 50)
         all_comm = [p, pv, pvl]
         for joint in manager.joints:
             for comm in all_comm:
