@@ -4,6 +4,7 @@ roboglia.dynamixel.DynamixelSyncReadLoop
 .. currentmodule:: roboglia.dynamixel
 
 .. autoclass:: DynamixelSyncReadLoop
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.dynamixel.DynamixelSyncReadLoop
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~DynamixelSyncReadLoop.__init__
       ~DynamixelSyncReadLoop.atomic

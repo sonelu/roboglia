@@ -4,6 +4,7 @@ roboglia.i2c.I2CDevice
 .. currentmodule:: roboglia.i2c
 
 .. autoclass:: I2CDevice
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.i2c.I2CDevice
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~I2CDevice.__init__
       ~I2CDevice.close

@@ -4,6 +4,7 @@ roboglia.base.RegisterWithThreshold
 .. currentmodule:: roboglia.base
 
 .. autoclass:: RegisterWithThreshold
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.base.RegisterWithThreshold
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~RegisterWithThreshold.__init__
       ~RegisterWithThreshold.read
@@ -28,6 +30,7 @@ roboglia.base.RegisterWithThreshold
    
       ~RegisterWithThreshold.access
       ~RegisterWithThreshold.address
+      ~RegisterWithThreshold.clone
       ~RegisterWithThreshold.default
       ~RegisterWithThreshold.device
       ~RegisterWithThreshold.factor

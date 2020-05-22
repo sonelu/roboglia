@@ -4,6 +4,7 @@ roboglia.dynamixel.DynamixelAXComplianceSlopeRegister
 .. currentmodule:: roboglia.dynamixel
 
 .. autoclass:: DynamixelAXComplianceSlopeRegister
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.dynamixel.DynamixelAXComplianceSlopeRegister
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~DynamixelAXComplianceSlopeRegister.__init__
       ~DynamixelAXComplianceSlopeRegister.read
@@ -28,6 +30,7 @@ roboglia.dynamixel.DynamixelAXComplianceSlopeRegister
    
       ~DynamixelAXComplianceSlopeRegister.access
       ~DynamixelAXComplianceSlopeRegister.address
+      ~DynamixelAXComplianceSlopeRegister.clone
       ~DynamixelAXComplianceSlopeRegister.default
       ~DynamixelAXComplianceSlopeRegister.device
       ~DynamixelAXComplianceSlopeRegister.int_value

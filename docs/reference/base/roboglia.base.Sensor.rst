@@ -4,6 +4,7 @@ roboglia.base.Sensor
 .. currentmodule:: roboglia.base
 
 .. autoclass:: Sensor
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.base.Sensor
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~Sensor.__init__
    

@@ -4,6 +4,7 @@ roboglia.base.BaseBus
 .. currentmodule:: roboglia.base
 
 .. autoclass:: BaseBus
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.base.BaseBus
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~BaseBus.__init__
       ~BaseBus.close

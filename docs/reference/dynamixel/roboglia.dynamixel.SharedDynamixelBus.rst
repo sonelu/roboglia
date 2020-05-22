@@ -4,6 +4,7 @@ roboglia.dynamixel.SharedDynamixelBus
 .. currentmodule:: roboglia.dynamixel
 
 .. autoclass:: SharedDynamixelBus
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.dynamixel.SharedDynamixelBus
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~SharedDynamixelBus.__init__
       ~SharedDynamixelBus.can_use

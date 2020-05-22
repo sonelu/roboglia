@@ -4,6 +4,7 @@ roboglia.base.BaseDevice
 .. currentmodule:: roboglia.base
 
 .. autoclass:: BaseDevice
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.base.BaseDevice
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~BaseDevice.__init__
       ~BaseDevice.close

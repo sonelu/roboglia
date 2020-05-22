@@ -4,6 +4,7 @@ roboglia.base.FileBus
 .. currentmodule:: roboglia.base
 
 .. autoclass:: FileBus
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.base.FileBus
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~FileBus.__init__
       ~FileBus.close

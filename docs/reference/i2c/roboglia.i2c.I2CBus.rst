@@ -4,6 +4,7 @@ roboglia.i2c.I2CBus
 .. currentmodule:: roboglia.i2c
 
 .. autoclass:: I2CBus
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.i2c.I2CBus
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~I2CBus.__init__
       ~I2CBus.close

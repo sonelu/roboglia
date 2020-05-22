@@ -4,6 +4,7 @@ roboglia.base.RegisterWithConversion
 .. currentmodule:: roboglia.base
 
 .. autoclass:: RegisterWithConversion
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.base.RegisterWithConversion
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~RegisterWithConversion.__init__
       ~RegisterWithConversion.read
@@ -28,6 +30,7 @@ roboglia.base.RegisterWithConversion
    
       ~RegisterWithConversion.access
       ~RegisterWithConversion.address
+      ~RegisterWithConversion.clone
       ~RegisterWithConversion.default
       ~RegisterWithConversion.device
       ~RegisterWithConversion.factor

@@ -4,6 +4,7 @@ roboglia.i2c.I2CWriteLoop
 .. currentmodule:: roboglia.i2c
 
 .. autoclass:: I2CWriteLoop
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.i2c.I2CWriteLoop
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~I2CWriteLoop.__init__
       ~I2CWriteLoop.atomic

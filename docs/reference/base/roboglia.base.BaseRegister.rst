@@ -4,6 +4,7 @@ roboglia.base.BaseRegister
 .. currentmodule:: roboglia.base
 
 .. autoclass:: BaseRegister
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.base.BaseRegister
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~BaseRegister.__init__
       ~BaseRegister.read
@@ -28,6 +30,7 @@ roboglia.base.BaseRegister
    
       ~BaseRegister.access
       ~BaseRegister.address
+      ~BaseRegister.clone
       ~BaseRegister.default
       ~BaseRegister.device
       ~BaseRegister.int_value

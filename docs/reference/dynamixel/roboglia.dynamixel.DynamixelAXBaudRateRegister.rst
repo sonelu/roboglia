@@ -4,6 +4,7 @@ roboglia.dynamixel.DynamixelAXBaudRateRegister
 .. currentmodule:: roboglia.dynamixel
 
 .. autoclass:: DynamixelAXBaudRateRegister
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.dynamixel.DynamixelAXBaudRateRegister
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~DynamixelAXBaudRateRegister.__init__
       ~DynamixelAXBaudRateRegister.read
@@ -28,6 +30,7 @@ roboglia.dynamixel.DynamixelAXBaudRateRegister
    
       ~DynamixelAXBaudRateRegister.access
       ~DynamixelAXBaudRateRegister.address
+      ~DynamixelAXBaudRateRegister.clone
       ~DynamixelAXBaudRateRegister.default
       ~DynamixelAXBaudRateRegister.device
       ~DynamixelAXBaudRateRegister.int_value

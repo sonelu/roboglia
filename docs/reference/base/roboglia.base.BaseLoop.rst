@@ -4,6 +4,7 @@ roboglia.base.BaseLoop
 .. currentmodule:: roboglia.base
 
 .. autoclass:: BaseLoop
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.base.BaseLoop
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~BaseLoop.__init__
       ~BaseLoop.atomic

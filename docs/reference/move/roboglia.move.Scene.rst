@@ -4,6 +4,7 @@ roboglia.move.Scene
 .. currentmodule:: roboglia.move
 
 .. autoclass:: Scene
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.move.Scene
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~Scene.__init__
       ~Scene.play

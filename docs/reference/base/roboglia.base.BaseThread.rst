@@ -4,6 +4,7 @@ roboglia.base.BaseThread
 .. currentmodule:: roboglia.base
 
 .. autoclass:: BaseThread
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.base.BaseThread
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~BaseThread.__init__
       ~BaseThread.pause

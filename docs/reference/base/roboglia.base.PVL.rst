@@ -1,9 +1,9 @@
-roboglia.move.Frame
-===================
+roboglia.base.PVL
+=================
 
-.. currentmodule:: roboglia.move
+.. currentmodule:: roboglia.base
 
-.. autoclass:: Frame
+.. autoclass:: PVL
    :show-inheritance:
 
    
@@ -14,7 +14,7 @@ roboglia.move.Frame
    .. autosummary::
 
    
-      ~Frame.__init__
+      ~PVL.__init__
    
    
 
@@ -24,11 +24,9 @@ roboglia.move.Frame
 
    .. autosummary::
    
-      ~Frame.commands
-      ~Frame.loads
-      ~Frame.name
-      ~Frame.positions
-      ~Frame.velocities
+      ~PVL.ld
+      ~PVL.p
+      ~PVL.v
    
    
 

@@ -4,6 +4,7 @@ roboglia.base.JointPV
 .. currentmodule:: roboglia.base
 
 .. autoclass:: JointPV
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.base.JointPV
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~JointPV.__init__
       ~JointPV.desired

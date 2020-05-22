@@ -4,6 +4,7 @@ roboglia.base.BaseWriteSync
 .. currentmodule:: roboglia.base
 
 .. autoclass:: BaseWriteSync
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.base.BaseWriteSync
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~BaseWriteSync.__init__
       ~BaseWriteSync.atomic
