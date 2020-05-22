@@ -4,6 +4,7 @@ roboglia.move.Script
 .. currentmodule:: roboglia.move
 
 .. autoclass:: Script
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.move.Script
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~Script.__init__
       ~Script.atomic

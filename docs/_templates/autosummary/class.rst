@@ -3,6 +3,7 @@
 .. currentmodule:: {{ module }}
 
 .. autoclass:: {{ objname }}
+   :show-inheritance:
 
    {% block methods %}
    
@@ -10,6 +11,7 @@
    .. rubric:: Methods
 
    .. autosummary::
+
    {% for item in methods %}
       ~{{ name }}.{{ item }}
    {%- endfor %}

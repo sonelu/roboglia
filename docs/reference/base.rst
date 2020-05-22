@@ -80,6 +80,8 @@ the synchronization of devices' values task.
    :nosignatures:
    :toctree: base
 
+   PVL
+   PVLList
    Joint
    JointPV
    JointPVL

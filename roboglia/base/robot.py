@@ -17,7 +17,6 @@ import yaml
 import logging
 import threading
 import statistics
-import time
 
 from ..utils import get_registered_class, check_key, check_type, check_options
 from .thread import BaseLoop
@@ -444,8 +443,23 @@ class JointManager(BaseLoop):
         statement in the robot definition file.
 
     function: str
-        The function used to produce the blended command for the joints.
-        Allowed values are 'mean' and 'median'.
+        The function used to produce the blended command for the joints. If
+        specific functions for position (``p_function``), velocity (
+        ``v_function``) or load (``ld_function``) are not supplied, then
+        this function is used.
+        Allowed values are 'mean', 'median', 'min', 'max'.
+
+    p_function: str
+        A specific function to be used for aggregating the position values.
+        Allowed values are 'mean', 'median', 'min', 'max'.
+
+    v_function: str
+        A specific function to be used for aggregating the velocity values.
+        Allowed values are 'mean', 'median', 'min', 'max'.
+
+    ld_function: str
+        A specific function to be used for aggregating the load values.
+        Allowed values are 'mean', 'median', 'min', 'max'.
 
     timeout: float
         Is a time in seconds an accessor will wait before issuing a timeout
@@ -453,7 +467,8 @@ class JointManager(BaseLoop):
         the data for the joints.
     """
     def __init__(self, name='JointManager', frequency=100.0, joints=[],
-                 group=None, function='mean', timeout=0.5, **kwargs):
+                 group=None, function='mean', p_function=None,
+                 v_function=None, ld_function=None, timeout=0.5, **kwargs):
         super().__init__(name=name, frequency=frequency, **kwargs)
         temp_joints = []
         if joints:
@@ -465,22 +480,70 @@ class JointManager(BaseLoop):
         if len(self.__joints) == 0:
             logger.warning('joint manager does not have any joints '
                            'attached to it')
-        check_options(function, ['mean', 'median'], 'JointManager', name,
-                      logger)
-        if function == 'mean':
-            self.__func = statistics.mean
-        elif function == 'median':
-            self.__func = statistics.median
-        else:
-            raise NotImplementedError
+        check_options(function, ['mean', 'median', 'min', 'max'],
+                      'JointManager', name, logger)
+        # aggregate functions
+        func = self.__check_function(function)
+        self.__p_func = self.__check_function(p_function, func)
+        self.__v_func = self.__check_function(v_function, func)
+        self.__ld_func = self.__check_function(ld_function, func)
+        # processing queues
         self.__submissions = {}
         self.__adjustments = {}
         self.__streams = {}
         self.__lock = threading.Lock()
 
+    def __check_function(self, func_name, default=statistics.mean):
+        """Checks the function provided and returns a reference to it.
+        Supported functions: ``mean``, ``median``, ``min`` and ``max``.
+
+        Paramters
+        ---------
+        func_name: str
+            A name of a function to be checked and retrieved. Supported
+            values: ``mean``, ``median``, ``min`` and ``max``.
+
+        default: function
+            A function that will be used to default to in case the supplied
+            one is not supported.
+
+        Returns
+        -------
+        func:
+            If the function is one of the supported ones, it returns a
+            reference to it, otherwise returns ``default`` function.
+        """
+        supported = {
+            'mean': statistics.mean,
+            'median': statistics.median,
+            'min': min,
+            'max': max
+        }
+        if func_name not in supported:
+            logger.warning(f'Function {func_name} not supported. '
+                           f'Using {default}')
+            return default
+        else:
+            return supported[func_name]
+
     @property
     def joints(self):
         return self.__joints
+
+    @property
+    def p_func(self):
+        """Aggregate function for positions."""
+        return self.__p_func
+
+    @property
+    def v_func(self):
+        """Aggregate function for positions."""
+        return self.__v_func
+
+    @property
+    def ld_func(self):
+        """Aggregate function for positions."""
+        return self.__ld_func
 
     def submit(self, stream, commands, adjustments=False):
         """Used by a stream of commands to notify the Joint Manager they
@@ -522,7 +585,8 @@ class JointManager(BaseLoop):
             review this and decide if they should retry to send data.
         """
         if not self.__lock.acquire(timeout=self.period):
-            logger.error(f'failed to acquire manager for stream {stream.name}')
+            logger.warning(f'failed to acquire manager for '
+                           f'stream {stream.name}')
             return False
         else:
             # add the new stream
@@ -566,7 +630,8 @@ class JointManager(BaseLoop):
             otherwise stale data will stay in the cache.
         """
         if not self.__lock.acquire(timeout=self.period):
-            logger.error(f'failed to acquire manager for stream {stream.name}')
+            logger.warning(f'failed to acquire manager for '
+                           f'stream {stream.name}')
             return False
         else:
             # delete the stream
@@ -606,8 +671,8 @@ class JointManager(BaseLoop):
         while self.__streams:
             stream = list(self.__streams.values())[0]
             stream.stop()
-            while stream.running:
-                time.sleep(0.1)
+            # while stream.running:
+            #     time.sleep(0.1)
         super().stop()
         for joint in self.joints:
             if joint.auto_activate and joint.active:
@@ -617,19 +682,21 @@ class JointManager(BaseLoop):
                 logger.info(f'--> Deactivating joint: {joint.name} - skipped')
 
     def atomic(self):
-        if not self.__lock.acquire():
-            logger.error('failed to acquire lock for atomic processing')
+        if not self.__lock.acquire(timeout=self.period):
+            logger.warning('failed to acquire lock for atomic processing')
         else:
             for joint in self.joints:
                 comm = self.__process_request(joint, self.__submissions)
                 adj = self.__process_request(joint, self.__adjustments)
-                value = self.__add_pvls(comm, adj)
+                value = comm + adj
                 logger.debug(f'Setting joint {joint.name}: value={value}')
                 joint.value = value
             self.__lock.release()
 
     def __process_request(self, joint, requests):
-        """Processes a list of requests and calculates averages.
+        """Processes a list of requests and returns the processed command
+        for that joint. The processed command applies an aggregation function
+        (default ``mean``) to the command parameters.
 
         Paramters
         ---------
@@ -643,6 +710,12 @@ class JointManager(BaseLoop):
             for joint positions. The dictionary has as key the submitter's
             name and the data is another dict of {joint : (pos, vel, load)}
             records.
+
+        Returns
+        -------
+        PVLList:
+            A list of PVL items selected from the requests. If there are no
+            commands for that joint it returns a list with
         """
         req = PVLList()
         for request in requests.values():
@@ -656,13 +729,6 @@ class JointManager(BaseLoop):
         if len(req) == 1:
             return req.items[0]
         else:
-            return req.process(self.__func)
-
-    def __add_with_none(self, val1, val2):
-        """Adds two numbers that could be ``None``."""
-        return val2 if val1 is None else val1 if val2 is None else val1 + val2
-
-    def __add_pvls(self, pvl1, pvl2):
-        return PVL(self.__add_with_none(pvl1.p, pvl2.p),
-                   self.__add_with_none(pvl1.v, pvl2.v),
-                   self.__add_with_none(pvl1.ld, pvl2.ld))
+            return req.process(p_func=self.p_func,
+                               v_func=self.v_func,
+                               ld_func=self.ld_func)

@@ -128,11 +128,14 @@ class BaseThread():
 
     def start(self, wait=True):
         """Starts the task in it's own thread."""
+        logger.info(f'Start requested for {self.name}')
         if self.running:
+            logger.info(f'{self.name} already running. Stopping first.')
             self.stop()
         self.__thread = threading.Thread(target=self._wrapped_target)
         self.__thread.daemon = True
         self.__thread.name = self.name
+        logger.info(f'{self.name} starting')
         self.__thread.start()
 
         if wait and (threading.current_thread() != self.__thread):
@@ -145,27 +148,39 @@ class BaseThread():
                 self.__thread.join()
                 logger.critical(mess)
                 raise RuntimeError(mess)
+        logger.info(f'{self.name} successfully started')
 
     def stop(self, wait=True):
         """Sends the stopping signal to the thread. By default waits for
         the thread to finish."""
+        logger.info(f'Stop requested for {self.name}')
         if self.started:
             self.__started.clear()
             self.__paused.clear()
+            logger.info(f'{self.name} stopping')
             if wait and (threading.current_thread() != self.__thread):
                 while self.__thread.is_alive():
                     self.__started.clear()
                     self.__thread.join(timeout=1.0)
+            logger.info(f'{self.name} successfully stopped')
+        else:
+            logger.info(f'{self.name} is not running; nothing to do')
 
     def pause(self):
         """Requests the thread to pause."""
+        logger.info(f'Pause requested for {self.name}')
         if self.running:
             self.__paused.set()
+            logger.info(f'{self.name} paused')
+        logger.info(f'{self.name} is not running; nothing to do')
 
     def resume(self):
         """Requests the thread to resume."""
+        logger.info(f'Resume requested for {self.name}')
         if self.paused:
             self.__paused.clear()
+            logger.info(f'{self.name} resumed')
+        logger.info(f'{self.name} is not paused; nothing to do')
 
 
 class BaseLoop(BaseThread):

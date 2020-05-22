@@ -4,6 +4,7 @@ roboglia.base.JointManager
 .. currentmodule:: roboglia.base
 
 .. autoclass:: JointManager
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.base.JointManager
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~JointManager.__init__
       ~JointManager.atomic

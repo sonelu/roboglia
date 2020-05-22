@@ -182,7 +182,7 @@ class Script(StepLoop):
         """Informs the robot manager we are finished."""
         for _ in range(5):
             if self.robot.manager.stop_submit(self):
-                logger.debug(f'Script {self.name} successfully unsubscribed')
+                logger.info(f'Script {self.name} successfully unsubscribed')
                 return None
         logger.warning(f'Script {self.name} failed to unsubscribe from '
                        'Joint Manager')

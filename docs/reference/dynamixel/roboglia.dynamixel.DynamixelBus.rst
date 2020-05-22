@@ -4,6 +4,7 @@ roboglia.dynamixel.DynamixelBus
 .. currentmodule:: roboglia.dynamixel
 
 .. autoclass:: DynamixelBus
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.dynamixel.DynamixelBus
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~DynamixelBus.__init__
       ~DynamixelBus.close

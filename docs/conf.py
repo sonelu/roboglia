@@ -44,6 +44,15 @@ extensions = [ 'sphinx.ext.autodoc',
 
 # generate autosummary pages
 autosummary_generate = True
+autodoc_default_options = {
+    # 'members': 'var1, var2',
+    # 'member-order': 'bysource',
+    'special-members': True,
+    # 'special-members': '__init__',
+    'undoc-members': True,
+    'private-members': True,
+    'exclude-members': '__weakref__'
+}
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).

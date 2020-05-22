@@ -4,6 +4,7 @@ roboglia.base.BaseSync
 .. currentmodule:: roboglia.base
 
 .. autoclass:: BaseSync
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.base.BaseSync
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~BaseSync.__init__
       ~BaseSync.atomic

@@ -4,6 +4,7 @@ roboglia.move.StepLoop
 .. currentmodule:: roboglia.move
 
 .. autoclass:: StepLoop
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.move.StepLoop
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~StepLoop.__init__
       ~StepLoop.atomic

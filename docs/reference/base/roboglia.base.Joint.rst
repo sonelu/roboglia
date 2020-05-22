@@ -4,6 +4,7 @@ roboglia.base.Joint
 .. currentmodule:: roboglia.base
 
 .. autoclass:: Joint
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.base.Joint
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~Joint.__init__
       ~Joint.desired

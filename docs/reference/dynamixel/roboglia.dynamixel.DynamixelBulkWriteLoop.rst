@@ -4,6 +4,7 @@ roboglia.dynamixel.DynamixelBulkWriteLoop
 .. currentmodule:: roboglia.dynamixel
 
 .. autoclass:: DynamixelBulkWriteLoop
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.dynamixel.DynamixelBulkWriteLoop
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~DynamixelBulkWriteLoop.__init__
       ~DynamixelBulkWriteLoop.atomic

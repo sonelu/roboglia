@@ -4,6 +4,7 @@ roboglia.i2c.MockSMBus
 .. currentmodule:: roboglia.i2c
 
 .. autoclass:: MockSMBus
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.i2c.MockSMBus
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~MockSMBus.__init__
       ~MockSMBus.block_process_call

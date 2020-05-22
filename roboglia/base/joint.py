@@ -29,23 +29,53 @@ logger = logging.getLogger(__name__)
 # just for this functionality.
 # So, we implemented with an old-fashioned class.
 class PVL():
+    """A representation of a (position, value, load) command that supports
+    ``None`` value components and implements a number of help functions
+    like addition, substraction, negation, equality (with error margin) and
+    representation.
 
+    Parameters
+    ---------
+    p: float or ``None``
+        The position value of the PVL
+
+    v: float or ``None``
+        The velocity value of the PVL
+
+    ld: float or ``None``
+        The load value of the PVL
+    """
     def __init__(self, p=None, v=None, ld=None):
         self.__p = p
         self.__v = v
         self.__ld = ld
 
     def __neg1(self, value):
+        """Inverts one value that could be ``None``. ``None`` inverted is
+        ``None``. Numbers are inverted normally."""
         return None if value is None else -value
 
     def __add1(self, val1, val2):
-        """Adds two numbers that could be ``None``."""
-        return val2 if val1 is None else val1 if val2 is None else val1 + val2
+        """Adds two numbers that could be ``None``. ``None`` plus anything
+        is ``None``. Numbers are added normally."""
+        return None if val1 is None or val2 is None else val1 + val2
 
     def __diff1(self, val1, val2):
+        """Calculates difference between two numbers that could be ``None``.
+        It practically calculates the sum with the inverted ``val2`` for
+        convenience."""
         return self.__add1(val1, self.__neg1(val2))
 
     def __eq1(self, val1, val2):
+        """Utility function: compares two values that could be ``None``. Two
+        ``None`` are equal, one ``None`` and one float are not. Floats are
+        equal if the absolute difference between them is less than 0.01.
+
+        TODO: see if it is possible to make this threshold dynamic such that
+            the value for radians for instance have a different threshold
+            than one ones for degrees. One option would be to read the
+            min and max values of the component and determine from there.
+        """
         if val1 is None and val2 is None:
             return True
         if val1 is None or val2 is None:
@@ -53,6 +83,33 @@ class PVL():
         return abs(val1 - val2) < 0.01
 
     def __eq__(self, other):
+        """Comparison of two PVLs with margin of error.
+
+        Compare components of PVL one to one. ``Nones`` are the same if
+        both are ``None``. Numbers are the same if the absolute difference
+        between them is less than 0.01 (to account for small rounding errors
+        that might result from conversion of values from external to internal
+        format).
+
+        TODO: see if it is possible to make this threshold dynamic such that
+            the value for radians for instance have a different threshold
+            than one ones for degrees. One option would be to read the
+            min and max values of the component and determine from there.
+
+        Parameters
+        ----------
+        other: PVL
+            The PVL to compare to
+
+        Returns
+        -------
+        True:
+            if all components match (are ``None`` in the same place) or the
+            differences are bellow the threshold
+
+        False:
+            if there are differences on any component of the PVLs.
+        """
         if isinstance(other, PVL):
             return self.__eq1(self.p, other.p) and \
                    self.__eq1(self.v, other.v) and \
@@ -61,60 +118,122 @@ class PVL():
             return False
 
     def __sub__(self, other):
+        """Substracts ``other`` from a PVL (``self`` - ``other``).
+
+        Parameters
+        ----------
+        other: PVL or float or int or list of float or int with size 3
+            You can substract from a PVL:
+
+            - another PVL
+            - a number (float or int)
+            - a list of 3 numbers (float or int)
+
+            Substracting ``None`` with anything results in ``None``. Numbers
+            are substracted normally.
+
+        Returns
+        -------
+        PVL:
+            The result as a PVL.
+        """
         if isinstance(other, PVL):
             return PVL(p=self.__diff1(self.p, other.p),
                        v=self.__diff1(self.v, other.v),
                        ld=self.__diff1(self.ld, other.ld))
         elif isinstance(other, float) or isinstance(other, int):
-            return PVL(p=(self.p - other),
-                       v=(self.v - other),
-                       ld=(self.ld - other))
+            return PVL(p=self.__diff1(self.p, other),
+                       v=self.__diff1(self.v, other),
+                       ld=self.__diff1(self.ld, other))
         elif isinstance(other, list) and len(other) == 3:
-            return PVL(p=(self.p - other[0]),
-                       v=(self.v - other[1]),
-                       ld=(self.ld - other[2]))
+            return PVL(p=self.__diff1(self.p, other[0]),
+                       v=self.__diff1(self.v, other[1]),
+                       ld=self.__diff1(self.ld, other[2]))
         else:
             raise RuntimeError(f'Incompatible __sub__ paramters for {other}')
 
     def __add__(self, other):
+        """Addition to a PVL.
+
+        Parameters
+        ----------
+        other: PVL or float or int or list of float or int with size 3
+            You can add to a PVL:
+
+            - another PVL
+            - a number (float or int)
+            - a list of 3 numbers (float or int)
+
+            Adding ``None`` with anything results in ``None``. Numbers are
+            added normally.
+
+        Returns
+        -------
+        PVL:
+            The result as a PVL.
+        """
         if isinstance(other, PVL):
             return PVL(p=self.__add1(self.p, other.p),
                        v=self.__add1(self.v, other.v),
                        ld=self.__add1(self.ld, other.ld))
         elif isinstance(other, float) or isinstance(other, int):
-            return PVL(p=(self.p + other),
-                       v=(self.v + other),
-                       ld=(self.ld + other))
+            return PVL(p=self.__add1(self.p, other),
+                       v=self.__add1(self.v, other),
+                       ld=self.__add1(self.ld, other))
         elif isinstance(other, list) and len(other) == 3:
-            return PVL(p=(self.p + other[0]),
-                       v=(self.v + other[1]),
-                       ld=(self.ld + other[2]))
+            return PVL(p=self.__add1(self.p, other[0]),
+                       v=self.__add1(self.v, other[1]),
+                       ld=self.__add1(self.ld, other[2]))
         else:
             raise RuntimeError(f'Incompatible __add__ paramters for {other}')
 
     def __neg__(self):
+        """Returns the inverse of a PVL. ``None`` values stay the same, floats
+        are negated."""
         return PVL(p=self.__neg1(self.p),
                    v=self.__neg1(self.v),
                    ld=self.__neg1(self.ld))
 
     def __repr__(self):
+        """Convenience representation of a PVL."""
         return f'PVL(p={self.p}, v={self.v}, l={self.ld})'
 
     @property
     def p(self):
+        """The position in PVL."""
         return self.__p
 
     @property
     def v(self):
+        """The velocity in PVL."""
         return self.__v
 
     @property
     def ld(self):
+        """The load in PVL."""
         return self.__ld
 
 
 class PVLList():
+    """A class that holds a list of PVL commands and provides a number of
+    extra manipulation functions.
 
+    The constructor pads the supplied lists with ``None``s in case the
+    lists are unequal in size.
+
+    Parameters
+    ----------
+    p: list of [float or ``None``]
+        The position commands as a list of float or ``None``s like this::
+
+            p=[1, 2, None, 30, None, 20, 10, None]
+
+    v: list of [float or ``None``]
+        The velocity commands as a list of float or ``None``s
+
+    ld: list of [float or ``None``]
+        The load commands as a list of float or ``None``s
+    """
     def __init__(self, p=[], v=[], ld=[]):
         length = max(len(p), len(v), len(ld))
         # pads the short lists
@@ -129,27 +248,38 @@ class PVLList():
 
     @property
     def items(self):
+        """Returns the raw items of the list."""
         return self.__items
 
     def __len__(self):
+        """Returns the length of the list."""
         return len(self.__items)
 
     def __getitem__(self, item):
+        """Access an item by position."""
         return self.__items[item]
 
     def __repr__(self):
+        """Provides a representation of the PVLList for convenience. It will
+        show a list of PVLs."""
         return self.items.__repr__()
 
     @property
     def positions(self):
+        """Returns the full list of positions (p) commands, including
+        ``None``s from the list."""
         return [item.p for item in self.items]
 
     @property
     def velocities(self):
+        """Returns the full list of velocities (v) commands, including
+        ``None``s from the list."""
         return [item.v for item in self.items]
 
     @property
     def loads(self):
+        """Returns the full list of load (ld) commands, including ``None``s
+        from the list."""
         return [item.ld for item in self.items]
 
     def append(self,
@@ -176,8 +306,32 @@ class PVLList():
         if p is not None or v is not None or ld is not None:
             self.__items.append(PVL(p, v, ld))
 
-    def pos_process(self, func):
-        items = [item.p for item in self.__items if item.p is not None]
+    def __process_one(self, attr, func):
+        """Utility method: applies an aggregation function ``func`` to all
+        the attributes ``attr`` in the list excluding ``None`` values.
+
+        Parameters
+        ----------
+        attr: str
+            An attribute of PVL; must be one of ['p', 'v', 'ld']
+
+        func: function
+            An aggregation function that supports processing a list of
+            values and returns one single aggregated value. Typical application
+            is ``mean`` but others possible like ``median``, ``max``, ``min``,
+            etc.
+
+        Returns
+        -------
+        float or None:
+            If the list contains non ``None`` values it will return the
+            aggregation of them. To make things more efficient, if only
+            one non ``None`` value is identified, it is returned instead
+            of applying the aggregation function. If no values are in the
+            list it returns ``None``.
+        """
+        items = [getattr(item, attr) for item in self.__items
+                 if getattr(item, attr) is not None]
         if len(items) == 0:
             return None
         elif len(items) == 1:
@@ -185,28 +339,35 @@ class PVLList():
         else:
             return func(items)
 
-    def vel_process(self, func):
-        items = [item.v for item in self.__items if item.v is not None]
-        if len(items) == 0:
-            return None
-        elif len(items) == 1:
-            return items[0]
-        else:
-            return func(items)
+    def process(self, p_func=mean, v_func=mean, ld_func=mean):
+        """Performs an aggregation function on all the elements in the list
+        by applying the provided functions to the ``p``, ``v`` and ``ld``
+        components of all the items in the list.
 
-    def load_process(self, func):
-        items = [item.ld for item in self.__items if item.ld is not None]
-        if len(items) == 0:
-            return None
-        elif len(items) == 1:
-            return items[0]
-        else:
-            return func(items)
+        Parameters
+        ----------
+        p_func: function
+            An aggregation function to be used for ``p`` values in the list.
+            Default is ``statistics.mean``.
 
-    def process(self, func=mean, p_func=None, v_func=None, l_func=None):
-        p = self.pos_process(p_func if p_func is not None else func)
-        v = self.vel_process(v_func if p_func is not None else func)
-        ld = self.load_process(l_func if p_func is not None else func)
+        v_func: function
+            An aggregation function to be used for ``v`` values in the list.
+            Default is ``statistics.mean``.
+
+        ld_func: function
+            An aggregation function to be used for ``ld`` values in the list.
+            Default is ``statistics.mean``.
+
+        Returns
+        -------
+        PVL:
+            A PVL object with the aggregated result. If any of the components
+            is missing any values in the list it will be reflected with
+            ``None`` value in that position.
+        """
+        p = self.__process_one('p', p_func)
+        v = self.__process_one('v', v_func)
+        ld = self.__process_one('ld', ld_func)
         return PVL(p, v, ld)
 
 
@@ -425,6 +586,7 @@ class Joint():
         if pvl.p is not None:
             self.position = pvl.p
 
+    @property
     def desired(self):
         """Generic accessor for desired joint values. Always a tuple. For
         position only joints only position attribute is used.
@@ -515,6 +677,7 @@ class JointPV(Joint):
         if pvl.v is not None:
             self.velocity = pvl.v
 
+    @property
     def desired(self):
         """For PV joint the desired is a tuple with only 2 values used.
         """
@@ -608,6 +771,7 @@ class JointPVL(JointPV):
         if pvl.ld is not None:
             self.load = pvl.ld
 
+    @property
     def desired(self):
         """For PV joint the desired is a tuple with all 3 values used."""
         return PVL(self.desired_position,

@@ -4,6 +4,7 @@ roboglia.base.SharedFileBus
 .. currentmodule:: roboglia.base
 
 .. autoclass:: SharedFileBus
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.base.SharedFileBus
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~SharedFileBus.__init__
       ~SharedFileBus.can_use

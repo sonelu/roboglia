@@ -4,6 +4,7 @@ roboglia.dynamixel.DynamixelDevice
 .. currentmodule:: roboglia.dynamixel
 
 .. autoclass:: DynamixelDevice
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.dynamixel.DynamixelDevice
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~DynamixelDevice.__init__
       ~DynamixelDevice.close

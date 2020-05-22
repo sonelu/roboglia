@@ -4,6 +4,7 @@ roboglia.base.BoolRegister
 .. currentmodule:: roboglia.base
 
 .. autoclass:: BoolRegister
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.base.BoolRegister
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~BoolRegister.__init__
       ~BoolRegister.read
@@ -28,13 +30,16 @@ roboglia.base.BoolRegister
    
       ~BoolRegister.access
       ~BoolRegister.address
+      ~BoolRegister.clone
       ~BoolRegister.default
       ~BoolRegister.device
       ~BoolRegister.int_value
+      ~BoolRegister.mask
       ~BoolRegister.max_ext
       ~BoolRegister.maxim
       ~BoolRegister.min_ext
       ~BoolRegister.minim
+      ~BoolRegister.mode
       ~BoolRegister.name
       ~BoolRegister.order
       ~BoolRegister.range

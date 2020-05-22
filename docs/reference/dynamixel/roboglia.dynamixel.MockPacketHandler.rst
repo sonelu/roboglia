@@ -4,6 +4,7 @@ roboglia.dynamixel.MockPacketHandler
 .. currentmodule:: roboglia.dynamixel
 
 .. autoclass:: MockPacketHandler
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.dynamixel.MockPacketHandler
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~MockPacketHandler.__init__
       ~MockPacketHandler.bulkReadTx

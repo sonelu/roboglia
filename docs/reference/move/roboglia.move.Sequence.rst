@@ -4,6 +4,7 @@ roboglia.move.Sequence
 .. currentmodule:: roboglia.move
 
 .. autoclass:: Sequence
+   :show-inheritance:
 
    
    
@@ -11,6 +12,7 @@ roboglia.move.Sequence
    .. rubric:: Methods
 
    .. autosummary::
+
    
       ~Sequence.__init__
       ~Sequence.play
