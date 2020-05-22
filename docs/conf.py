@@ -47,7 +47,7 @@ autosummary_generate = True
 autodoc_default_options = {
     # 'members': 'var1, var2',
     # 'member-order': 'bysource',
-    'special-members': True,
+    'special-members': '__init__, __sub__',
     # 'special-members': '__init__',
     'undoc-members': True,
     'private-members': True,
