@@ -88,8 +88,8 @@ class Script(StepLoop):
         for scene_name, scene_info in scenes.items():
             sequences = scene_info.get('sequences', None)
             if not sequences:
-                logger.warning(f'Scene {scene_name} does not have any '
-                               f'sequences defined, it will be skipped')
+                logger.warning(f'Scene "{scene_name}" does not have any '
+                               f'sequences defined; will skip')
                 self.__scenes[scene_name] = None
             else:
                 # replace sequence names with object references
@@ -107,9 +107,9 @@ class Script(StepLoop):
                     # validate the sequence exists
                     # if not log error and use None
                     if seq_name not in self.sequences:
-                        logger.warning(f'sequence {seq_name} used by scene '
-                                       f'{scene_name} does not exist; '
-                                       'it will be skipped')
+                        logger.warning(f'Sequence "{seq_name}" used by scene '
+                                       f'"{scene_name}" does not exist; '
+                                       'will skip')
                         seq['sequence'] = None
                     else:
                         seq['sequence'] = self.sequences[seq_name]
@@ -123,8 +123,8 @@ class Script(StepLoop):
         """Called by __init__ to setup the script steps."""
         for index, scene_name in enumerate(script):
             if scene_name not in self.scenes:
-                logger.warning(f'scene {scene_name} used by script '
-                               f'{self.name} does not exist - will be skipped')
+                logger.warning(f'Scene "{scene_name}" used by script '
+                               f'"{self.name}" does not exist; will skip')
                 script[index] = None
             else:
                 script[index] = self.scenes[scene_name]
@@ -209,16 +209,17 @@ class Scene():
 
     def play(self):
         for step in range(self.times):
-            logger.debug(f'Scene {self.name} playing iteration {step+1}')
+            logger.debug(f'Scene "{self.name}" playing iteration {step+1}')
             for seq_ext in self.sequences:
                 sequence = seq_ext['sequence']
                 reverse = seq_ext['reverse']
                 rev_text = ' in reverse' if reverse else ''
                 if not sequence:
-                    logger.debug('Skipping None sequence')
+                    logger.debug(f'Scene "{self.name}" playing sequence '
+                                 '<None> sequence - skipping')
                 else:
-                    logger.debug(f'Scene {self.name} playing sequence '
-                                 f'{sequence.name}{rev_text}')
+                    logger.debug(f'Scene "{self.name}" playing sequence '
+                                 f'"{sequence.name}"{rev_text}')
                     for frame, duration in sequence.play(reverse=reverse):
                         yield frame, duration
 
@@ -247,8 +248,8 @@ class Sequence():
     def __init__(self, name='SEQUENCE', frames=[], durations=[], times=1):
         self.__name = name
         if len(frames) != len(durations):
-            logger.critical(f'durations supplied for sequence {name} do not '
-                            'match the number of frames')
+            logger.warning(f'Durations for sequence "{name}" different than '
+                           'the number of frames; will skip')
             return None
         else:
             self.__frames = frames
@@ -292,25 +293,26 @@ class Sequence():
             the frame.
         """
         for step in range(self.times):
-            logger.debug(f'Sequence {self.name} playing iteration {step+1}')
+            logger.debug(f'Sequence "{self.name}" playing iteration {step+1}')
             if reverse:
                 zipped = zip(reversed(self.frames), reversed(self.durations))
             else:
                 zipped = zip(self.frames, self.durations)
             for frame, duration in zipped:
                 if frame:
-                    logger.debug(f'Sequence {self.name} playing frame '
-                                 f'{frame.name}, duration {duration}')
+                    logger.debug(f'Sequence "{self.name}" playing frame '
+                                 f'"{frame.name}", duration {duration}')
                     yield frame.commands, duration
                 else:
-                    logger.debug('None frame - skipping')
+                    logger.debug(f'Sequence "{self.name}" playing frame '
+                                 '<None> frame - skipping')
 
 
 class Frame():
     """A ``Frame`` is a single representation of the robots' joints at one
     point in time. It is described by a list of positions, the velocities
     wanted to get to those positions and the loads. The last two of them
-    are optional and will be padded with ``None`` in case they do not cover
+    are optional and will be padded with ``nan`` in case they do not cover
     all positions listed in the first parameter.
 
     Parameters
@@ -327,25 +329,21 @@ class Frame():
 
     velocities: list of floats
         The velocities used to move to the desired positions. If they are
-        empty or not all covered, the constructor will padded with ``None``s
-        to make it the same size as the positions. You can also use ``None``
+        empty or not all covered, the constructor will padded with ``nan``
+        to make it the same size as the positions. You can also use ``nan``
         in the list to indicate that a particular joint does not need to
         change the velocity (will continue to use the one set previously).
 
     loads: list of floats
         The loads used to move to the desired positions. If they are
-        empty or not all covered, the constructor will padded with ``None``s
-        to make it the same size as the positions. You can also use ``None``
+        empty or not all covered, the constructor will padded with ``nan``
+        to make it the same size as the positions. You can also use ``nan``
         in the list to indicate that a particular joint does not need to
         change the load (will continue to use the one set previously).
     """
     def __init__(self, name='FRAME', positions=[], velocities=[], loads=[]):
         self.__name = name
         self.__pvl = PVLList(positions, velocities, loads)
-        # p_len = len(positions)
-        # self.__pos = positions
-        # self.__vel = velocities + [None] * max(0, p_len - len(velocities))
-        # self.__loads = loads + [None] * max(0, p_len - len(loads))
 
     @property
     def name(self):

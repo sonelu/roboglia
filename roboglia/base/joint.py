@@ -15,6 +15,8 @@
 
 import logging
 from statistics import mean
+from math import nan, isnan, isclose
+
 
 from ..utils import check_key, check_type, check_options, check_not_empty
 from .device import BaseDevice
@@ -30,87 +32,49 @@ logger = logging.getLogger(__name__)
 # So, we implemented with an old-fashioned class.
 class PVL():
     """A representation of a (position, value, load) command that supports
-    ``None`` value components and implements a number of help functions
+    ``nan`` value components and implements a number of help functions
     like addition, substraction, negation, equality (with error margin) and
     representation.
 
     Parameters
-    ----------
-    p: float or ``None``
+    ---------
+    p: float or ``nan``
         The position value of the PVL
 
-    v: float or ``None``
+    v: float or ``nan``
         The velocity value of the PVL
 
-    ld: float or ``None``
+    ld: float or ``nan``
         The load value of the PVL
     """
-    def __init__(self, p=None, v=None, ld=None):
+    def __init__(self, p=nan, v=nan, ld=nan):
         self.__p = p
         self.__v = v
         self.__ld = ld
 
     @property
     def p(self):
-        """The position in PVL."""
+        """The position value in PVL."""
         return self.__p
 
     @property
     def v(self):
-        """The velocity in PVL."""
+        """The velocity value in PVL."""
         return self.__v
 
     @property
     def ld(self):
-        """The load in PVL."""
+        """The load value in PVL."""
         return self.__ld
-
-    def __neg1(self, value):
-        """Inverts one value that could be ``None``. ``None`` inverted is
-        ``None``. Numbers are inverted normally."""
-        return None if value is None else -value
-
-    def __add1(self, val1, val2):
-        """Adds two numbers that could be ``None``. ``None`` plus anything
-        is ``None``. Numbers are added normally."""
-        return None if val1 is None or val2 is None else val1 + val2
-
-    def __diff1(self, val1, val2):
-        """Calculates difference between two numbers that could be ``None``.
-        It practically calculates the sum with the inverted ``val2`` for
-        convenience."""
-        return self.__add1(val1, self.__neg1(val2))
-
-    def __eq1(self, val1, val2):
-        """Utility function: compares two values that could be ``None``. Two
-        ``None`` are equal, one ``None`` and one float are not. Floats are
-        equal if the absolute difference between them is less than 0.01.
-
-        .. todo:: See if it is possible to make this threshold dynamic such
-            that the value for radians for instance have a different threshold
-            than one ones for degrees. One option would be to read the min
-            and max values of the component and determine from there.
-
-        """
-        if val1 is None and val2 is None:
-            return True
-        if val1 is None or val2 is None:
-            return False
-        return abs(val1 - val2) < 0.01
 
     def __eq__(self, other):
         """Comparison of two PVLs with margin of error.
 
-        Compare components of PVL one to one. ``Nones`` are the same if
-        both are ``None``. Numbers are the same if the absolute difference
-        between them is less than 0.01 (to account for small rounding errors
+        Compare components of PVL one to one. ``nan`` are the same if
+        both are ``nan``. Numbers are the same if the relative difference
+        between them is less than 0.1% (to account for small rounding errors
         that might result from conversion of values from external to internal
         format).
-
-        TODO: see if it is possible to make this threshold dynamic such that
-            the value for radians for instance have a different threshold
-            than one ones for degrees. One option would be to read the
-            min and max values of the component and determine from there.
 
         Parameters
         ----------
@@ -120,16 +84,22 @@ class PVL():
         Returns
         -------
         True:
-            if all components match (are ``None`` in the same place) or the
+            if all components match (are ``nan`` in the same place) or the
             differences are bellow the threshold
 
         False:
             if there are differences on any component of the PVLs.
         """
+        def isclose_with_nan(val1, val2, rel_tol=1e-09, abs_tol=0.0):
+            if isnan(val1) and isnan(val2):
+                return True
+            else:
+                return isclose(val1, val2, rel_tol=rel_tol, abs_tol=abs_tol)
+
         if isinstance(other, PVL):
-            return self.__eq1(self.p, other.p) and \
-                   self.__eq1(self.v, other.v) and \
-                   self.__eq1(self.ld, other.ld)
+            return isclose_with_nan(self.p, other.p, rel_tol=0.001) and \
+                   isclose_with_nan(self.v, other.v, rel_tol=0.001) and \
+                   isclose_with_nan(self.ld, other.ld, rel_tol=0.001)
         else:
             return False
 
@@ -145,7 +115,7 @@ class PVL():
             - a number (float or int)
             - a list of 3 numbers (float or int)
 
-            Substracting ``None`` with anything results in ``None``. Numbers
+            Substracting ``nan`` with anything results in ``nan``. Numbers
             are substracted normally.
 
         Returns
@@ -154,17 +124,17 @@ class PVL():
             The result as a PVL.
         """
         if isinstance(other, PVL):
-            return PVL(p=self.__diff1(self.p, other.p),
-                       v=self.__diff1(self.v, other.v),
-                       ld=self.__diff1(self.ld, other.ld))
+            return PVL(p=(self.p - other.p),
+                       v=(self.v - other.v),
+                       ld=(self.ld - other.ld))
         elif isinstance(other, float) or isinstance(other, int):
-            return PVL(p=self.__diff1(self.p, other),
-                       v=self.__diff1(self.v, other),
-                       ld=self.__diff1(self.ld, other))
+            return PVL(p=(self.p - other),
+                       v=(self.v - other),
+                       ld=(self.ld - other))
         elif isinstance(other, list) and len(other) == 3:
-            return PVL(p=self.__diff1(self.p, other[0]),
-                       v=self.__diff1(self.v, other[1]),
-                       ld=self.__diff1(self.ld, other[2]))
+            return PVL(p=(self.p - other[0]),
+                       v=(self.v - other[1]),
+                       ld=(self.ld - other[2]))
         else:
             raise RuntimeError(f'Incompatible __sub__ paramters for {other}')
 
@@ -180,7 +150,7 @@ class PVL():
             - a number (float or int)
             - a list of 3 numbers (float or int)
 
-            Adding ``None`` with anything results in ``None``. Numbers are
+            Adding ``nan`` with anything results in ``nan``. Numbers are
             added normally.
 
         Returns
@@ -189,26 +159,26 @@ class PVL():
             The result as a PVL.
         """
         if isinstance(other, PVL):
-            return PVL(p=self.__add1(self.p, other.p),
-                       v=self.__add1(self.v, other.v),
-                       ld=self.__add1(self.ld, other.ld))
+            return PVL(p=(self.p + other.p),
+                       v=(self.v + other.v),
+                       ld=(self.ld + other.ld))
         elif isinstance(other, float) or isinstance(other, int):
-            return PVL(p=self.__add1(self.p, other),
-                       v=self.__add1(self.v, other),
-                       ld=self.__add1(self.ld, other))
+            return PVL(p=(self.p + other),
+                       v=(self.v + other),
+                       ld=(self.ld + other))
         elif isinstance(other, list) and len(other) == 3:
-            return PVL(p=self.__add1(self.p, other[0]),
-                       v=self.__add1(self.v, other[1]),
-                       ld=self.__add1(self.ld, other[2]))
+            return PVL(p=(self.p + other[0]),
+                       v=(self.v + other[1]),
+                       ld=(self.ld + other[2]))
         else:
             raise RuntimeError(f'Incompatible __add__ paramters for {other}')
 
     def __neg__(self):
-        """Returns the inverse of a PVL. ``None`` values stay the same, floats
+        """Returns the inverse of a PVL. ``nan`` values stay the same, floats
         are negated."""
-        return PVL(p=self.__neg1(self.p),
-                   v=self.__neg1(self.v),
-                   ld=self.__neg1(self.ld))
+        return PVL(p=(-1 * self.p),
+                   v=(-1 * self.v),
+                   ld=(-1 * self.ld))
 
     def __repr__(self):
         """Convenience representation of a PVL."""
@@ -219,31 +189,31 @@ class PVLList():
     """A class that holds a list of PVL commands and provides a number of
     extra manipulation functions.
 
-    The constructor pads the supplied lists with ``None`` in case the
+    The constructor pads the supplied lists with ``nan`` in case the
     lists are unequal in size.
 
     Parameters
     ----------
-    p: list of [float or ``None``]
-        The position commands as a list of float or ``None`` like this::
+    p: list of [float or ``nan``]
+        The position commands as a list of float or ``nan`` like this::
 
-            p=[1, 2, None, 30, None, 20, 10, None]
+            p=[1, 2, nan, 30, nan, 20, 10, nan]
 
-    v: list of [float or ``None``]
-        The velocity commands as a list of float or ``None``
+    v: list of [float or ``nan``]
+        The velocity commands as a list of float or ``nan``
 
-    ld: list of [float or ``None``]
-        The load commands as a list of float or ``None``
+    ld: list of [float or ``nan``]
+        The load commands as a list of float or ``nan``
     """
     def __init__(self, p=[], v=[], ld=[]):
         length = max(len(p), len(v), len(ld))
         # pads the short lists
         if len(p) < length:
-            p = p + [None] * (length - len(p))
+            p = p + [nan] * (length - len(p))
         if len(v) < length:
-            v = v + [None] * (length - len(v))
+            v = v + [nan] * (length - len(v))
         if len(ld) < length:
-            ld = ld + [None] * (length - len(ld))
+            ld = ld + [nan] * (length - len(ld))
         self.__items = [PVL(p[index], v[index], ld[index])
                         for index in range(length)]
 
@@ -268,23 +238,23 @@ class PVLList():
     @property
     def positions(self):
         """Returns the full list of positions (p) commands, including
-        ``None`` from the list."""
+        ``nan`` from the list."""
         return [item.p for item in self.items]
 
     @property
     def velocities(self):
         """Returns the full list of velocities (v) commands, including
-        ``None`` from the list."""
+        ``nan`` from the list."""
         return [item.v for item in self.items]
 
     @property
     def loads(self):
-        """Returns the full list of load (ld) commands, including ``None``
+        """Returns the full list of load (ld) commands, including ``nan``
         from the list."""
         return [item.ld for item in self.items]
 
     def append(self,
-               p=None, v=None, ld=None,
+               p=nan, v=nan, ld=nan,
                p_list=[], v_list=[], l_list=[],
                pvl=None,
                pvl_list=[]):
@@ -306,7 +276,7 @@ class PVLList():
         if p_list or v_list or l_list:
             new_pvl_list = PVLList(p_list, v_list, l_list)
             self.__items.extend(new_pvl_list.items)
-        if p is not None or v is not None or ld is not None:
+        if not isnan(p) or not isnan(v) or not isnan(ld):
             self.__items.append(PVL(p, v, ld))
 
     def __process_one(self, attr, func):
@@ -327,16 +297,16 @@ class PVLList():
         Returns
         -------
         float or None:
-            If the list contains non ``None`` values it will return the
+            If the list contains non ``nan`` values it will return the
             aggregation of them. To make things more efficient, if only
-            one non ``None`` value is identified, it is returned instead
+            one non ``nan`` value is identified, it is returned instead
             of applying the aggregation function. If no values are in the
-            list it returns ``None``.
+            list it returns ``nan``.
         """
         items = [getattr(item, attr) for item in self.__items
-                 if getattr(item, attr) is not None]
+                 if not isnan(getattr(item, attr))]
         if len(items) == 0:
-            return None
+            return nan
         elif len(items) == 1:
             return items[0]
         else:
@@ -366,7 +336,7 @@ class PVLList():
         PVL:
             A PVL object with the aggregated result. If any of the components
             is missing any values in the list it will be reflected with
-            ``None`` value in that position.
+            ``nan`` value in that position.
         """
         p = self.__process_one('p', p_func)
         v = self.__process_one('v', v_func)
@@ -579,14 +549,14 @@ class Joint():
         """Generic accessor / setter that uses tuples to interact with the
         joint. For position only joints only position is set.
         """
-        return PVL(self.position, None, None)
+        return PVL(self.position, nan, nan)
 
     @value.setter
     def value(self, pvl):
         """``values`` should be a tuple in all circumstances. For position
         only joints only position is used.
         """
-        if pvl.p is not None:
+        if not isnan(pvl.p):
             self.position = pvl.p
 
     @property
@@ -594,7 +564,7 @@ class Joint():
         """Generic accessor for desired joint values. Always a tuple. For
         position only joints only position attribute is used.
         """
-        return PVL(self.desired_position, None, None)
+        return PVL(self.desired_position, nan, nan)
 
     def __repr__(self):
         return f'{self.name}: p={self.position:.3f}'
@@ -665,7 +635,7 @@ class JointPV(Joint):
     def value(self):
         """For a PV joint the value is a tuple with only 2 values used:
         (position, velocity)."""
-        return PVL(self.position, self.velocity, None)
+        return PVL(self.position, self.velocity, nan)
 
     @value.setter
     def value(self, pvl):
@@ -675,16 +645,16 @@ class JointPV(Joint):
         ----------
         values: PVL (position, velocity, None)
         """
-        if pvl.p is not None:
+        if not isnan(pvl.p):
             self.position = pvl.p
-        if pvl.v is not None:
+        if not isnan(pvl.v):
             self.velocity = pvl.v
 
     @property
     def desired(self):
         """For PV joint the desired is a tuple with only 2 values used.
         """
-        return PVL(self.desired_position, self.desired_velocity, None)
+        return PVL(self.desired_position, self.desired_velocity, nan)
 
     def __repr__(self):
         return f'{Joint.__repr__(self)}, v={self.velocity:.3f}'
@@ -767,11 +737,11 @@ class JointPVL(JointPV):
         ----------
         values: tuple (position, velocity, load)
         """
-        if pvl.p is not None:
+        if not isnan(pvl.p):
             self.position = pvl.p
-        if pvl.v is not None:
+        if not isnan(pvl.v):
             self.velocity = pvl.v
-        if pvl.ld is not None:
+        if not isnan(pvl.ld):
             self.load = pvl.ld
 
     @property
