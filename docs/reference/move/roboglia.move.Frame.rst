@@ -5,39 +5,6 @@ roboglia.move.Frame
 
 .. autoclass:: Frame
    :show-inheritance:
-
-   
-   
-   
-   .. rubric:: Methods
-
-   .. autosummary::
-
-   
-      ~Frame.__init__
-   
-   
-
-   
-   
-   .. rubric:: Attributes
-
-   .. autosummary::
-   
-      ~Frame.commands
-      ~Frame.loads
-      ~Frame.name
-      ~Frame.positions
-      ~Frame.velocities
-   
-   
-
-   
-
-   
-   .. rubric:: Methods in detail
-
-   
-   .. automethod:: __init__
-   
-   
+   :inherited-members:
+   :members:
+   :special-members:

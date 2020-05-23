@@ -9,7 +9,7 @@ activities.
 
 The name `roboglia` is derived from the glial cells present in the brian. 
 Their role is to support the neurons in their functions by supplying them 
-with nutirients, energy and disposing of the residues produced during the 
+with nutrients, energy and disposing of the residues produced during the 
 execution of their activities. The analogy is that ``roboglia`` provides this 
 boring, but very complex activity of putting together the specific functions 
 of the physical devices used in robots in order to provide a more accessible 
@@ -32,21 +32,21 @@ rather than gritty details.
     * first a ``Bus`` is instantiated with information from a robot definition 
       (an YAML) file, using an existing class from ``roboglia`` or a custom 
       defined one in case these are not enough. In this example most likely 
-      the bus woould be an :py:class:`I2CBus` which is provided out of the box in 
+      the bus would be an :py:class:`I2CBus` which is provided out of the box in 
       ``roboglia``.
     * the robot definition file then contains information about the devices 
       used and their association with the buses. In our example the device 
-      will be an :py:class:`I2CDevice` and ``roboglia`` frameowork will construct 
+      will be an :py:class:`I2CDevice` and ``roboglia`` framework will construct 
       the specific instance of this device by resorting to a *device 
-      defintion file*.  Such a device description is produced in YAML and 
+      definition file*.  Such a device description is produced in YAML and 
       lists the registers of the device each with  information like name, 
       the address where it is accessed,size. The register is associated 
       with a class that provides convenient transformation of the 
       information in the registers in an external format. Developers have 
-      access to sevaral common classes in ``roboglia`` but it is also very 
+      access to several common classes in ``roboglia`` but it is also very 
       simple to extend the framework by writing custom register classes.
-    * once the setup of the device is ready the robot defintion can provide 
-      details about a syncronization loop that will be run in a separate 
+    * once the setup of the device is ready the robot definition can provide 
+      details about a synchronization loop that will be run in a separate 
       thread in order to read / write information to the physical device 
       leveraging those devices and protocols that provide improved efficiency 
       when accessing data in bulk. Of course it is still possible and the 
@@ -54,7 +54,7 @@ rather than gritty details.
       time when we are interested to access the information a register.  
     
 All in all the approach described above makes it possible to define and run 
-a complete robot only by preparing or reusing existing defintion files without 
+a complete robot only by preparing or reusing existing definition files without 
 writing any code!
 
 In the next sections we will take you step by step through the modeling of a 
@@ -64,7 +64,7 @@ this activity.
 Creating a robot
 ----------------
 
-A ``robot`` is ultimatelly a collection of devices that are either providing
+A ``robot`` is ultimately a collection of devices that are either providing
 or are provided information. A higher level control mechanism uses the
 information provided by the devices and produces control sequences that are
 passed to the device.
@@ -75,7 +75,7 @@ subclass :py:class:`BaseRobot` as we will see shortly. You will normally
 create this by providing a YAML description of the structure of your robot.
 
 .. code-block:: python
-   :linenos:
+    :linenos:
 
     from roboglia.base.robot import BaseRobot
 
@@ -91,7 +91,7 @@ You might have noticed that the :py:class:`BaseRobot` constructor takes a single
 parameter, a  dictionary:
 
 .. code-block:: python
-   :linenos:
+    :linenos:
 
     class BaseRobot():
 
@@ -110,7 +110,7 @@ Most of the times when a constructor is defined in Python a list of parameters
 is provided in the signature like this:
 
 .. code-block:: python
-   :linenos:
+    :linenos:
 
     def __init__(self, name, path, min, max):
         ...
@@ -121,7 +121,7 @@ That makes it very hard to use and maintain code, with an added necessity
 to provide named parameters in calls to avoid confusions. When making changes
 to the framework (as is it very easy to decide to add an additional component
 for one object) a lot of refactoring is needed in the subclasses and calling
-code to keep things alogned. 
+code to keep things aligned. 
 
 In addition, most of the times the construction of these objects is made using
 data from YAML files that are read in Python standard structures like
@@ -132,13 +132,13 @@ the specific needs, like in the following example from
 py:class:`BaseRegister`:
 
 .. code-block:: python
-   :linenos:
+    :linenos:
 
     def __init__(self, init_dict):
         self.name = init_dict['name']
         self.device = init_dict['device']
         if 'address' not in init_dict:
-            mess = f'No address specified for register {self.name}. All registers must have an address speficied.'
+            mess = f'No address specified for register {self.name}. All registers must have an address specified.'
             logger.critical(mess)
             raise KeyError(mess)
         self.address = init_dict['address']
@@ -175,10 +175,10 @@ py:class:`BaseRegister`:
             raise ValueError(mess)
         self.int_value = self.default
 
-In the example above `name` and `device` are provided and checkd by the device
-constructor, so are not rechecked, but you can see that other paramters are
+In the example above `name` and `device` are provided and checked by the device
+constructor, so are not rechecked, but you can see that other parameters are
 checked against their existence (ex. `address`) or their content. In case the
-data is bad and exception will be raised. This is an acceptable behaviour 
+data is bad and exception will be raised. This is an acceptable behavior 
 because these exceptions will be thrown only at the start of the work, when
 the structure of the robot is built and not during the operation of the robot.
 This makes it easier as all the logic is processed by the object being
@@ -218,7 +218,7 @@ will simply call the ``super()`` constructor and then add the specific
 configuration:
 
 .. code-block:: python
-   :linenos:
+    :linenos:
 
     def __init__(self, init_dict):
         super().__init__(init_dict)
@@ -243,16 +243,16 @@ What's in a robot?
 
 We return now to the initialization of the robot. The :py:class:`BaseRobot` constructor 
 will parse the ``init_dict`` and build the components. To make things easier 
-to understand the components of a robot can be organised in two main groups: 
+to understand the components of a robot can be organized in two main groups: 
 
 * **Downstream**: these are objects that sit between the robot and the actual 
   physical elements of the robot
 
 * **Upstream**: these are objects that provide additional layers of 
-  abstractization producing a uniform representation of the robot for the 
+  abstraction producing a uniform representation of the robot for the 
   benefit of higher processing functions. For instance a ``Device`` will 
   represent a physical servomotor (downstream) while a ``Joint`` will 
-  represent an abstractization of a robot DOF, connected to that ``Device``. 
+  represent an abstraction of a robot DOF, connected to that ``Device``. 
   This makes it very easy to define structures that present a heterogeneous 
   higher representation (joints) even if the devices that are used in 
   downstream are very different (for instance some could be servomotors, 
@@ -276,14 +276,14 @@ initializes:
 * **Groups**: are collections of objects that are defined for convenience. 
   Some objects that will be mentioned bellow use groups for their processing. 
   It is interesting to notice that the implementation of these in code is with 
-  ``sets`` and that when creating groups there are no limitations in groupping
+  ``sets`` and that when creating groups there are no limitations in grouping
   object; you can group devices and joints together if you want, although it 
   is very unlikely you will find a use for that. Most of the object that use 
   groups (ex. syncs) will check that the objects in the groups fulfill certain 
   rules before accepting them.
 
 * **Syncs**: are background processing tasks that exploit highly efficient 
-  functionalities to syncronize the information from the ``Device`` instances 
+  functionalities to synchronize the information from the ``Device`` instances 
   with the actual physical objects. Very often there are significant overheads 
   in calling buses' methods to read / write information for a single register 
   and using them in a loop over all the registers and all devices. Some 
@@ -292,9 +292,9 @@ initializes:
   at high speed.
 
 Because the purpose of a robot is to make use of physical devices, the minimum 
-you can have in a robot defintion is a bus and a device.
+you can have in a robot definition is a bus and a device.
 
-As mentioned above you would use the :py:method:`BaseRobot.from_yaml` to construct 
+As mentioned above you would use the :py:meth:`BaseRobot.from_yaml` to construct 
 the robot. Let's see how the YAML file would be structured.
 
 Robot definition YAML
@@ -322,33 +322,33 @@ reads that YAML file it will represent the content in a dictionary with two
 elements with keys 'buses' and 'devices'. These are exactly the keys that the 
 constructors are looking for in order to extract the information needed for 
 initialization. The detail API provides more detail for each class that is 
-build dynamically from an ``init_dict`` as to what keys are exepcted and which 
+build dynamically from an ``init_dict`` as to what keys are expected and which 
 are defaulted.
 
-Also notice that almost always one of the attributes that we need to specify 
+Also notice that almost always one of the attributes that we need to specify
 for the objects is the ``class``. This is the name a of a class that is 
 dynamically instantiable. What does this mean? It means that the class can 
-be created by any piece of code without ``include``ing the module where the 
+be created by any piece of code without ``include`` ing the module where the 
 class was defined using a concept of **class factory**.
 
 Class factory
 ^^^^^^^^^^^^^
 
-Consider the following scenario: for the robot defintion file above the 
-:py:class:`BaseRobot` constructor will need to creare an instance of a 
+Consider the following scenario: for the robot definition file above the 
+:py:class:`BaseRobot` constructor will need to create an instance of a 
 :py:class:`FileBus` and a :py:class:`DynamixelDevice`. Typically that means 
 the module where :py:class:`BaseRobot` sits needs to import the modules where 
 these two classes are defined. What happens if you want to use a custom device 
 class that you have written for some devices that are not covered in 
 ``roboglia``? Well. since you cannot use the constructor of :py:class:`BaseRobot`
- you will need to create a subclass of it, include the defintion of your device 
+you will need to create a subclass of it, include the definition of your device 
 class and somehow handle that new device class. The framework would have 
 needed to have a stub method to instantiate a class by name and your subclass 
 will do the processing for the own classes or pass it to the ``super()`` to 
 process the 'standard' ones. Although this is a perfectly possible scenario, it 
-makes for a complex impementation: there are several classes that need to 
+makes for a complex implementation: there are several classes that need to 
 dynamically build from YAML (robot, device, move, etc.), so each would have 
-to provide this stub method and will require subclassing in case of custom 
+to provide this stub method and will require subclasses in case of custom 
 components.
 
 Instead ``roboglia`` uses the concept of a ``class factory``. This is a very 
@@ -356,15 +356,15 @@ simple idea: in a common module (``factory.py``) we maintain a dictionary
 (initially empty) with classes that we want to be able to instantiate by name. 
 The module then provides 2 global functions: 
 
-* :py:function:`register_class(cls)` this adds a class to the dictionary using 
+* :py:func:`register_class(cls)` this adds a class to the dictionary using 
   the class name as key
-* :py:function:`get_registered_class(class_name)` this retrieves a class from the 
+* :py:func:`get_registered_class(class_name)` this retrieves a class from the 
   dictionary using the class name as key
 
 The code looks like this:
 
 .. code-block:: python
-   :linenos:
+    :linenos:
 
     __registered_classes = {}
 
@@ -394,7 +394,7 @@ the registers of a device after reading the structure of the registers from
 the device's file description:
 
 .. code-block:: python
-   :linenos:
+    :linenos:
 
     def __init__(self, init_dict):
         ...
@@ -427,13 +427,13 @@ be the following:
 
 :py:class:`BaseRegister` is a class in ``roboglia`` that represents a generic simple 
 register. ``MySpecialRegister`` is a custom register defined by me and 
-implementing some spcial handling of the data, maybe some bitwise interpretation 
+implementing some special handling of the data, maybe some bitwise interpretation 
 that is specific to that device and register. The only thing that I would need 
 is that in the main code **before** the initialization of the robot is done, 
 I will have to register this class with the ``class factory`` like this:
 
 .. code-block:: python
-   :linenos:
+    :linenos:
 
     from myregister import MySpecialRegister
     from roboglia.base.factory import register_class
@@ -457,10 +457,10 @@ without the need to subclass and invoke super class implementations.
 
 The classes that are subject to be used for this dynamic allocation pattern 
 are registered in the ``__ini__.py`` file of the modules in ``roboglia``, 
-for instance the one for the ``base`` submodule looks like this:
+for instance the one for the ``base`` sub-module looks like this:
 
 .. code-block:: python
-   :linenos:
+    :linenos:
 
     from .factory import register_class
     from .bus import  FileBus
@@ -473,14 +473,14 @@ for instance the one for the ``base`` submodule looks like this:
     register_class(FloatRegisterWithThreshold)
     register_class(BoolRegister)
 
-When :py:module:`roboglia.base` is imported, the classes will be registered automatically
+When :py:mod:`roboglia.base` is imported, the classes will be registered automatically
 with the class factory and can be reused. This is a technique that can be used 
 for custom classes too by placing the code in a module and setting up a 
 ``__init__.py`` file where, similar to the approach above the desired classes 
 are registered. 
 
 Now it becomes quite clear why you would very rarely need to subclass :py:class:`BaseRobot`
-and you can relly on the processing this class provides even if you include 
+and you can rely on the processing this class provides even if you include 
 custom defined objects.
 
 Let us now review each of the type of objects supported by the robot and 

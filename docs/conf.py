@@ -38,20 +38,23 @@ extensions = [ 'sphinx.ext.autodoc',
                'sphinx.ext.napoleon',
                'sphinx.ext.intersphinx',
                'sphinx.ext.viewcode',
-               'sphinx_rtd_theme'
+               'sphinx_rtd_theme',
+               'sphinx.ext.todo'
 ]
 
+# Display todos by setting to True
+todo_include_todos = True
 
 # generate autosummary pages
 autosummary_generate = True
 autodoc_default_options = {
-    # 'members': 'var1, var2',
-    # 'member-order': 'bysource',
-    'special-members': True,
-    # 'special-members': '__init__',
-    'undoc-members': True,
-    'private-members': True,
-    'exclude-members': '__weakref__'
+#     # 'members': 'var1, var2',
+      'member-order': 'bysource',
+#     'special-members': '__init__, __sub__',
+#     # 'special-members': '__init__',
+#     'undoc-members': True,
+#     'private-members': True,
+     'exclude-members': '__weakref__'
 }
 
 # If true, the current module name will be prepended to all description
