@@ -263,7 +263,7 @@ class Sequence():
 
     @property
     def frames(self):
-        """The list of ``Frame``s in the sequence."""
+        """The list of ``Frame`` in the sequence."""
         return self.__frames
 
     @property

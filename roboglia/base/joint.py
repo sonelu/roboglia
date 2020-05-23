@@ -201,21 +201,6 @@ class PVL():
         """Convenience representation of a PVL."""
         return f'PVL(p={self.p}, v={self.v}, l={self.ld})'
 
-    @property
-    def p(self):
-        """The position in PVL."""
-        return self.__p
-
-    @property
-    def v(self):
-        """The velocity in PVL."""
-        return self.__v
-
-    @property
-    def ld(self):
-        """The load in PVL."""
-        return self.__ld
-
 
 class PVLList():
     """A class that holds a list of PVL commands and provides a number of
@@ -292,12 +277,14 @@ class PVLList():
                pvl_list=[]):
         """Appends items to the PVL List. Depending on the way you call it
         you can:
+
         - append one item defined by parameters ``p``, ``v`` and ``l``
         - append a list of items defined by paramters ``p_list``, ``v_list``
           and ``l_list``; this works similar with the constructor by padding
           the lists if they have unequal length
         - append one PVL object is provided as ``pvl``
         - append a list of PVL objects provided as ``pvl_list``
+
         """
         if pvl_list:
             self.__items.extend(pvl_list)
