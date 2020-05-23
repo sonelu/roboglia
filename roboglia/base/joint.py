@@ -52,6 +52,21 @@ class PVL():
         self.__v = v
         self.__ld = ld
 
+    @property
+    def p(self):
+        """The position value in PVL."""
+        return self.__p
+
+    @property
+    def v(self):
+        """The velocity value in PVL."""
+        return self.__v
+
+    @property
+    def ld(self):
+        """The load value in PVL."""
+        return self.__ld
+
     def __eq__(self, other):
         """Comparison of two PVLs with margin of error.
 
