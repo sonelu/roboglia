@@ -52,38 +52,6 @@ class PVL():
         self.__v = v
         self.__ld = ld
 
-    # def __neg1(self, value):
-    #     """Inverts one value that could be ``None``. ``None`` inverted is
-    #     ``None``. Numbers are inverted normally."""
-    #     return None if value is None else -value
-
-    # def __add1(self, val1, val2):
-    #     """Adds two numbers that could be ``None``. ``None`` plus anything
-    #     is ``None``. Numbers are added normally."""
-    #     return None if val1 is None or val2 is None else val1 + val2
-
-    # def __diff1(self, val1, val2):
-    #     """Calculates difference between two numbers that could be ``None``.
-    #     It practically calculates the sum with the inverted ``val2`` for
-    #     convenience."""
-    #     return self.__add1(val1, self.__neg1(val2))
-
-    # def __eq1(self, val1, val2):
-    #     """Utility function: compares two values that could be ``None``. Two
-    #     ``None`` are equal, one ``None`` and one float are not. Floats are
-    #     equal if the absolute difference between them is less than 0.01.
-
-    #     TODO: see if it is possible to make this threshold dynamic such that
-    #         the value for radians for instance have a different threshold
-    #         than one ones for degrees. One option would be to read the
-    #         min and max values of the component and determine from there.
-    #     """
-    #     if val1 is None and val2 is None:
-    #         return True
-    #     if val1 is None or val2 is None:
-    #         return False
-    #     return abs(val1 - val2) < 0.01
-
     def __eq__(self, other):
         """Comparison of two PVLs with margin of error.
 
