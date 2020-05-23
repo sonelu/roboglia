@@ -5,39 +5,6 @@ roboglia.move.Scene
 
 .. autoclass:: Scene
    :show-inheritance:
-
-   
-   
-   
-   .. rubric:: Methods
-
-   .. autosummary::
-
-   
-      ~Scene.__init__
-      ~Scene.play
-   
-   
-
-   
-   
-   .. rubric:: Attributes
-
-   .. autosummary::
-   
-      ~Scene.name
-      ~Scene.sequences
-      ~Scene.times
-   
-   
-
-   
-
-   
-   .. rubric:: Methods in detail
-
-   
-   .. automethod:: __init__
-   .. automethod:: play
-   
-   
+   :inherited-members:
+   :members:
+   :special-members:

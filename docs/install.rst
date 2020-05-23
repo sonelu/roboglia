@@ -45,7 +45,9 @@ You can install roboglia without installing the hardware dependencies, but
 when you will use it you must have those dependencies available otherwise 
 Python will raise an ``No module`` exception.
 
-You can install roboglia using pip::
+You can install roboglia using pip:
+
+.. code::
 
     pip install roboglia
 
