@@ -12,8 +12,8 @@ script_1:
     frame_01: [100, 100, 100, 0]
     frame_02: [200, 200, 200, 0]
     frame_03: [400, 400, 400, 0]
-    frame_04: [null, null, 300, 0]
-    frame_05: [null, null, 100, 0]
+    frame_04: [nan, nan, 300, 0]
+    frame_05: [nan, nan, 100, 0]
 
   sequences:
     move_1:

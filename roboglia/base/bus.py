@@ -179,7 +179,7 @@ class FileBus(BaseBus):
                          **kwargs)
         self.__fp = None
         self.__last = {}
-        logger.debug(f'FileBus {self.name} initialized')
+        logger.debug(f'FileBus "{self.name}" initialized')
 
     def open(self):
         """Opens the file associated with the ``FileBus``."""
@@ -228,15 +228,16 @@ class FileBus(BaseBus):
             logger.error(f'attempt to write to closed bus {self.name}')
         else:
             self.__last[(reg.device.dev_id, reg.address)] = value
-            text = f'written {value} in register {reg.name} ' + \
-                   f'({reg.address}) of device {reg.device.dev_id}'
+            text = f'written {value} in register "{reg.name}"" ' + \
+                   f'({reg.address}) of device "{reg.device.name}" ' + \
+                   f'({reg.device.dev_id})'
             try:
                 self.__fp.write(text + '\n')
                 self.__fp.flush()
             except Exception:
                 logger.error(f'error executing write and flush to file '
                              f'for bus: {self.name}')
-            logger.debug(f'FileBus {self.name} {text}')
+            logger.debug(f'FileBus "{self.name}" {text}')
 
     def read(self, reg):
         """Reads the value from the buffer of ``FileBus`` and logs it.
@@ -272,15 +273,15 @@ class FileBus(BaseBus):
             if (reg.device.dev_id, reg.address) not in self.__last:
                 self.__last[(reg.device.dev_id, reg.address)] = reg.default
             val = self.__last[(reg.device.dev_id, reg.address)]
-            text = f'read {val} from register {reg.name} ){reg.address}) ' + \
-                   f'of device {reg.device.dev_id}'
+            text = f'read {val} from register "{reg.name}" ({reg.address}) ' +\
+                   f'of device "{reg.device.name}" ({reg.device.dev_id})'
             try:
-                self.__fp.write(text + '\n')
+                self.__fp.write(text+'\n')
                 self.__fp.flush()
             except Exception:
                 logger.error(f'error executing write and flush to file '
                              f'for bus: {self.name}')
-            logger.debug(f'FileBus {self.name} {text}')
+            logger.debug(f'FileBus "{self.name}" {text}')
             return val
 
     def __str__(self):

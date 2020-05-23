@@ -2,6 +2,7 @@ import pytest
 import logging
 import time
 import yaml
+from math import nan
 
 from roboglia.utils import register_class, unregister_class, registered_classes, get_registered_class
 from roboglia.utils import check_key, check_options, check_type, check_not_empty
@@ -1024,21 +1025,21 @@ class TestMove:
         robot.stop()
 
     def test_pvl(self):
-        list1 = PVLList(p=[1,2,3], v=[None], ld=[None, 10, 10, None])
+        list1 = PVLList(p=[1,2,3], v=[nan], ld=[nan, 10, 10, nan])
         assert len(list1) == 4
-        list1.append(p=10, v=20, ld=None)
+        list1.append(p=10, v=20, ld=nan)
         assert len(list1) == 5
-        assert list1.positions == [1, 2, 3, None, 10]
-        assert list1.velocities == [None, None, None, None, 20]
-        assert list1.loads == [None, 10, 10, None, None]
-        list1.append(p_list=[20, None], v_list=[None, None, None], l_list=[])
+        assert list1.positions == [1, 2, 3, nan, 10]
+        assert list1.velocities == [nan, nan, nan, nan, 20]
+        assert list1.loads == [nan, 10, 10, nan, nan]
+        list1.append(p_list=[20, nan], v_list=[nan, nan, nan], l_list=[])
         assert len(list1) == 8
         list2 = PVLList(p=[3,4,5], v=[1,1,1], ld=[5,5,5])
         list1.append(pvl_list=list2)
         assert len(list1) == 11
         list1.append(pvl=PVL(p=4, v=5, ld=6))
         assert len(list1) == 12
-        assert list1.positions == [1, 2, 3, None, 10, 20, None, None, 3, 4, 5, 4]
+        assert list1.positions == [1, 2, 3, nan, 10, 20, nan, nan, 3, 4, 5, 4]
         # func with one item
         list3 = PVLList()
         list3.append(pvl=PVL(10,10,10))
@@ -1046,15 +1047,15 @@ class TestMove:
         assert avg == PVL(10,10,10)
         assert avg != 10
         # adition
-        pvl1 = PVL(10, None, None)
-        assert pvl1 + 10 == PVL(20, None, None)
-        assert pvl1 - 10 == PVL(0, None, None)
-        assert pvl1 + PVL(5, 10, None) == PVL(15, None, None)
-        assert pvl1 - PVL(5, 10, None) == PVL(5, None, None)
-        assert pvl1 + [10, 20, 30] == PVL(20, None, None)
-        assert pvl1 - [10, 20, 30] == PVL(0, None, None)
-        assert -pvl1 == PVL(-10, None, None)
-        assert  not pvl1 == PVL(None, None, None)
+        pvl1 = PVL(10, nan, nan)
+        assert pvl1 + 10 == PVL(20, nan, nan)
+        assert pvl1 - 10 == PVL(0, nan, nan)
+        assert pvl1 + PVL(5, 10, nan) == PVL(15, nan, nan)
+        assert pvl1 - PVL(5, 10, nan) == PVL(5, nan, nan)
+        assert pvl1 + [10, 20, 30] == PVL(20, nan, nan)
+        assert pvl1 - [10, 20, 30] == PVL(0, nan, nan)
+        assert -pvl1 == PVL(-10, nan, nan)
+        assert  not pvl1 == PVL(nan, nan, nan)
         # raise errors
         with pytest.raises(RuntimeError):
             _ = pvl1 + [1,2]
@@ -1076,11 +1077,11 @@ class TestMove:
         for joint in manager.joints:
             for comm in all_comm:
                 joint.value = comm
-        assert mock_robot.joints['j01'].value == PVL(0,None,None)
-        assert mock_robot.joints['j02'].value == PVL(0,57.05,None)
+        assert mock_robot.joints['j01'].value == PVL(0,nan,nan)
+        assert mock_robot.joints['j02'].value == PVL(0,57.05,nan)
         assert mock_robot.joints['j03'].value == PVL(0,57.05,-50.0)
-        assert mock_robot.joints['j01'].desired == PVL(100, None, None)
-        assert mock_robot.joints['j02'].desired == PVL(100, 10.03, None)
+        assert mock_robot.joints['j01'].desired == PVL(100, nan, nan)
+        assert mock_robot.joints['j02'].desired == PVL(100, 10.03, nan)
         assert mock_robot.joints['j03'].desired == PVL(100, 10.03, 50.0)
 
 
