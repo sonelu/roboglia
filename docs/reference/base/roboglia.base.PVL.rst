@@ -5,37 +5,6 @@ roboglia.base.PVL
 
 .. autoclass:: PVL
    :show-inheritance:
-
-   
-   
-   
-   .. rubric:: Methods
-
-   .. autosummary::
-
-   
-      ~PVL.__init__
-   
-   
-
-   
-   
-   .. rubric:: Attributes
-
-   .. autosummary::
-   
-      ~PVL.ld
-      ~PVL.p
-      ~PVL.v
-   
-   
-
-   
-
-   
-   .. rubric:: Methods in detail
-
-   
-   .. automethod:: __init__
-   
-   
+   :inherited-members:
+   :members:
+   :special-members:

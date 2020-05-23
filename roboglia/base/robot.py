@@ -497,8 +497,8 @@ class JointManager(BaseLoop):
         """Checks the function provided and returns a reference to it.
         Supported functions: ``mean``, ``median``, ``min`` and ``max``.
 
-        Paramters
-        ---------
+        Parameters
+        ----------
         func_name: str
             A name of a function to be checked and retrieved. Supported
             values: ``mean``, ``median``, ``min`` and ``max``.
@@ -698,8 +698,8 @@ class JointManager(BaseLoop):
         for that joint. The processed command applies an aggregation function
         (default ``mean``) to the command parameters.
 
-        Paramters
-        ---------
+        Parameters
+        ----------
         joint: Joint or subclass
             The joint being processed
 

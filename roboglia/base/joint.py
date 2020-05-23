@@ -35,7 +35,7 @@ class PVL():
     representation.
 
     Parameters
-    ---------
+    ----------
     p: float or ``None``
         The position value of the PVL
 
@@ -49,6 +49,21 @@ class PVL():
         self.__p = p
         self.__v = v
         self.__ld = ld
+
+    @property
+    def p(self):
+        """The position in PVL."""
+        return self.__p
+
+    @property
+    def v(self):
+        """The velocity in PVL."""
+        return self.__v
+
+    @property
+    def ld(self):
+        """The load in PVL."""
+        return self.__ld
 
     def __neg1(self, value):
         """Inverts one value that could be ``None``. ``None`` inverted is
@@ -71,10 +86,11 @@ class PVL():
         ``None`` are equal, one ``None`` and one float are not. Floats are
         equal if the absolute difference between them is less than 0.01.
 
-        TODO: see if it is possible to make this threshold dynamic such that
-            the value for radians for instance have a different threshold
-            than one ones for degrees. One option would be to read the
-            min and max values of the component and determine from there.
+        .. todo:: See if it is possible to make this threshold dynamic such
+            that the value for radians for instance have a different threshold
+            than one ones for degrees. One option would be to read the min
+            and max values of the component and determine from there.
+
         """
         if val1 is None and val2 is None:
             return True
@@ -198,41 +214,26 @@ class PVL():
         """Convenience representation of a PVL."""
         return f'PVL(p={self.p}, v={self.v}, l={self.ld})'
 
-    @property
-    def p(self):
-        """The position in PVL."""
-        return self.__p
-
-    @property
-    def v(self):
-        """The velocity in PVL."""
-        return self.__v
-
-    @property
-    def ld(self):
-        """The load in PVL."""
-        return self.__ld
-
 
 class PVLList():
     """A class that holds a list of PVL commands and provides a number of
     extra manipulation functions.
 
-    The constructor pads the supplied lists with ``None``s in case the
+    The constructor pads the supplied lists with ``None`` in case the
     lists are unequal in size.
 
     Parameters
     ----------
     p: list of [float or ``None``]
-        The position commands as a list of float or ``None``s like this::
+        The position commands as a list of float or ``None`` like this::
 
             p=[1, 2, None, 30, None, 20, 10, None]
 
     v: list of [float or ``None``]
-        The velocity commands as a list of float or ``None``s
+        The velocity commands as a list of float or ``None``
 
     ld: list of [float or ``None``]
-        The load commands as a list of float or ``None``s
+        The load commands as a list of float or ``None``
     """
     def __init__(self, p=[], v=[], ld=[]):
         length = max(len(p), len(v), len(ld))
@@ -267,18 +268,18 @@ class PVLList():
     @property
     def positions(self):
         """Returns the full list of positions (p) commands, including
-        ``None``s from the list."""
+        ``None`` from the list."""
         return [item.p for item in self.items]
 
     @property
     def velocities(self):
         """Returns the full list of velocities (v) commands, including
-        ``None``s from the list."""
+        ``None`` from the list."""
         return [item.v for item in self.items]
 
     @property
     def loads(self):
-        """Returns the full list of load (ld) commands, including ``None``s
+        """Returns the full list of load (ld) commands, including ``None``
         from the list."""
         return [item.ld for item in self.items]
 
@@ -289,12 +290,14 @@ class PVLList():
                pvl_list=[]):
         """Appends items to the PVL List. Depending on the way you call it
         you can:
+
         - append one item defined by parameters ``p``, ``v`` and ``l``
         - append a list of items defined by paramters ``p_list``, ``v_list``
           and ``l_list``; this works similar with the constructor by padding
           the lists if they have unequal length
         - append one PVL object is provided as ``pvl``
         - append a list of PVL objects provided as ``pvl_list``
+
         """
         if pvl_list:
             self.__items.extend(pvl_list)
