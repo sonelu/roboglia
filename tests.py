@@ -107,7 +107,7 @@ class TestMockRobot:
         caplog.clear()
         reg.int_value = 1
         assert len(caplog.records) >= 1
-        assert 'only BaseSync subclasses can chance' in caplog.text
+        assert 'only BaseSync subclasses can change' in caplog.text
 
     def test_register_with_threshold(self, mock_robot):
         reg = mock_robot.devices['d03'].writeable_current_load

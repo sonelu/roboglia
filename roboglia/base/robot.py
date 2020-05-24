@@ -521,12 +521,12 @@ class JointManager(BaseLoop):
             'min': min,
             'max': max
         }
-        if func_name not in supported:
-            logger.info(f'Function {func_name} not supported. '
-                        f'Using {default}')
-            return default
-        else:
+        if func_name in supported:
             return supported[func_name]
+
+        logger.info(f'Function {func_name} not supported. '
+                    f'Using {default}')
+        return default
 
     @property
     def joints(self):
@@ -590,18 +590,18 @@ class JointManager(BaseLoop):
             logger.warning(f'failed to acquire manager for '
                            f'stream {stream.name}')
             return False
+
+        # add the new stream
+        if stream.name not in self.__streams:
+            self.__streams[stream.name] = stream
+        # record adjustments request
+        if adjustments:
+            self.__adjustments[stream.name] = commands
+        # record submission request
         else:
-            # add the new stream
-            if stream.name not in self.__streams:
-                self.__streams[stream.name] = stream
-            # record adjustments request
-            if adjustments:
-                self.__adjustments[stream.name] = commands
-            # record submission request
-            else:
-                self.__submissions[stream.name] = commands
-            self.__lock.release()
-            return True
+            self.__submissions[stream.name] = commands
+        self.__lock.release()
+        return True
 
     def stop_submit(self, stream, adjustments=False):
         """Notifies the ``JointManager`` that the stream has finished
@@ -635,20 +635,20 @@ class JointManager(BaseLoop):
             logger.warning(f'failed to acquire manager for '
                            f'stream {stream.name}')
             return False
+
+        # delete the stream
+        if stream.name in self.__streams:              # pragma: no branch
+            del self.__streams[stream.name]
+        # remove any adjustment requests
+        if adjustments:
+            if stream.name in self.__adjustments:      # pragma: no branch
+                del self.__adjustments[stream.name]
+        # remove any submission requests
         else:
-            # delete the stream
-            if stream.name in self.__streams:              # pragma: no branch
-                del self.__streams[stream.name]
-            # remove any adjustment requests
-            if adjustments:
-                if stream.name in self.__adjustments:      # pragma: no branch
-                    del self.__adjustments[stream.name]
-            # remove any submission requests
-            else:
-                if stream.name in self.__submissions:      # pragma: no branch
-                    del self.__submissions[stream.name]
-            self.__lock.release()
-            return True
+            if stream.name in self.__submissions:      # pragma: no branch
+                del self.__submissions[stream.name]
+        self.__lock.release()
+        return True
 
     def start(self):
         """Starts the JointManager. Before calling the
@@ -736,7 +736,6 @@ class JointManager(BaseLoop):
             return PVL()        # will be with ``nan```
         if len(req) == 1:
             return req.items[0]
-        else:
-            return req.process(p_func=self.p_func,
-                               v_func=self.v_func,
-                               ld_func=self.ld_func)
+        return req.process(p_func=self.p_func,
+                           v_func=self.v_func,
+                           ld_func=self.ld_func)

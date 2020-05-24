@@ -249,10 +249,9 @@ class BaseRegister():
     def int_value(self):
         """Internal value of register, if a clone return the value of the
         main register."""
-        if not self.clone:
-            return self.__int_value
-        else:
+        if self.clone:
             return self.clone.int_value
+        return self.__int_value
 
     @int_value.setter
     def int_value(self, value):
@@ -260,13 +259,13 @@ class BaseRegister():
         for the ``int_value``. If clone, store the value in the main register.
         """
         caller = inspect.stack()[1].frame.f_locals['self']
-        if isinstance(caller, BaseSync) or isinstance(caller, BaseRegister):
+        if isinstance(caller, (BaseSync, BaseRegister)):
             if not self.clone:
                 self.__int_value = value
             else:
                 self.clone.int_value = value
         else:
-            logger.error('only BaseSync subclasses can chance the '
+            logger.error('only BaseSync subclasses can change the '
                          'internal value')
 
     def value_to_external(self, value):
@@ -425,24 +424,20 @@ class BoolRegister(BaseRegister):
         """
         if self.mask is None:
             return bool(value)
-        else:
-            if self.mode == 'any':
-                return bool(value & self.mask)
-            elif self.mode == 'all':
-                return (value & self.mask) == self.mask
-            else:
-                raise NotImplementedError
+        if self.mode == 'any':
+            return bool(value & self.mask)
+        if self.mode == 'all':
+            return (value & self.mask) == self.mask
+        raise NotImplementedError
 
     def value_to_internal(self, value):
         """The internal representation of the register's value.
         """
-        if value:
-            if self.mask:
-                return self.mask
-            else:
-                return 1
-        else:
+        if not value:
             return 0
+        if self.mask:
+            return self.mask
+        return 1
 
 
 class RegisterWithConversion(BaseRegister):
@@ -594,8 +589,7 @@ class RegisterWithThreshold(BaseRegister):
         """
         if value < self.threshold:
             return value / self.factor
-        else:
-            return (self.threshold - value) / self.factor
+        return (self.threshold - value) / self.factor
 
     def value_to_internal(self, value):
         """The internal representation of the register's value.
@@ -609,5 +603,4 @@ class RegisterWithThreshold(BaseRegister):
         """
         if value >= 0:
             return value * self.factor
-        else:
-            return (-value) * self.factor + self.threshold
+        return (-value) * self.factor + self.threshold
