@@ -91,7 +91,7 @@ dummy:
       load_write: desired_load
       inverse: True
       offset: 45.0
-      auto: False    
+      auto: False
 
   sensors:
     bus_voltage:

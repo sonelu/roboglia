@@ -155,13 +155,10 @@ class DynamixelBus(BaseBus):
         """
         if not self.is_open:
             logger.error('ping invoked with a bus not opened')
-        else:
-            _, cerr, derr = self.__packet_handler.ping(self.__port_handler,
-                                                       dxl_id)
-            if cerr == 0 and derr == 0:
-                return True
-            else:
-                return False
+            return False
+
+        _, cerr, derr = self.__packet_handler.ping(self.__port_handler, dxl_id)
+        return True if cerr == 0 and derr == 0 else False
 
     def scan(self, range=range(254)):
         """Scans the devices on the bus.
@@ -236,14 +233,14 @@ class DynamixelBus(BaseBus):
                 logger.error(f'[bus {self.name}] device {dev.name}, '
                              f'register {reg.name}: {err_desc}')
                 return None
-            else:
-                if derr != 0:
-                    # device error
-                    err_desc = self.__packet_handler.getRxPacketError(derr)
-                    logger.warning(f'device {dev.name} responded with a '
-                                   f'return error: {err_desc}')
-                else:
-                    return res
+
+            if derr != 0:
+                # device error
+                err_desc = self.__packet_handler.getRxPacketError(derr)
+                logger.warning(f'device {dev.name} responded with a '
+                               f'return error: {err_desc}')
+
+            return res
 
     def write(self, reg, value):
         """Depending on the size of the register calls the corresponding
@@ -406,14 +403,9 @@ class MockPacketHandler():
     def __common_writeTxRx(self, ph, dev_id, address, value):
         if random.random() < self.__err:
             return -3001, 0
-        else:
-            # device = self.__robot.device_by_id(dev_id)
-            # reg = device.register_by_address(address)
-            # reg.int_value = value
-            if random.random() < self.__err:
-                return 0, 4         # overheat
-            else:
-                return 0, 0
+        if random.random() < self.__err:
+            return 0, 4         # overheat
+        return 0, 0
 
     def write1ByteTxRx(self, ph, dev_id, address, value):
         """Mocks a write of 1 byte to a device. In ``err`` percentage
@@ -439,13 +431,11 @@ class MockPacketHandler():
     def __common_readTxRx(self, ph, dev_id, address):
         if random.random() < self.__err:
             return 0, -3001, 0
-        else:
-            device = self.__robot.device_by_id(dev_id)
-            reg = device.register_by_address(address)
-            if random.random() < self.__err:
-                return reg.int_value, 0, 4      # overheat
-            else:
-                return reg.int_value, 0, 0
+        device = self.__robot.device_by_id(dev_id)
+        reg = device.register_by_address(address)
+        if random.random() < self.__err:
+            return reg.int_value, 0, 4      # overheat
+        return reg.int_value, 0, 0
 
     def read1ByteTxRx(self, ph, dev_id, address):
         """Same as :py:meth:`write1ByteTxRx` but for reading 1 Bytes
@@ -468,8 +458,7 @@ class MockPacketHandler():
         or success."""
         if random.random() < self.__err:
             return -3001
-        else:
-            return 0
+        return 0
 
     def syncReadTx(self, port, start_address, data_length, param,
                    param_length):
@@ -477,13 +466,12 @@ class MockPacketHandler():
         or success."""
         if random.random() < self.__err:
             return -3001
-        else:
-            self.__sync_data_length = data_length
-            self.__param = param
-            self.__start_address = start_address
-            self.__index = 0
-            self.__mode = 'sync'
-            return 0
+        self.__sync_data_length = data_length
+        self.__param = param
+        self.__start_address = start_address
+        self.__index = 0
+        self.__mode = 'sync'
+        return 0
 
     def readRx(self, port, dxl_id, length):
         """Mocks a read package received. Used by SyncRead and BulkRead.
@@ -501,48 +489,45 @@ class MockPacketHandler():
         # we're not going to check the device and register as we
         # expect both to be available since we checked them when
         # we setup the sync
+        if self.__mode == 'sync':
+            device = self.__robot.device_by_id(self.__param[self.__index])
+            register = device.register_by_address(self.__start_address)
+
+        else:           # bulk
+            idx = self.__index * 5
+            dev_id = self.__param[idx]
+            device = self.__robot.device_by_id(dev_id)
+            assert dev_id == dxl_id
+            address = self.__param[idx + 1] + self.__param[idx + 2] * 256
+            register = device.register_by_address(address)
+            assert register.size == length
+
+        if register.access == 'RW':
+            value = register.int_value
         else:
-            if self.__mode == 'sync':
-                device = self.__robot.device_by_id(self.__param[self.__index])
-                register = device.register_by_address(self.__start_address)
-
-            else:           # bulk
-                idx = self.__index * 5
-                dev_id = self.__param[idx]
-                device = self.__robot.device_by_id(dev_id)
-                assert dev_id == dxl_id
-                address = self.__param[idx + 1] + self.__param[idx + 2] * 256
-                register = device.register_by_address(address)
-                assert register.size == length
-
-            if register.access == 'RW':
-                value = register.int_value
-            else:
-                value = register.int_value + random.randint(-10, 10)
-                value = max(register.minim, min(register.maxim, value))
-            self.__index += 1
-            return device.register_low_endian(value, register.size), 0, 0
+            value = register.int_value + random.randint(-10, 10)
+            value = max(register.minim, min(register.maxim, value))
+        self.__index += 1
+        return device.register_low_endian(value, register.size), 0, 0
 
     def bulkWriteTxOnly(self, port, param, param_length):
         """Simulate a BulkWrite transmit package. We return randomly an error
         or success."""
         if random.random() < self.__err:
             return -3001
-        else:
-            return 0
+        return 0
 
     def bulkReadTx(self, port, param, param_length):
         """"Simulate a BulkWrite transmit of response request package. We
         return randomly an error or success."""
         if random.random() < self.__err:
             return -3001
-        else:
-            # self.__sync_data_length = data_length
-            self.__param = param
-            # self.__start_address = start_address
-            self.__index = 0
-            self.__mode = 'bulk'
-            return 0
+        # self.__sync_data_length = data_length
+        self.__param = param
+        # self.__start_address = start_address
+        self.__index = 0
+        self.__mode = 'bulk'
+        return 0
 
     def ping(self, ph, dxl_id):
         """Simulates a ``ping`` on the Dynamixel bus."""

@@ -188,7 +188,7 @@ registers:
     size: 2
     access: RW
     maxim: 1023
-    factor: 0.939722013047473  
+    factor: 0.939722013047473
 
   torque_limit:
     class: RegisterWithConversion

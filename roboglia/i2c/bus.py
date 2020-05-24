@@ -160,16 +160,16 @@ class I2CBus(BaseBus):
             function = self.__i2cbus.write_byte_data
             base = 256
 
-        values = [0] * reg.size
+        buffer = [0] * reg.size
         data = reg.int_value
         for pos in range(reg.size):
-            values[pos] = data % base
+            buffer[pos] = data % base
             data = data // base
         if reg.order == 'HL':
-            values = values.reverse()
-        for pos, value in enumerate(values):
+            buffer = buffer.reverse()
+        for pos, item in enumerate(buffer):
             try:
-                function(dev.dev_id, reg.address + pos, value)
+                function(dev.dev_id, reg.address + pos, item)
             except Exception as e:
                 logger.error(f'failed to execute write command on I2C bus '
                              f'{self.name} for device {dev.name} and '
@@ -307,16 +307,16 @@ class MockSMBus(SMBus):
         if random.random() < self.__err:
             logger.error('*** random generated read error ***')
             raise OSError
-        else:
-            device = self.__robot.device_by_id(dev_id)
-            reg = device.register_by_address(address)
-            if reg.access == 'R':
-                # we randomize the read
-                plus = random.randint(-10, 10)
-                value = max(reg.minim, min(reg.maxim, reg.int_value + plus))
-                return value
-            else:
-                return reg.int_value
+        # non-error case
+        device = self.__robot.device_by_id(dev_id)
+        reg = device.register_by_address(address)
+        if reg.access == 'R':
+            # we randomize the read
+            plus = random.randint(-10, 10)
+            value = max(reg.minim, min(reg.maxim, reg.int_value + plus))
+            return value
+        # default case
+        return reg.int_value
 
     def read_byte_data(self, dev_id, address):
         """Simulates the read of 1 Byte."""
@@ -334,8 +334,7 @@ class MockSMBus(SMBus):
         if random.random() < self.__err:
             logger.error('*** random generated write error ***')
             raise OSError
-        else:
-            return None
+        return None
 
     def write_byte_data(self, dev_id, address, value):
         """Simulates the write of one byte."""
@@ -354,9 +353,8 @@ class MockSMBus(SMBus):
         if random.random() < self.__err:
             logger.error('*** random generated read-block error ***')
             raise OSError
-        else:
-            # we'll just return a random list of numbers
-            return random.sample(range(0, 255), length)
+        # we'll just return a random list of numbers
+        return random.sample(range(0, 255), length)
 
     def write_i2c_block_data(self, dev_id, address, length, data):
         """Simulates the write of one block of data."""

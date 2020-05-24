@@ -5,7 +5,7 @@ registers:
   func_cfg_access:
     address: 1
     access: RW
-    desc: Embedded functions configuration register 
+    desc: Embedded functions configuration register
 
   sensor_sync_time_frame:
     address: 4
@@ -15,27 +15,27 @@ registers:
   fifo_ctrl1:
     address: 6
     access: RW
-    desc: FIFO configuration registers 
+    desc: FIFO configuration registers
 
   fifo_ctrl2:
     address: 7
     access: RW
-    desc: FIFO configuration registers 
+    desc: FIFO configuration registers
 
   fifo_ctrl3:
     address: 8
     access: RW
-    desc: FIFO configuration registers 
+    desc: FIFO configuration registers
 
   fifo_ctrl4:
     address: 9
     access: RW
-    desc: FIFO configuration registers 
+    desc: FIFO configuration registers
 
   fifo_ctrl5:
     address: 10
     access: RW
-    desc: FIFO configuration registers 
+    desc: FIFO configuration registers
 
   orient_cfg_g:
     address: 11
@@ -44,64 +44,64 @@ registers:
   int1_ctrl:
     address: 13
     access: RW
-    desc: INT1 pin control 
+    desc: INT1 pin control
 
   int1_ctr2:
     address: 14
     access: RW
-    desc: INT2 pin control 
+    desc: INT2 pin control
 
   who_am_i:
     address: 15
     default: 105
-    desc: Who I am ID 
+    desc: Who I am ID
 
   ctrl1_xl:
     address: 16
     access: RW
-    desc: Accelerometer and gyroscope control registers 
+    desc: Accelerometer and gyroscope control registers
 
   ctrl2_g:
     address: 17
     access: RW
-    desc: Accelerometer and gyroscope control registers 
+    desc: Accelerometer and gyroscope control registers
 
   ctrl3_c:
     address: 18
     access: RW
     default: 4
-    desc: Accelerometer and gyroscope control registers 
+    desc: Accelerometer and gyroscope control registers
 
   ctrl4_c:
     address: 19
     access: RW
-    desc: Accelerometer and gyroscope control registers 
+    desc: Accelerometer and gyroscope control registers
 
   ctrl5_c:
     address: 20
     access: RW
-    desc: Accelerometer and gyroscope control registers 
+    desc: Accelerometer and gyroscope control registers
 
   ctrl6_c:
     address: 21
     access: RW
-    desc: Accelerometer and gyroscope control registers 
+    desc: Accelerometer and gyroscope control registers
 
   ctrl7_g:
     address: 22
     access: RW
-    desc: Accelerometer and gyroscope control registers 
+    desc: Accelerometer and gyroscope control registers
 
   ctrl8_xl:
     address: 23
     access: RW
-    desc: Accelerometer and gyroscope control registers 
+    desc: Accelerometer and gyroscope control registers
 
   ctrl9_xl:
     address: 24
     access: RW
     default: 56
-    desc: Accelerometer and gyroscope control registers 
+    desc: Accelerometer and gyroscope control registers
 
   ctrl10_c:
     address: 25
@@ -112,56 +112,56 @@ registers:
   master_config:
     address: 26
     access: RW
-    desc: I2C master configuration register 
+    desc: I2C master configuration register
 
   wake_up_src:
     address: 27
-    desc: Interrupts registers 
+    desc: Interrupts registers
 
   tap_src:
     address: 28
-    desc: Interrupts registers 
+    desc: Interrupts registers
 
   d6d_src:
     address: 29
-    desc: Interrupts registers 
+    desc: Interrupts registers
 
   status_reg:
     address: 30
-    desc: Status data register 
+    desc: Status data register
 
   out_temp:
     address: 32
     size: 2
-    desc: Temperature output data register 
+    desc: Temperature output data register
 
   outx_l_g:
     address: 34
-    desc: Gyroscope output register 
+    desc: Gyroscope output register
 
   outx_h_g:
     address: 35
-    desc: Gyroscope output register 
+    desc: Gyroscope output register
 
   outy_l_g:
     address: 36
-    desc: Gyroscope output register 
+    desc: Gyroscope output register
 
   outy_h_g:
     address: 37
-    desc: Gyroscope output register 
+    desc: Gyroscope output register
 
   outz_l_g:
     address: 38
-    desc: Gyroscope output register 
+    desc: Gyroscope output register
 
   outz_h_g:
     address: 39
-    desc: Gyroscope output register 
+    desc: Gyroscope output register
 
   outx_l_xl:
     address: 40
-    desc: Accelerometer output register  
+    desc: Accelerometer output register
 
   outx_h_xl:
     address: 41
@@ -185,15 +185,15 @@ registers:
 
   sensorhub1_reg:
     address: 46
-    desc: Sensor hub output registers 
+    desc: Sensor hub output registers
 
   sensorhub2_reg:
     address: 47
-    desc: Sensor hub output registers 
+    desc: Sensor hub output registers
 
   sensorhub3_reg:
     address: 48
-    desc: Sensor hub output registers 
+    desc: Sensor hub output registers
 
   sensorhub4_reg:
     address: 49
@@ -201,15 +201,15 @@ registers:
 
   sensorhub5_reg:
     address: 50
-    desc: Sensor hub output registers 
+    desc: Sensor hub output registers
 
   sensorhub6_reg:
     address: 51
-    desc: Sensor hub output registers 
+    desc: Sensor hub output registers
 
   sensorhub7_reg:
     address: 52
-    desc: Sensor hub output registers 
+    desc: Sensor hub output registers
 
   sensorhub8_reg:
     address: 53
@@ -221,43 +221,43 @@ registers:
 
   sensorhub10_reg:
     address: 55
-    desc: Sensor hub output registers 
+    desc: Sensor hub output registers
 
   sensorhub11_reg:
     address: 56
-    desc: Sensor hub output registers 
+    desc: Sensor hub output registers
 
   sensorhub12_reg:
     address: 57
-    desc: Sensor hub output registers 
+    desc: Sensor hub output registers
 
   fifo_status1:
     address: 58
-    desc: FIFO status registers 
+    desc: FIFO status registers
 
   fifo_status2:
     address: 59
     desc: FIFO status registers
 
   fifo_status3:
-    address: 60 
-    desc: FIFO status registers 
+    address: 60
+    desc: FIFO status registers
 
   fifo_status4:
     address: 61
-    desc: FIFO status registers 
+    desc: FIFO status registers
 
   fifo_data_out_l:
     address: 62
-    desc: FIFO data output registers 
+    desc: FIFO data output registers
 
   fifo_data_out_h:
     address: 63
-    desc: FIFO data output registers 
+    desc: FIFO data output registers
 
   timestamp0_reg:
     address: 64
-    desc: Timestamp output registers 
+    desc: Timestamp output registers
 
   timestamp1_reg:
     address: 65
@@ -353,24 +353,24 @@ registers:
 
   out_mag_raw_x_l:
     address: 102
-    desc: External magnetometer raw data output registers 
+    desc: External magnetometer raw data output registers
 
   out_mag_raw_x_h:
     address: 103
-    desc: External magnetometer raw data output registers 
+    desc: External magnetometer raw data output registers
 
   out_mag_raw_y_l:
     address: 104
-    desc: External magnetometer raw data output registers 
+    desc: External magnetometer raw data output registers
 
   out_mag_raw_y_h:
     address: 105
-    desc: External magnetometer raw data output registers 
+    desc: External magnetometer raw data output registers
 
   out_mag_raw_z_l:
     address: 106
-    desc: External magnetometer raw data output registers 
+    desc: External magnetometer raw data output registers
 
   out_mag_raw_z_h:
     address: 107
-    desc: External magnetometer raw data output registers 
+    desc: External magnetometer raw data output registers

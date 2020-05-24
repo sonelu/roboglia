@@ -93,15 +93,13 @@ class PVL():
         def isclose_with_nan(val1, val2, rel_tol=1e-09, abs_tol=0.0):
             if isnan(val1) and isnan(val2):
                 return True
-            else:
-                return isclose(val1, val2, rel_tol=rel_tol, abs_tol=abs_tol)
+            return isclose(val1, val2, rel_tol=rel_tol, abs_tol=abs_tol)
 
         if isinstance(other, PVL):
             return isclose_with_nan(self.p, other.p, rel_tol=0.001) and \
                    isclose_with_nan(self.v, other.v, rel_tol=0.001) and \
                    isclose_with_nan(self.ld, other.ld, rel_tol=0.001)
-        else:
-            return False
+        return False
 
     def __sub__(self, other):
         """Substracts ``other`` from a PVL (``self`` - ``other``).
@@ -127,16 +125,15 @@ class PVL():
             return PVL(p=(self.p - other.p),
                        v=(self.v - other.v),
                        ld=(self.ld - other.ld))
-        elif isinstance(other, float) or isinstance(other, int):
+        if isinstance(other, (float, int)):
             return PVL(p=(self.p - other),
                        v=(self.v - other),
                        ld=(self.ld - other))
-        elif isinstance(other, list) and len(other) == 3:
+        if isinstance(other, list) and len(other) == 3:
             return PVL(p=(self.p - other[0]),
                        v=(self.v - other[1]),
                        ld=(self.ld - other[2]))
-        else:
-            raise RuntimeError(f'Incompatible __sub__ paramters for {other}')
+        raise RuntimeError(f'Incompatible __sub__ paramters for {other}')
 
     def __add__(self, other):
         """Addition to a PVL.
@@ -162,16 +159,15 @@ class PVL():
             return PVL(p=(self.p + other.p),
                        v=(self.v + other.v),
                        ld=(self.ld + other.ld))
-        elif isinstance(other, float) or isinstance(other, int):
+        if isinstance(other, (float, int)):
             return PVL(p=(self.p + other),
                        v=(self.v + other),
                        ld=(self.ld + other))
-        elif isinstance(other, list) and len(other) == 3:
+        if isinstance(other, list) and len(other) == 3:
             return PVL(p=(self.p + other[0]),
                        v=(self.v + other[1]),
                        ld=(self.ld + other[2]))
-        else:
-            raise RuntimeError(f'Incompatible __add__ paramters for {other}')
+        raise RuntimeError(f'Incompatible __add__ paramters for {other}')
 
     def __neg__(self):
         """Returns the inverse of a PVL. ``nan`` values stay the same, floats
@@ -307,10 +303,9 @@ class PVLList():
                  if not isnan(getattr(item, attr))]
         if len(items) == 0:
             return nan
-        elif len(items) == 1:
+        if len(items) == 1:
             return items[0]
-        else:
-            return func(items)
+        return func(items)
 
     def process(self, p_func=mean, v_func=mean, ld_func=mean):
         """Performs an aggregation function on all the elements in the list
@@ -471,8 +466,7 @@ class Joint():
         """
         if self.__activate:
             return self.__activate.value
-        else:
-            return True
+        return True
 
     @active.setter
     def active(self, value):

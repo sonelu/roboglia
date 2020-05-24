@@ -137,8 +137,8 @@ class Sensor():
         """
         if self.__activate:
             return self.__activate.value
-        else:
-            return True
+        # default
+        return True
 
     @active.setter
     def active(self, value):
@@ -187,11 +187,10 @@ class Sensor():
         if self.mask:
             # boolean value
             return (reg_value & self.mask) != 0
-        else:
-            # float value
-            if self.inverse:
-                reg_value = - reg_value
-            return reg_value + self.offset
+        # float value
+        if self.inverse:
+            reg_value = - reg_value
+        return reg_value + self.offset
 
 
 class SensorXYZ():
@@ -399,8 +398,8 @@ class SensorXYZ():
         """
         if self.__activate:
             return self.__activate.value
-        else:
-            return True
+        # default
+        return True
 
     @active.setter
     def active(self, value):
