@@ -251,10 +251,10 @@ class Sequence():
             logger.warning(f'Durations for sequence "{name}" different than '
                            'the number of frames; will skip')
             return None
-        else:
-            self.__frames = frames
-            self.__durations = durations
-            self.__times = times
+        # normal processing
+        self.__frames = frames
+        self.__durations = durations
+        self.__times = times
 
     @property
     def name(self):

@@ -76,8 +76,8 @@ class DynamixelAXBaudRateRegister(BaseRegister):
             logger.error(f'attempt to write a non supported for AX baud '
                          f'rate: {value}; ignored')
             return self.int_value
-        else:
-            return int_value
+
+        return int_value
 
 
 class DynamixelAXComplianceSlopeRegister(BaseRegister):
@@ -150,5 +150,5 @@ class DynamixelXLBaudRateRegister(BaseRegister):
             logger.error(f'attempt to write a non supported for XL baud '
                          f'rate: {value}; ignored')
             return self.int_value
-        else:
-            return int_value
+
+        return int_value

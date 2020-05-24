@@ -269,20 +269,20 @@ class FileBus(BaseBus):
         if not self.is_open:
             logger.error(f'attempt to read from closed bus {self.name}')
             return None
-        else:
-            if (reg.device.dev_id, reg.address) not in self.__last:
-                self.__last[(reg.device.dev_id, reg.address)] = reg.default
-            val = self.__last[(reg.device.dev_id, reg.address)]
-            text = f'read {val} from register "{reg.name}" ({reg.address}) ' +\
-                   f'of device "{reg.device.name}" ({reg.device.dev_id})'
-            try:
-                self.__fp.write(text+'\n')
-                self.__fp.flush()
-            except Exception:
-                logger.error(f'error executing write and flush to file '
-                             f'for bus: {self.name}')
-            logger.debug(f'FileBus "{self.name}" {text}')
-            return val
+        # normal processing
+        if (reg.device.dev_id, reg.address) not in self.__last:
+            self.__last[(reg.device.dev_id, reg.address)] = reg.default
+        val = self.__last[(reg.device.dev_id, reg.address)]
+        text = f'read {val} from register "{reg.name}" ({reg.address}) ' +\
+               f'of device "{reg.device.name}" ({reg.device.dev_id})'
+        try:
+            self.__fp.write(text+'\n')
+            self.__fp.flush()
+        except Exception:
+            logger.error(f'error executing write and flush to file '
+                         f'for bus: {self.name}')
+        logger.debug(f'FileBus "{self.name}" {text}')
+        return val
 
     def __str__(self):
         """The string representation of the ``FileBus`` is a dump of the
@@ -461,9 +461,9 @@ class SharedBus():
             value = self.__main_bus.read(reg)
             self.stop_using()
             return value
-        else:
-            logger.error(f'failed to acquire bus {self.__main_bus.name}')
-            return None
+        # couldn't acquire
+        logger.error(f'failed to acquire bus {self.__main_bus.name}')
+        return None
 
     def write(self, reg, value):
         """Overrides the main bus' `~roboglia.base.BaseBus.write` method and

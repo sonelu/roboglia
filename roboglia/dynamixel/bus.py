@@ -155,13 +155,10 @@ class DynamixelBus(BaseBus):
         """
         if not self.is_open:
             logger.error('ping invoked with a bus not opened')
-        else:
-            _, cerr, derr = self.__packet_handler.ping(self.__port_handler,
-                                                       dxl_id)
-            if cerr == 0 and derr == 0:
-                return True
-            else:
-                return False
+            return False
+
+        _, cerr, derr = self.__packet_handler.ping(self.__port_handler, dxl_id)
+        return True if cerr == 0 and derr == 0 else False
 
     def scan(self, range=range(254)):
         """Scans the devices on the bus.
@@ -236,14 +233,14 @@ class DynamixelBus(BaseBus):
                 logger.error(f'[bus {self.name}] device {dev.name}, '
                              f'register {reg.name}: {err_desc}')
                 return None
-            else:
-                if derr != 0:
-                    # device error
-                    err_desc = self.__packet_handler.getRxPacketError(derr)
-                    logger.warning(f'device {dev.name} responded with a '
-                                   f'return error: {err_desc}')
-                else:
-                    return res
+
+            if derr != 0:
+                # device error
+                err_desc = self.__packet_handler.getRxPacketError(derr)
+                logger.warning(f'device {dev.name} responded with a '
+                               f'return error: {err_desc}')
+
+            return res
 
     def write(self, reg, value):
         """Depending on the size of the register calls the corresponding
