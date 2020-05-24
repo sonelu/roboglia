@@ -240,7 +240,7 @@ registers:
     desc: FIFO status registers
 
   fifo_status3:
-    address: 60 
+    address: 60
     desc: FIFO status registers
 
   fifo_status4:

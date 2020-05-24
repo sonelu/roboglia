@@ -57,4 +57,3 @@ dynamixel:
       registers: [present_voltage, present_temperature]
       frequency: 10.0
       auto: False
-  

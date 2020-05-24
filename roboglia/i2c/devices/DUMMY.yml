@@ -5,7 +5,7 @@ registers:
     address: 1
     access: RW
     default: 42
-    desc: Control Accelerometer 
+    desc: Control Accelerometer
 
   word_control_2:
     address: 2
