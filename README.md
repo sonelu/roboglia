@@ -7,6 +7,7 @@
 [![Build Status](https://travis-ci.com/sonelu/roboglia.svg?branch=master)](https://travis-ci.com/sonelu/roboglia)
 [![Documentation Status](https://readthedocs.org/projects/roboglia/badge/?version=latest)](https://roboglia.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/sonelu/roboglia/branch/master/graph/badge.svg)](https://codecov.io/gh/sonelu/roboglia)
+[![CodeFactor](https://www.codefactor.io/repository/github/sonelu/roboglia/badge/codefactor)](https://www.codefactor.io/repository/github/sonelu/roboglia/overview/codefactor)
 
 ``roboglia`` is a framework that helps developers with the setup of robots
 in a more reusable fashion. Most of the times the creation of robots involve
