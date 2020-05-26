@@ -118,7 +118,7 @@ class BaseBus():
 
     def __repr__(self):
         """Returrns a representation of a BaseBus that includes the name of
-        the class, the port and the status (open or closed).""" 
+        the class, the port and the status (open or closed)."""
         return f'<{self.__class__.__name__} port={self.port} ' + \
                f'open={self.is_open}>'
 
