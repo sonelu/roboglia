@@ -301,6 +301,11 @@ class DynamixelBus(BaseBus):
                     logger.warning(f'device {dev.name} responded with a '
                                    f'return error: {err_desc}')
 
+    def __repr__(self):
+        ans = super().__repr__()[:-1]
+        ans += f' prot={self.protocol} baud={self.baudrate} rs485={self.rs485}'
+        return ans+'>'
+
 
 class SharedDynamixelBus(SharedBus):
     """A DynamixelBus that can be used in multithreaded environment.
