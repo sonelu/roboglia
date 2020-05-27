@@ -42,7 +42,7 @@ class DynamixelSyncWriteLoop(BaseSync):
         # determines the addresses and lengths for each SyncWrite
         # allocates the GroupSyncWrite objects for each one
         self.gsws = []
-        for reg_name in self.registers:
+        for reg_name in self.register_names:
             register = getattr(self.devices[0], reg_name)
             self.gsws.append(GroupSyncWrite(self.bus.port_handler,
                                             self.bus.packet_handler,
@@ -51,7 +51,7 @@ class DynamixelSyncWriteLoop(BaseSync):
 
     def atomic(self):
         """Executes a SyncWrite."""
-        for index, reg_name in enumerate(self.registers):
+        for index, reg_name in enumerate(self.register_names):
             sync_write = self.gsws[index]
             # add params to sync write
             for device in self.devices:
@@ -104,7 +104,7 @@ class DynamixelSyncReadLoop(BaseSync):
     def setup(self):
         """Prepares to start the loop."""
         self.gsrs = []
-        for reg_name in self.registers:
+        for reg_name in self.register_names:
             register = getattr(self.devices[0], reg_name)
             gsr = GroupSyncRead(self.bus.port_handler,
                                 self.bus.packet_handler,
@@ -119,7 +119,7 @@ class DynamixelSyncReadLoop(BaseSync):
 
     def atomic(self):
         """Executes a SyncRead."""
-        for index, reg_name in enumerate(self.registers):
+        for index, reg_name in enumerate(self.register_names):
             gsr = self.gsrs[index]
             # acquire the bus
             if not self.bus.can_use():
@@ -173,13 +173,13 @@ class DynamixelBulkWriteLoop(BaseSync):
         that is produced by :py:class:`BaseThread` class.
         """
         self.gbws = []
-        for _ in self.registers:
+        for _ in self.register_names:
             self.gbws.append(GroupBulkWrite(self.bus.port_handler,
                                             self.bus.packet_handler))
 
     def atomic(self):
         """Executes a SyncWrite."""
-        for index, reg_name in enumerate(self.registers):
+        for index, reg_name in enumerate(self.register_names):
             gbw = self.gbws[index]
             # prepares the call
             for device in self.devices:
@@ -224,7 +224,7 @@ class DynamixelBulkReadLoop(BaseSync):
     def setup(self):
         """Prepares to start the loop."""
         self.gbrs = []
-        for reg_name in self.registers:
+        for reg_name in self.register_names:
             gbr = GroupBulkRead(self.bus.port_handler,
                                 self.bus.packet_handler)
             for device in self.devices:
@@ -239,7 +239,7 @@ class DynamixelBulkReadLoop(BaseSync):
     def atomic(self):
         """Executes a BulkRead."""
         # execute read
-        for index, reg_name in enumerate(self.registers):
+        for index, reg_name in enumerate(self.register_names):
             gbr = self.gbrs[index]
             if not self.bus.can_use():
                 logger.error(f'sync {self.name} '

@@ -336,6 +336,10 @@ class SharedBus():
         self.__lock = threading.Lock()
 
     @property
+    def lock(self):
+        return self.__lock
+
+    @property
     def timeout(self):
         """Returns the timeout for requesting access to lock."""
         return self.__timeout
