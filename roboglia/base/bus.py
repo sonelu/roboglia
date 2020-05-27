@@ -116,6 +116,12 @@ class BaseBus():
                 return False
         return True
 
+    def __repr__(self):
+        """Returrns a representation of a BaseBus that includes the name of
+        the class, the port and the status (open or closed)."""
+        return f'<{self.__class__.__name__} port={self.port} ' + \
+               f'open={self.is_open}>'
+
     @property
     def is_open(self):
         """Returns `True` or `False` if the bus is open. Must be overridden
@@ -330,6 +336,10 @@ class SharedBus():
         self.__lock = threading.Lock()
 
     @property
+    def lock(self):
+        return self.__lock
+
+    @property
     def timeout(self):
         """Returns the timeout for requesting access to lock."""
         return self.__timeout
@@ -490,6 +500,15 @@ class SharedBus():
             self.stop_using()
         else:
             logger.error(f'failed to acquire bus {self.__main_bus.name}')
+
+    def __repr__(self):
+        """Invokes the main bus representation but changes the class name
+        with the "Shared" class name to show a more accurate picture of the
+        object."""
+        ans = self.__main_bus.__repr__()
+        ans = ans.replace(self.__main_bus.__class__.__name__,
+                          self.__class__.__name__)
+        return ans
 
     def __getattr__(self, name):
         """Forwards all unanswered calls to the main bus instance."""

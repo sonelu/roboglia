@@ -160,7 +160,7 @@ class BaseRobot():
             bus_class = get_registered_class(bus_info['class'])
             new_bus = bus_class(**bus_info)
             self.__buses[bus_name] = new_bus
-            logger.debug(f'Bus "{bus_name}" added')
+            logger.info(f'Bus "{bus_name}" added')
 
     def __init_devices(self, devices):
         """Called by ``__init__`` to parse and instantiate devices."""
@@ -189,7 +189,7 @@ class BaseRobot():
             new_dev = dev_class(**dev_info)
             self.__devices[dev_name] = new_dev
             self.__dev_by_id[dev_info['dev_id']] = new_dev
-            logger.debug(f'Device "{dev_name}" added')
+            logger.info(f'Device "{dev_name}" added')
 
     def __init_joints(self, joints):
         """Called by ``__init__`` to parse and instantiate joints."""
@@ -211,7 +211,7 @@ class BaseRobot():
             joint_class = get_registered_class(joint_info['class'])
             new_joint = joint_class(**joint_info)
             self.__joints[joint_name] = new_joint
-            logger.debug(f'Joint "{joint_name}" added')
+            logger.info(f'Joint "{joint_name}" added')
 
     def __init_sensors(self, sensors):
         """Called by ``__init__`` to parse and instantiate sensors."""
@@ -233,7 +233,7 @@ class BaseRobot():
             sensor_class = get_registered_class(sensor_info['class'])
             new_sensor = sensor_class(**sensor_info)
             self.__sensors[sensor_name] = new_sensor
-            logger.debug(f'Sensor "{sensor_name}" added')
+            logger.info(f'Sensor "{sensor_name}" added')
 
     def __init_groups(self, groups):
         """Called by ``__init__`` to parse and instantiate groups."""
@@ -257,7 +257,7 @@ class BaseRobot():
                           logger, f'group {sub_grp_name} does not exist')
                 new_grp.update(self.groups[sub_grp_name])
             self.__groups[grp_name] = new_grp
-            logger.debug(f'Group "{grp_name}" added')
+            logger.info(f'Group "{grp_name}" added')
 
     def __init_syncs(self, syncs):
         """Called by ``__init__`` to parse and instantiate syncs."""
@@ -276,7 +276,7 @@ class BaseRobot():
             sync_class = get_registered_class(sync_info['class'])
             new_sync = sync_class(**sync_info)
             self.__syncs[sync_name] = new_sync
-            logger.debug(f'Sync "{sync_name}" added')
+            logger.info(f'Sync "{sync_name}" added')
 
     def __init_manager(self, manager):
         """Called by ``__init__`` to parse and instantiate the robot
@@ -302,7 +302,7 @@ class BaseRobot():
         name = manager.get('name', self.name+'-manager')
         self.__manager = JointManager(name=name, joints=joints,
                                       group=group, **manager)
-        logger.debug(f'Manager "{self.manager.name}" added')
+        logger.info(f'Manager "{self.manager.name}" added')
 
     @property
     def name(self):
@@ -377,26 +377,32 @@ class BaseRobot():
 
         """
         logger.info('***** Starting robot *****************')
+        # buses
         logger.info('Opening buses...')
         for bus in self.buses.values():
             if bus.auto_open:
-                logger.info(f'--> Opening bus: {bus.name}')
+                logger.info(f'Opening bus: "{bus.name}"')
                 bus.open()
             else:
-                logger.info(f'--> Opening bus: {bus.name} - skipped')
+                logger.info(f'Opening bus: "{bus.name}" - skipped')
+        # devices
         logger.info('Opening devices...')
         for device in self.devices.values():
-            logger.info(f'--> Opening device: {device.name}')
+            logger.info(f'Opening device: "{device.name}"')
+            # TODO: should there be an Auto attribute for devices?
             device.open()
+        # syncs
         logger.info('Starting syncs...')
         for sync in self.syncs.values():
             if sync.auto_start:
-                logger.info(f'--> Starting sync: {sync.name}')
+                logger.info(f'Starting sync: "{sync.name}"')
                 sync.start()
             else:
-                logger.info(f'--> Starting sync: {sync.name} - skipped')
+                logger.info(f'Starting sync: "{sync.name}" - skipped')
+        # joint manager; this will also start the joints
         logger.info('Starting joint manager...')
         self.manager.start()
+        # finished
         logger.info('***** Robot started ******************')
 
     def stop(self):
@@ -412,15 +418,15 @@ class BaseRobot():
         self.manager.stop()
         logger.info('Stopping syncs...')
         for sync in self.syncs.values():
-            logger.debug(f'--> Stopping sync: {sync.name}')
+            logger.info(f'Stopping sync: "{sync.name}"')
             sync.stop()
         logger.info('Closing devices...')
         for device in self.devices.values():
-            logger.debug(f'--> Closing device: {device.name}')
+            logger.info(f'Closing device: "{device.name}"')
             device.close()
         logger.info('Closing buses...')
         for bus in self.buses.values():
-            logger.debug(f'--> Closing bus: {bus.name}')
+            logger.info(f'Closing bus: "{bus.name}"')
             bus.close()
         logger.info('***** Robot stopped ******************')
 
@@ -480,22 +486,23 @@ class JointManager(BaseLoop):
         # eliminate duplicates
         self.__joints = list(set(temp_joints))
         if len(self.__joints) == 0:
-            logger.warning('joint manager does not have any joints '
+            logger.warning('Joint manager does not have any joints '
                            'attached to it')
         check_options(function, ['mean', 'median', 'min', 'max'],
                       'JointManager', name, logger)
         # aggregate functions
-        func = self.__check_function(function)
-        self.__p_func = self.__check_function(p_function, func)
-        self.__v_func = self.__check_function(v_function, func)
-        self.__ld_func = self.__check_function(ld_function, func)
+        func = self.__check_function(function, 'default')
+        self.__p_func = self.__check_function(p_function, 'p_function', func)
+        self.__v_func = self.__check_function(v_function, 'v_function', func)
+        self.__ld_func = self.__check_function(ld_function, 'ld_function',
+                                               func)
         # processing queues
         self.__submissions = {}
         self.__adjustments = {}
         self.__streams = {}
         self.__lock = threading.Lock()
 
-    def __check_function(self, func_name, default=statistics.mean):
+    def __check_function(self, func_name, context, default=statistics.mean):
         """Checks the function provided and returns a reference to it.
         Supported functions: ``mean``, ``median``, ``min`` and ``max``.
 
@@ -524,7 +531,7 @@ class JointManager(BaseLoop):
         if func_name in supported:
             return supported[func_name]
 
-        logger.info(f'Function {func_name} not supported. '
+        logger.info(f'Function "{func_name}" for {context} not supported. '
                     f'Using {default}')
         return default
 

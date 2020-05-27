@@ -1,11 +1,11 @@
-# Dynamixel AX-12A servo
-# http://emanual.robotis.com/docs/en/dxl/ax/ax-12a/#control-table
+# Dynamixel AX-18A servo
+# http://emanual.robotis.com/docs/en/dxl/ax/ax-18a/#control-table
 #
 registers:
   model_number:
     address: 0
     size: 2
-    default: 12
+    default: 18
 
   firmware:
     address: 2

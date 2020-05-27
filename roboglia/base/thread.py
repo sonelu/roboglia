@@ -128,59 +128,59 @@ class BaseThread():
 
     def start(self, wait=True):
         """Starts the task in it's own thread."""
-        logger.info(f'Start requested for {self.name}')
+        logger.info(f'Start requested for "{self.name}"')
         if self.running:
-            logger.info(f'{self.name} already running. Stopping first.')
+            logger.info(f'"{self.name}" already running. Stopping first.')
             self.stop()
         self.__thread = threading.Thread(target=self._wrapped_target)
         self.__thread.daemon = True
         self.__thread.name = self.name
-        logger.info(f'{self.name} starting')
+        logger.info(f'"{self.name}" starting')
         self.__thread.start()
 
         if wait and (threading.current_thread() != self.__thread):
             if not self.__started.wait(self.__patience):
                 if self.__crashed:
-                    mess = f'Setup failed, for {self.__thread.name}.'
+                    mess = f'Setup failed, for "{self.__thread.name}".'
                 else:
                     mess = f'Setup took longer than {self.__patience}s ' + \
-                           f'for {self.__thread.name}'
+                           f'for "{self.__thread.name}"'
                 self.__thread.join()
                 logger.critical(mess)
                 raise RuntimeError(mess)
-        logger.info(f'{self.name} successfully started')
+        logger.info(f'"{self.name}" successfully started')
 
     def stop(self, wait=True):
         """Sends the stopping signal to the thread. By default waits for
         the thread to finish."""
-        logger.info(f'Stop requested for {self.name}')
+        logger.info(f'Stop requested for "{self.name}"')
         if self.started:
             self.__started.clear()
             self.__paused.clear()
-            logger.info(f'{self.name} stopping')
+            logger.info(f'"{self.name}" stopping')
             if wait and (threading.current_thread() != self.__thread):
                 while self.__thread.is_alive():
                     self.__started.clear()
                     self.__thread.join(timeout=1.0)
-            logger.info(f'{self.name} successfully stopped')
+            logger.info(f'"{self.name}" successfully stopped')
         else:
-            logger.info(f'{self.name} is not running; nothing to do')
+            logger.info(f'"{self.name}" is not running; nothing to do')
 
     def pause(self):
         """Requests the thread to pause."""
-        logger.info(f'Pause requested for {self.name}')
+        logger.info(f'Pause requested for "{self.name}"')
         if self.running:
             self.__paused.set()
-            logger.info(f'{self.name} paused')
-        logger.info(f'{self.name} is not running; nothing to do')
+            logger.info(f'"{self.name}" paused')
+        logger.info(f'"{self.name}" is not running; nothing to do')
 
     def resume(self):
         """Requests the thread to resume."""
-        logger.info(f'Resume requested for {self.name}')
+        logger.info(f'Resume requested for "{self.name}"')
         if self.paused:
             self.__paused.clear()
-            logger.info(f'{self.name} resumed')
-        logger.info(f'{self.name} is not paused; nothing to do')
+            logger.info(f'"{self.name}" resumed')
+        logger.info(f'"{self.name}" is not paused; nothing to do')
 
 
 class BaseLoop(BaseThread):
@@ -206,7 +206,7 @@ class BaseLoop(BaseThread):
         calculated over a period of time specified by the parameter `review`.
 
     throttle: float
-        Is a float (small) that is used by the monitoring of
+        Is a float (< 1.0) that is used by the monitoring of
         execution statistics to adjust the wait time in order to produce
         the desired processing frequency.
 
@@ -220,7 +220,7 @@ class BaseLoop(BaseThread):
         dictionary are incorrect or missing.
     """
     def __init__(self, frequency=None, warning=0.90,
-                 throttle=0.02, review=1.0, **kwargs):
+                 throttle=0.1, review=1.0, **kwargs):
         super().__init__(**kwargs)
         check_not_empty(frequency, 'frequency', 'loop', self.name, logger)
         check_type(frequency, float, 'loop', self.name, logger)
@@ -275,7 +275,7 @@ class BaseLoop(BaseThread):
     def run(self):
         exec_counts = 0
         last_count_reset = time.time()
-        factor = 1.0            # fine adjust the rate
+        adjust = 0.0            # fine adjust the rate
         while not self.stopped:
             if self.paused:
                 # paused; reset the statistics
@@ -286,27 +286,33 @@ class BaseLoop(BaseThread):
                 start_time = time.time()
                 self.atomic()
                 end_time = time.time()
-                wait_time = self.__period - (end_time - start_time)
-                wait_time *= factor
+                wait_time = self.__period - (end_time - start_time) + adjust
                 if wait_time > 0:
                     time.sleep(wait_time)
+                else:
+                    logger.debug(f'Loop "{self.name}" took longer to run '
+                                 f'{end_time - start_time:.5f} than '
+                                 f'loop period {self.period:.5f}; check')
                 # statistics:
                 exec_counts += 1
                 if exec_counts >= self.__frequency * self.__review:
                     exec_time = time.time() - last_count_reset
                     actual_freq = exec_counts / exec_time
+                    rate = actual_freq / self.__frequency
+                    diff = self.__period - exec_time / exec_counts
                     # fine tune the frequency
-                    if actual_freq < self.__frequency:
-                        # will reduce wait time
-                        factor *= (1 - self.__throttle)
-                    else:
-                        # will increase wait time
-                        factor *= (1 + self.__throttle)
+                    adjust += diff * self.__throttle
                     if actual_freq < (self.__frequency * self.__warning):
                         logger.warning(
-                            f'loop {self.name} running under '
-                            f'warning threshold {actual_freq:.2f}[Hz] '
-                            f'({actual_freq/self.__frequency*100:.0f}%')
+                            f'Loop "{self.name}" running under '
+                            f'warning threshold at {actual_freq:.2f}[Hz] '
+                            f'({rate*100:.0f}%)')
+                        logger.warning(f'adjust={adjust}')
+                    else:
+                        logger.info(
+                            f'Loop "{self.name}" running at '
+                            f'{actual_freq:.2f}[Hz] '
+                            f'({rate*100:.0f}%)')
                     # reset counters
                     exec_counts = 0
                     last_count_reset = time.time()

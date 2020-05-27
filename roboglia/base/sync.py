@@ -65,9 +65,10 @@ class BaseSync(BaseLoop):
         check_type(self.__bus, SharedBus, 'sync', self.name, logger)
         check_not_empty(registers, 'registers', 'sync', self.name, logger)
         check_type(registers, list, 'sync', self.name, logger)
-        self.__registers = registers
+        self.__reg_names = registers
         check_options(auto, [True, False], 'sync', self.name, logger)
         self.__auto_start = auto
+        self.__all_registers = []
         self.process_registers()
 
     @property
@@ -88,9 +89,13 @@ class BaseSync(BaseLoop):
         return self.__devices
 
     @property
-    def registers(self):
-        """The registers used buy the sync."""
-        return self.__registers
+    def register_names(self):
+        """The register names used by the sync."""
+        return self.__reg_names
+
+    @property
+    def all_registers(self):
+        return self.__all_registers
 
     def process_devices(self):
         """Processes the provided devices.
@@ -122,17 +127,21 @@ class BaseSync(BaseLoop):
         devices and sets the ``sync`` attribute to ``True`` if not already
         set."""
         for device in self.__devices:
-            for register in self.__registers:
-                check_key(register, device.registers, 'sync',
+            for reg_name in self.register_names:
+                check_key(reg_name, device.registers, 'sync',
                           self.name, logger,
                           f'device {device.name} does not have a '
-                          f'register {register}')
+                          f'register {reg_name}')
                 # mark the register for sync
-                reg_obj = getattr(device, register)
+                reg_obj = getattr(device, reg_name)
+                # add the objest in the list so that we don't need
+                # to loop over devices and registers and use getattr()
+                # during the atomic() processing
+                self.__all_registers.append(reg_obj)
                 if not reg_obj.sync:
                     reg_obj.sync = True
-                    logger.debug(f'\t\tsetting register {register} of device '
-                                 f'{device.name} sync=True')
+                    logger.debug(f'Setting register "{reg_name}" of device '
+                                 f'"{device.name}" sync=True')
 
     def get_register_range(self):
         """Determines the start address of the range of registers and the
@@ -146,7 +155,7 @@ class BaseSync(BaseLoop):
         length = 0
         # pick the first device; we expect all to have the same registers
         device = self.devices[0]
-        for reg_name in self.registers:
+        for reg_name in self.register_names:
             register = getattr(device, reg_name)
             if register.address < start_address:
                 start_address = register.address
@@ -180,19 +189,19 @@ class BaseReadSync(BaseSync):
         devices and registers and ask them to refresh.
         """
         if self.bus.can_use():
-            for device in self.devices:
-                for register in self.registers:
-                    reg = getattr(device, register)
-                    value = self.bus.naked_read(reg)
-                    if value is not None:
-                        reg.int_value = value
-                    else:
-                        logger.warning(f'sync {self.name}: failed to read '
-                                       f'register {register} '
-                                       f'of device {device.name}')
+            for reg in self.all_registers:
+                value = self.bus.naked_read(reg)
+                logger.debug(f'Read {value} for device "{reg.device.name}" '
+                             f'register "{reg.name}"')
+                if value is not None:
+                    reg.int_value = value
+                else:
+                    logger.warning(f'Sync "{self.name}": failed to read '
+                                   f'register "{reg.name}" '
+                                   f'of device "{reg.device.name}"')
             self.bus.stop_using()
         else:
-            logger.error(f'failed to acquire buss {self.bus.name}')
+            logger.error(f'Failed to acquire bus "{self.bus.name}"')
 
 
 class BaseWriteSync(BaseSync):
@@ -209,10 +218,10 @@ class BaseWriteSync(BaseSync):
         devices and registers and ask them to refresh.
         """
         if self.bus.can_use():
-            for device in self.devices:
-                for register in self.registers:
-                    reg = getattr(device, register)
-                    self.bus.naked_write(reg, reg.int_value)
+            for reg in self.all_registers:
+                self.bus.naked_write(reg, reg.int_value)
+                logger.debug(f'Wrote {reg.int_value} for device '
+                             f'"{reg.device.name}" register "{reg.name}"')
             self.bus.stop_using()
         else:
-            logger.error(f'failed to acquire buss {self.bus.name}')
+            logger.error(f'Failed to acquire bus "{self.bus.name}"')

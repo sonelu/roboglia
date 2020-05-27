@@ -41,7 +41,7 @@ class I2CWriteLoop(BaseSync):
         for device in self.devices:
             # prepare data
             data = [0] * self.length
-            for reg_name in self.registers:
+            for reg_name in self.register_names:
                 register = getattr(device, reg_name)
                 pos = register.address - self.start_address
                 if register.size == 1:
@@ -87,7 +87,7 @@ class I2CReadLoop(BaseSync):
                                             self.length)
             logger.debug(f'{self.name} read block data {data}')
             if data is not None:
-                for reg_name in self.registers:
+                for reg_name in self.register_names:
                     register = getattr(device, reg_name)
                     pos = register.address - self.start_address
                     if register.size == 1:
