@@ -104,10 +104,12 @@ class TestMockRobot:
         assert (ext_range[0] - exp_min_ext) < 1
         assert (ext_range[1] - exp_max_ext) < 1
         # try changing the internal value directly
-        caplog.clear()
-        reg.int_value = 1
-        assert len(caplog.records) >= 1
-        assert 'only BaseSync subclasses can change' in caplog.text
+        # removed after bug #64
+        # 
+        # caplog.clear()
+        # reg.int_value = 1
+        # assert len(caplog.records) >= 1
+        # assert 'only BaseSync subclasses can change' in caplog.text
 
     def test_register_with_threshold(self, mock_robot):
         reg = mock_robot.devices['d03'].writeable_current_load
