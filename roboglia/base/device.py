@@ -270,18 +270,19 @@ class BaseDevice():
         for init in self.__inits:
             for reg_name, value in init.items():
                 if reg_name not in self.registers:
-                    logger.warning(f'register {reg_name} does not exist in '
-                                   f'device {self.name}; '
+                    logger.warning(f'Register "{reg_name}" does not exist in '
+                                   f'device "{self.name}"; '
                                    'skipping initialization')
                 else:
                     register = self.registers[reg_name]
                     if value is None:
                         register.read()
-                        logger.debug(f'register {reg_name} read')
+                        logger.debug(f'Register "{reg_name}" read')
                     else:
                         register.value = value
-                        logger.debug(f'register {reg_name} updated to {value}')
-                        logger.debug(f'>>> int_value: {register.int_value}')
+                        logger.debug(
+                            f'Register "{reg_name}" updated to {value} '
+                            f'(int_value: {register.int_value})')
 
     def close(self):
         """Perform device closure. ``BaseDevice`` implementation does
