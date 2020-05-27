@@ -267,6 +267,8 @@ class BaseDevice():
         parameter provided initializes the indicated
         registers with the values from the ``init`` paramters.
         """
+        if self.__inits:
+            logger.info(f'Initializing device "{self.name}"')
         for init in self.__inits:
             for reg_name, value in init.items():
                 if reg_name not in self.registers:

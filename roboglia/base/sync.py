@@ -131,8 +131,8 @@ class BaseSync(BaseLoop):
                 reg_obj = getattr(device, register)
                 if not reg_obj.sync:
                     reg_obj.sync = True
-                    logger.debug(f'\t\tsetting register {register} of device '
-                                 f'{device.name} sync=True')
+                    logger.debug(f'Setting register "{register}" of device '
+                                 f'"{device.name}" sync=True')
 
     def get_register_range(self):
         """Determines the start address of the range of registers and the
@@ -181,18 +181,20 @@ class BaseReadSync(BaseSync):
         """
         if self.bus.can_use():
             for device in self.devices:
-                for register in self.registers:
-                    reg = getattr(device, register)
+                for reg_name in self.registers:
+                    reg = getattr(device, reg_name)
                     value = self.bus.naked_read(reg)
+                    logger.debug(f'Read {value} for device "{device.name}" '
+                                 f'register "{reg_name}"')
                     if value is not None:
                         reg.int_value = value
                     else:
-                        logger.warning(f'sync {self.name}: failed to read '
-                                       f'register {register} '
-                                       f'of device {device.name}')
+                        logger.warning(f'Sync "{self.name}": failed to read '
+                                       f'register "{reg_name}" '
+                                       f'of device "{device.name}"')
             self.bus.stop_using()
         else:
-            logger.error(f'failed to acquire buss {self.bus.name}')
+            logger.error(f'Failed to acquire bus "{self.bus.name}"')
 
 
 class BaseWriteSync(BaseSync):
@@ -210,9 +212,11 @@ class BaseWriteSync(BaseSync):
         """
         if self.bus.can_use():
             for device in self.devices:
-                for register in self.registers:
-                    reg = getattr(device, register)
+                for reg_name in self.registers:
+                    reg = getattr(device, reg_name)
                     self.bus.naked_write(reg, reg.int_value)
+                    logger.debug(f'Wrote {reg.int_value} for device '
+                                 f'"{device.name}" register "{reg_name}"')
             self.bus.stop_using()
         else:
-            logger.error(f'failed to acquire buss {self.bus.name}')
+            logger.error(f'Failed to acquire bus "{self.bus.name}"')
