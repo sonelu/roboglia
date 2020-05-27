@@ -486,22 +486,23 @@ class JointManager(BaseLoop):
         # eliminate duplicates
         self.__joints = list(set(temp_joints))
         if len(self.__joints) == 0:
-            logger.warning('joint manager does not have any joints '
+            logger.warning('Joint manager does not have any joints '
                            'attached to it')
         check_options(function, ['mean', 'median', 'min', 'max'],
                       'JointManager', name, logger)
         # aggregate functions
-        func = self.__check_function(function)
-        self.__p_func = self.__check_function(p_function, func)
-        self.__v_func = self.__check_function(v_function, func)
-        self.__ld_func = self.__check_function(ld_function, func)
+        func = self.__check_function(function, 'default')
+        self.__p_func = self.__check_function(p_function, 'p_function', func)
+        self.__v_func = self.__check_function(v_function, 'v_function', func)
+        self.__ld_func = self.__check_function(ld_function, 'ld_function',
+                                               func)
         # processing queues
         self.__submissions = {}
         self.__adjustments = {}
         self.__streams = {}
         self.__lock = threading.Lock()
 
-    def __check_function(self, func_name, default=statistics.mean):
+    def __check_function(self, func_name, context, default=statistics.mean):
         """Checks the function provided and returns a reference to it.
         Supported functions: ``mean``, ``median``, ``min`` and ``max``.
 
@@ -530,7 +531,7 @@ class JointManager(BaseLoop):
         if func_name in supported:
             return supported[func_name]
 
-        logger.info(f'Function {func_name} not supported. '
+        logger.info(f'Function "{func_name}" for {context} not supported. '
                     f'Using {default}')
         return default
 
