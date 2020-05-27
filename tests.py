@@ -383,14 +383,14 @@ class TestMockRobot:
         assert not thread.paused
 
         thread = CrashAtSetup(name='my_thread', patience=0.3)
-        with pytest.raises(RuntimeError) as excinfo:
+        with pytest.raises(RuntimeError):
             thread.start()
             time.sleep(0.5)
         assert not thread.started
         assert not thread.paused       
 
         thread = CrashLongSetup(name='my_thread', patience=0.3)
-        with pytest.raises(RuntimeError) as excinfo:
+        with pytest.raises(RuntimeError):
             thread.start()
             time.sleep(0.5)
         assert not thread.started
@@ -679,23 +679,23 @@ class TestDynamixelRobot:
         caplog.clear()
         bus.ping(11)
         assert len(caplog.records) == 1
-        assert 'ping invoked with a bus not opened' in caplog.text
+        assert 'Ping invoked with a bus not opened' in caplog.text
         # scan
         caplog.clear()
         bus.scan(range(10))
         assert len(caplog.records) == 1
-        assert 'scan invoked with a bus not opened' in caplog.text
+        assert 'Scan invoked with a bus not opened' in caplog.text
         # read
         dev = robot.devices['d11']
         caplog.clear()
         bus.read(dev.return_delay_time)
         assert len(caplog.records) == 1
-        assert 'attempt to use closed bus ttys1' in caplog.text
+        assert 'Attempt to use closed bus "ttys1"' in caplog.text
         # write
         caplog.clear()
         bus.write(dev.return_delay_time, 10)
         assert len(caplog.records) == 1
-        assert 'attempt to use closed bus ttys1' in caplog.text
+        assert 'Attempt to use closed bus "ttys1"' in caplog.text
         robot.stop()
 
 

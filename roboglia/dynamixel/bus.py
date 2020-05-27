@@ -118,9 +118,9 @@ class DynamixelBus(BaseBus):
             self.__port_handler.setBaudRate(self.baudrate)
             if self.rs485:
                 self.__port_handler.ser.rs485_mode = rs485.RS485Settings()
-                logger.info(f'\tbus {self.name} set in rs485 mode')
+                logger.info(f'Bus "{self.name}" set in rs485 mode')
             self.__packet_handler = PacketHandler(self.__protocol)
-        logger.info(f'bus {self.name} opened')
+        logger.info(f'Bus "{self.name}" opened')
 
     def close(self):
         """Closes the actual physical bus. Calls the ``super().close()`` to
@@ -132,7 +132,7 @@ class DynamixelBus(BaseBus):
                 if not self.__mock:
                     self.__port_handler.closePort()
                 self.__port_handler = None
-                logger.info(f'bus {self.name} closed')
+                logger.info(f'Bus "{self.name}" closed')
 
     @property
     def is_open(self):
@@ -154,7 +154,7 @@ class DynamixelBus(BaseBus):
             ``True`` if the device responded, ``False`` otherwise.
         """
         if not self.is_open:
-            logger.error('ping invoked with a bus not opened')
+            logger.error('Ping invoked with a bus not opened')
             return False
 
         _, cerr, derr = self.__packet_handler.ping(self.__port_handler, dxl_id)
@@ -177,7 +177,7 @@ class DynamixelBus(BaseBus):
             empty.
         """
         if not self.is_open:
-            logger.error('scan invoked with a bus not opened')
+            logger.error('Scan invoked with a bus not opened')
         else:
             return [dxl_id for dxl_id in range if self.ping(dxl_id)]
 
@@ -199,7 +199,7 @@ class DynamixelBus(BaseBus):
             The value read by calling the device.
         """
         if not self.is_open:
-            logger.error(f'attempt to use closed bus {self.name}')
+            logger.error(f'Attempt to use closed bus "{self.name}"')
         else:
             dev = reg.device
             # select the function by the size of register
@@ -217,8 +217,9 @@ class DynamixelBus(BaseBus):
                 res, cerr, derr = function(self.__port_handler,
                                            dev.dev_id, reg.address)
             except Exception as e:
-                logger.error(f'Exception raised while reading bus {self.name}'
-                             f' device {dev.name} register {reg.name}')
+                logger.error(f'Exception raised while reading bus '
+                             f'"{self.name}" device "{dev.name}" register '
+                             f'"{reg.name}"')
                 logger.error(str(e))
                 return None
 
@@ -230,14 +231,14 @@ class DynamixelBus(BaseBus):
             if cerr != 0:
                 # communication error
                 err_desc = self.__packet_handler.getTxRxResult(cerr)
-                logger.error(f'[bus {self.name}] device {dev.name}, '
-                             f'register {reg.name}: {err_desc}')
+                logger.error(f'[bus "{self.name}"] device "{dev.name}", '
+                             f'register "{reg.name}": {err_desc}')
                 return None
 
             if derr != 0:
                 # device error
                 err_desc = self.__packet_handler.getRxPacketError(derr)
-                logger.warning(f'device {dev.name} responded with a '
+                logger.warning(f'device "{dev.name}" responded with a '
                                f'return error: {err_desc}')
 
             return res
@@ -261,7 +262,7 @@ class DynamixelBus(BaseBus):
             between the internal and external format if they are different.
         """
         if not self.is_open:
-            logger.error(f'attempt to use closed bus {self.name}')
+            logger.error(f'Attempt to use closed bus "{self.name}"')
         else:
             dev = reg.device
             # select function by register size
@@ -279,8 +280,9 @@ class DynamixelBus(BaseBus):
                 cerr, derr = function(self.__port_handler, dev.dev_id,
                                       reg.address, value)
             except Exception as e:
-                logger.error(f'Exception raised while writing bus {self.name}'
-                             f' device {dev.name} register {reg.name}')
+                logger.error(f'Exception raised while writing bus '
+                             f'"{self.name}" device "{dev.name}" register '
+                             f'"{reg.name}"')
                 logger.error(str(e))
                 return None
 
@@ -292,13 +294,13 @@ class DynamixelBus(BaseBus):
             if cerr != 0:
                 # communication error
                 err_desc = self.__packet_handler.getTxRxResult(cerr)
-                logger.error(f'[bus {self.name}] device {dev.name}, '
-                             f'register {reg.name}: {err_desc}')
+                logger.error(f'[Bus "{self.name}"] device "{dev.name}", '
+                             f'register "{reg.name}": {err_desc}')
             else:
                 if derr != 0:
                     # device error
                     err_desc = self.__packet_handler.getRxPacketError(derr)
-                    logger.warning(f'device {dev.name} responded with a '
+                    logger.warning(f'Device "{dev.name}" responded with a '
                                    f'return error: {err_desc}')
 
     def __repr__(self):
