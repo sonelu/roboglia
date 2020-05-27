@@ -255,18 +255,17 @@ class BaseRegister():
 
     @int_value.setter
     def int_value(self, value):
-        """Allows only :py:class:`BaseSync` derrived classes to set the values
-        for the ``int_value``. If clone, store the value in the main register.
-        """
-        caller = inspect.stack()[1].frame.f_locals['self']
-        if isinstance(caller, (BaseSync, BaseRegister)):
-            if not self.clone:
-                self.__int_value = value
-            else:
-                self.clone.int_value = value
+        """If clone, store the value in the main register."""
+        # caller = inspect.stack()[1].frame.f_locals['self']
+        # if isinstance(caller, (BaseSync, BaseRegister)):
+        # fixes bug #64
+        if not self.clone:
+            self.__int_value = value
         else:
-            logger.error('only BaseSync subclasses can change the '
-                         'internal value')
+            self.clone.int_value = value
+        # else:
+        #     logger.error('only BaseSync subclasses can change the '
+        #                  'internal value')
 
     def value_to_external(self, value):
         """Converts the presented value to external format according to
