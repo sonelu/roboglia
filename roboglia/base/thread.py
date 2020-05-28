@@ -289,10 +289,10 @@ class BaseLoop(BaseThread):
                 wait_time = self.__period - (end_time - start_time) + adjust
                 if wait_time > 0:
                     time.sleep(wait_time)
-                else:
-                    logger.debug(f'Loop "{self.name}" took longer to run '
-                                 f'{end_time - start_time:.5f} than '
-                                 f'loop period {self.period:.5f}; check')
+                # else:
+                #     logger.debug(f'Loop "{self.name}" took longer to run '
+                #                  f'{end_time - start_time:.5f} than '
+                #                  f'loop period {self.period:.5f}; check')
                 # statistics:
                 exec_counts += 1
                 if exec_counts >= self.__frequency * self.__review:
@@ -302,12 +302,13 @@ class BaseLoop(BaseThread):
                     diff = self.__period - exec_time / exec_counts
                     # fine tune the frequency
                     adjust += diff * self.__throttle
+                    if adjust < - self.__period:
+                        adjust = - self.__period
                     if actual_freq < (self.__frequency * self.__warning):
                         logger.warning(
                             f'Loop "{self.name}" running under '
                             f'warning threshold at {actual_freq:.2f}[Hz] '
                             f'({rate*100:.0f}%)')
-                        logger.warning(f'adjust={adjust}')
                     else:
                         logger.info(
                             f'Loop "{self.name}" running at '
