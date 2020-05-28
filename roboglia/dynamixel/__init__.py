@@ -14,6 +14,7 @@ from .sync import DynamixelSyncReadLoop
 from .sync import DynamixelSyncWriteLoop
 from .sync import DynamixelBulkReadLoop
 from .sync import DynamixelBulkWriteLoop
+from .sync import DynamixelRangeReadLoop
 
 register_class(DynamixelAXBaudRateRegister)
 register_class(DynamixelAXComplianceSlopeRegister)
@@ -29,3 +30,4 @@ register_class(DynamixelSyncReadLoop)
 register_class(DynamixelSyncWriteLoop)
 register_class(DynamixelBulkReadLoop)
 register_class(DynamixelBulkWriteLoop)
+register_class(DynamixelRangeReadLoop)

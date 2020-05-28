@@ -112,7 +112,7 @@ class DynamixelBus(BaseBus):
             self.__port_handler = 'MockBus'
             self.__packet_handler = MockPacketHandler(self.protocol,
                                                       self.robot)
-        else:
+        else:               # pragma: no cover
             self.__port_handler = PortHandler(self.port)
             self.__port_handler.openPort()
             self.__port_handler.setBaudRate(self.baudrate)
@@ -127,9 +127,9 @@ class DynamixelBus(BaseBus):
         check if there is ok to close the bus and no other objects are
         using it."""
         if self.is_open:
-            if super().close():
+            if super().close():             # pragma: no branch
                 self.__packet_handler = None
-                if not self.__mock:
+                if not self.__mock:         # pragma: no cover
                     self.__port_handler.closePort()
                 self.__port_handler = None
                 logger.info(f'Bus "{self.name}" closed')
@@ -216,7 +216,7 @@ class DynamixelBus(BaseBus):
             try:
                 res, cerr, derr = function(self.__port_handler,
                                            dev.dev_id, reg.address)
-            except Exception as e:
+            except Exception as e:          # pragma: no cover
                 logger.error(f'Exception raised while reading bus '
                              f'"{self.name}" device "{dev.name}" register '
                              f'"{reg.name}"')
@@ -279,7 +279,7 @@ class DynamixelBus(BaseBus):
             try:
                 cerr, derr = function(self.__port_handler, dev.dev_id,
                                       reg.address, value)
-            except Exception as e:
+            except Exception as e:      # pragma: no cover
                 logger.error(f'Exception raised while writing bus '
                              f'"{self.name}" device "{dev.name}" register '
                              f'"{reg.name}"')
@@ -516,6 +516,49 @@ class MockPacketHandler():
             value = max(register.minim, min(register.maxim, value))
         self.__index += 1
         return device.register_low_endian(value, register.size), 0, 0
+
+    def readTxRx(self, port, dxl_id, address, length):
+        """Mocks a read package received. Used by RangeRead.
+        It will attempt to produce a response based on the data already
+        exiting in the registers. If the register is a read-only one, we
+        will add a random value between (-10, 10) to the exiting value and
+        then trim it to the ``min`` and ``max`` limits of the register. When
+        passing back the data, for registers that are more than 1 byte a
+        *low endian* conversion is executed (see
+        :py:meth:`DynamixelRegister.register_low_endian`).
+        """
+        if random.random() < self.__err:
+            logger.error('Mock exception raised by MockPacketHandler')
+            raise OSError
+        if random.random() < self.__err:
+            logger.error('Mock comm error raised by MockPacketHandler')
+            return [0], -3001, 0
+        device = self.__robot.device_by_id(dxl_id)
+        parsed_len = 0
+        res = []
+        register = None
+        while parsed_len < length:
+            while not register:
+                register = device.register_by_address(address)
+                if not register:
+                    address += 1
+                    parsed_len += 1
+                    res.append(0)
+            if register.access == 'RW':
+                value = register.int_value
+            else:
+                value = register.int_value + random.randint(-10, 10)
+                value = max(register.minim, min(register.maxim, value))
+            res.extend(device.register_low_endian(value, register.size))
+            address += register.size
+            parsed_len += register.size
+            register = None
+        if random.random() < self.__err:
+            logger.error('Mock device error raised by MockPacketHandler')
+            derr = 4        # overheat
+        else:
+            derr = 0
+        return res, 0, derr
 
     def bulkWriteTxOnly(self, port, param, param_length):
         """Simulate a BulkWrite transmit package. We return randomly an error

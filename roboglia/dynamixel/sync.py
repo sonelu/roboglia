@@ -60,7 +60,7 @@ class DynamixelSyncWriteLoop(BaseSync):
                     device.dev_id,
                     device.register_low_endian(register.int_value,
                                                register.size))
-                if not result:
+                if not result:      # pragma: no cover
                     logger.error(f'failed to setup SyncWrite for loop '
                                  f'{self.name} for device {device.name}')
             # execute write
@@ -112,7 +112,7 @@ class DynamixelSyncReadLoop(BaseSync):
                                 register.size)
             for device in self.devices:
                 result = gsr.addParam(device.dev_id)
-                if result is not True:
+                if result is not True:          # pragma: no cover
                     logger.error(f'failed to setup SyncRead for loop '
                                  f'{self.name} for device {device.name}')
             self.gsrs.append(gsr)
@@ -190,7 +190,7 @@ class DynamixelBulkWriteLoop(BaseSync):
                 result = gbw.addParam(device.dev_id, register.address,
                                       register.size,
                                       data)
-                if not result:
+                if not result:          # pragma: no cover
                     logger.error(f'failed to setup BulkWrite for loop '
                                  f'{self.name} for device {device.name}')
             # execute write
@@ -231,7 +231,7 @@ class DynamixelBulkReadLoop(BaseSync):
                 register = getattr(device, reg_name)
                 result = gbr.addParam(device.dev_id, register.address,
                                       register.size)
-                if result is not True:
+                if result is not True:          # pragma: no cover
                     logger.error(f'failed to setup BulkRead for loop '
                                  f'{self.name} for device {device.name}')
             self.gbrs.append(gbr)
@@ -265,3 +265,82 @@ class DynamixelBulkReadLoop(BaseSync):
                         register.int_value = gbr.getData(device.dev_id,
                                                          register.address,
                                                          register.size)
+
+
+class DynamixelRangeReadLoop(BaseSync):
+    """Implements Read for a list of registers as specified in the frequency
+    parameter.
+
+    This method is provided as an alternative for AX devices that do not
+    support BulkRead or SyncRead and for which reading registers with
+    BaseReadSync would be extremely inefficient. With this method we still
+    have to send / recieive a communication packet for each device, but we
+    would get all the registers in one go.
+
+    The devices are provided in the `group` parameter and the registers
+    in the `registers` as a list of register names. The registers do not
+    need to be sequential.
+    It will update the `int_value` of each register in every device with
+    the result of the call.
+    Will raise exceptions if the BulkRead cannot be setup or fails to
+    execute.
+    """
+
+    def setup(self):
+        """Prepares to start the loop."""
+        self.start_address, self.length = self.get_register_range()
+
+    def atomic(self):
+        """Executes a RangeRead for all devices."""
+        # execute read
+        if not self.bus.can_use():
+            logger.error(f'Sync "{self.name}" '
+                         f'failed to acquire bus "{self.bus.name}"')
+            return
+
+        for device in self.devices:
+            # call the function
+            try:
+                res, cerr, derr = self.bus.packet_handler.readTxRx(
+                    self.bus.port_handler, device.dev_id,
+                    self.start_address, self.length)
+            except Exception as e:
+                logger.error(f'Exception raised while reading bus '
+                             f'"{self.name}" device "{device.name}"')
+                logger.error(str(e))
+                continue
+
+            # success call - log DEBUG
+            logger.debug(f'[RangeRead] dev={device.dev_id} '
+                         f'{res} (cerr={cerr}, derr={derr})')
+            # process result
+            if cerr != 0:
+                # communication error
+                err_desc = self.bus.packet_handler.getTxRxResult(cerr)
+                logger.error(f'[RangeRead "{self.name}"] '
+                             f'device "{device.name}", cerr={err_desc}')
+                continue
+
+            if derr != 0:
+                # device error
+                err_desc = self.bus.packet_handler.getRxPacketError(derr)
+                logger.warning(f'Device "{device.name}" responded with a '
+                               f'return error: {err_desc}')
+
+            # processs results
+            for reg_name in self.register_names:
+                reg = getattr(device, reg_name)
+                pos = reg.address - self.start_address
+                if reg.size == 1:
+                    value = res[pos]
+                elif reg.size == 2:
+                    value = res[pos] + res[pos + 1] * 256
+                elif reg.size == 4:
+                    value = res[pos] + res[pos + 1] * 256 + \
+                        res[pos + 2] * 65536 + \
+                        res[pos + 3] * 16777216
+                else:
+                    raise NotImplementedError
+                reg.int_value = value
+
+        self.bus.stop_using()       # !! as soon as possible

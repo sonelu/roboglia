@@ -240,7 +240,7 @@ class FileBus(BaseBus):
             try:
                 self.__fp.write(text + '\n')
                 self.__fp.flush()
-            except Exception:
+            except Exception:           # pragma: no cover
                 logger.error(f'error executing write and flush to file '
                              f'for bus: {self.name}')
             logger.debug(f'FileBus "{self.name}" {text}')
@@ -284,7 +284,7 @@ class FileBus(BaseBus):
         try:
             self.__fp.write(text+'\n')
             self.__fp.flush()
-        except Exception:
+        except Exception:               # pragma: no cover
             logger.error(f'error executing write and flush to file '
                          f'for bus: {self.name}')
         logger.debug(f'FileBus "{self.name}" {text}')
