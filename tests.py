@@ -620,6 +620,13 @@ class TestDynamixelRobot:
         time.sleep(1)
         robot.stop()
 
+    def test_dynamixel_rangeread(self, mock_robot_init):
+        robot = BaseRobot(**mock_robot_init['dynamixel'])
+        robot.start()
+        robot.syncs['rangeread'].start()
+        time.sleep(1)
+        robot.stop()
+
     def test_protocol1_syncread(self, mock_robot_init):
         mock_robot_init['dynamixel']['buses']['ttys1']['protocol'] = 1.0
         # we remove the bulkwrite so that the error will refer to syncread
@@ -810,7 +817,7 @@ class TestI2CRobot:
         robot = BaseRobot(**mock_robot_init['i2crobot'])
         caplog.clear()
         robot.buses['i2c2'].open()
-        assert len(caplog.records) == 2
+        assert len(caplog.records) >= 2
         assert 'failed to open I2C bus' in caplog.text
         # caplog.clear()
         # robot.buses['i2c2'].close()

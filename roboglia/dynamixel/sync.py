@@ -60,7 +60,7 @@ class DynamixelSyncWriteLoop(BaseSync):
                     device.dev_id,
                     device.register_low_endian(register.int_value,
                                                register.size))
-                if not result:
+                if not result:      # pragma: no cover
                     logger.error(f'failed to setup SyncWrite for loop '
                                  f'{self.name} for device {device.name}')
             # execute write
@@ -112,7 +112,7 @@ class DynamixelSyncReadLoop(BaseSync):
                                 register.size)
             for device in self.devices:
                 result = gsr.addParam(device.dev_id)
-                if result is not True:
+                if result is not True:          # pragma: no cover
                     logger.error(f'failed to setup SyncRead for loop '
                                  f'{self.name} for device {device.name}')
             self.gsrs.append(gsr)
@@ -190,7 +190,7 @@ class DynamixelBulkWriteLoop(BaseSync):
                 result = gbw.addParam(device.dev_id, register.address,
                                       register.size,
                                       data)
-                if not result:
+                if not result:          # pragma: no cover
                     logger.error(f'failed to setup BulkWrite for loop '
                                  f'{self.name} for device {device.name}')
             # execute write
@@ -231,7 +231,7 @@ class DynamixelBulkReadLoop(BaseSync):
                 register = getattr(device, reg_name)
                 result = gbr.addParam(device.dev_id, register.address,
                                       register.size)
-                if result is not True:
+                if result is not True:          # pragma: no cover
                     logger.error(f'failed to setup BulkRead for loop '
                                  f'{self.name} for device {device.name}')
             self.gbrs.append(gbr)

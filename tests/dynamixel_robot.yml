@@ -57,3 +57,10 @@ dynamixel:
       registers: [present_voltage, present_temperature]
       frequency: 10.0
       auto: False
+
+    rangeread:
+      group: all_servos
+      class: DynamixelRangeReadLoop
+      registers: [present_position_deg, present_speed_rpm, present_voltage, present_temperature]
+      frequency: 10.0
+      auto: False
