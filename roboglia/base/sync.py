@@ -124,8 +124,7 @@ class BaseSync(BaseLoop):
 
     def process_registers(self):
         """Checks that the supplied registers are available in all
-        devices and sets the ``sync`` attribute to ``True`` if not already
-        set."""
+        devices."""
         for device in self.__devices:
             for reg_name in self.register_names:
                 check_key(reg_name, device.registers, 'sync',
@@ -138,10 +137,6 @@ class BaseSync(BaseLoop):
                 # to loop over devices and registers and use getattr()
                 # during the atomic() processing
                 self.__all_registers.append(reg_obj)
-                if not reg_obj.sync:
-                    reg_obj.sync = True
-                    logger.debug(f'Setting register "{reg_name}" of device '
-                                 f'"{device.name}" sync=True')
 
     def get_register_range(self):
         """Determines the start address of the range of registers and the
@@ -166,13 +161,32 @@ class BaseSync(BaseLoop):
         return start_address, length
 
     def start(self):
-        """Checks that the bus is open before calling the inherited
-        ``start``."""
+        """Checks that the bus is open, then refreshes the register, sets the
+        ``sync`` flag before calling the inherited :py:meth:BaseLoop.`start.
+        """
         if not self.bus.is_open:
             logger.error(f'sync {self.name}: attempt to start with a bus '
                          f'not open')
         else:
+            for reg in self.all_registers:
+                if reg.sync:
+                    logger.warning(f'Register "{reg.name}" of device '
+                                   f'"{reg.device.name}" is already marked '
+                                   'for "sync" - it should not happen')
+                else:
+                    # refresh the register before setting it for sync
+                    reg.read()
+                    reg.sync = True
+                    logger.debug(f'Setting register "{reg.name}" of device '
+                                 f'"{reg.device.name}" sync=True')
             super().start()
+
+    def stop(self):
+        """Before calling the inherited method it unflags the registers
+        for syncing."""
+        for reg in self.all_registers:
+            reg.sync = False
+        super().stop()
 
 
 class BaseReadSync(BaseSync):

@@ -391,7 +391,13 @@ class BaseRobot():
             logger.info(f'Opening device: "{device.name}"')
             # TODO: should there be an Auto attribute for devices?
             device.open()
+        # joint manager; this will also start the joints
+        logger.info('Starting joint manager...')
+        self.manager.start()
         # syncs
+        # we start syncs latest to make sure that the joint manager
+        # has properly initialized the joints before starting to replicate
+        # the internal devices
         logger.info('Starting syncs...')
         for sync in self.syncs.values():
             if sync.auto_start:
@@ -399,9 +405,6 @@ class BaseRobot():
                 sync.start()
             else:
                 logger.info(f'Starting sync: "{sync.name}" - skipped')
-        # joint manager; this will also start the joints
-        logger.info('Starting joint manager...')
-        self.manager.start()
         # finished
         logger.info('***** Robot started ******************')
 
@@ -664,10 +667,10 @@ class JointManager(BaseLoop):
         """
         for joint in self.joints:
             if joint.auto_activate and not joint.active:
-                logger.info(f'--> Activating joint: {joint.name}')
+                logger.info(f'Activating joint: "{joint.name}"')
                 joint.active = True
             else:
-                logger.info(f'--> Activating joint: {joint.name} - skipped')
+                logger.info(f'Activating joint: "{joint.name}" - skipped')
         super().start()
 
     def stop(self):
@@ -690,10 +693,10 @@ class JointManager(BaseLoop):
         super().stop()
         for joint in self.joints:
             if joint.auto_activate and joint.active:
-                logger.info(f'--> Deactivating joint: {joint.name}')
+                logger.info(f'Deactivating joint: "{joint.name}"')
                 joint.active = False
             else:
-                logger.info(f'--> Deactivating joint: {joint.name} - skipped')
+                logger.info(f'Deactivating joint: "{joint.name}" - skipped')
 
     def atomic(self):
         if not self.__lock.acquire(timeout=self.period):
