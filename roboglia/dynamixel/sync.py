@@ -41,43 +41,41 @@ class DynamixelSyncWriteLoop(BaseSync):
         """
         # determines the addresses and lengths for each SyncWrite
         # allocates the GroupSyncWrite objects for each one
-        self.gsws = []
-        for reg_name in self.register_names:
-            register = getattr(self.devices[0], reg_name)
-            self.gsws.append(GroupSyncWrite(self.bus.port_handler,
-                                            self.bus.packet_handler,
-                                            register.address,
-                                            register.size))
+        self.__start_address, self.__length = self.get_register_range()
+        self.gsw = GroupSyncWrite(self.bus.port_handler,
+                                  self.bus.packet_handler,
+                                  self.__start_address, self.__length)
 
     def atomic(self):
         """Executes a SyncWrite."""
-        for index, reg_name in enumerate(self.register_names):
-            sync_write = self.gsws[index]
-            # add params to sync write
-            for device in self.devices:
+        # add params to sync write
+        for device in self.devices:
+            data = [0] * self.__length
+            for reg_name in self.register_names:
                 register = getattr(device, reg_name)
-                result = sync_write.addParam(
-                    device.dev_id,
-                    device.register_low_endian(register.int_value,
-                                               register.size))
-                if not result:      # pragma: no cover
-                    logger.error(f'failed to setup SyncWrite for loop '
-                                 f'{self.name} for device {device.name}')
-            # execute write
-            if self.bus.can_use():
-                result = sync_write.txPacket()
-                self.bus.stop_using()       # !! as soon as possible
-                error = sync_write.ph.getTxRxResult(result)
-                logger.debug(f'[sync write {self.name}] for register '
-                             f'{reg_name}, result: {error}')
-                if result != 0:
-                    logger.error(f'failed to execute SyncWrite {self.name}: '
-                                 f'cerr={error}')
-            else:
-                logger.error(f'sync {self.name} '
-                             f'failed to acquire bus {self.bus.name}')
-            # cleanup
-            sync_write.clearParam()
+                pos = register.address - self.__start_address
+                data[pos: pos + register.size] = device.register_low_endian(
+                    register.int_value, register.size)
+            # addParam
+            result = self.gsw.addParam(device.dev_id, data)
+            if not result:      # pragma: no cover
+                logger.error(f'failed to setup SyncWrite for loop '
+                                f'{self.name} for device {device.name}')
+        # execute write
+        if self.bus.can_use():
+            result = self.gsw.txPacket()
+            self.bus.stop_using()       # !! as soon as possible
+            error = self.gsw.ph.getTxRxResult(result)
+            logger.debug(f'[sync write {self.name}] for register '
+                            f'{reg_name}, result: {error}')
+            if result != 0:
+                logger.error(f'failed to execute SyncWrite {self.name}: '
+                                f'cerr={error}')
+        else:
+            logger.error(f'sync {self.name} '
+                            f'failed to acquire bus {self.bus.name}')
+        # cleanup
+        self.gsw.clearParam()
 
 
 class DynamixelSyncReadLoop(BaseSync):

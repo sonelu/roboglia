@@ -161,8 +161,9 @@ class BaseSync(BaseLoop):
         return start_address, length
 
     def start(self):
-        """Checks that the bus is open before calling the inherited
-        ``start``."""
+        """Checks that the bus is open, then refreshes the register, sets the
+        ``sync`` flag before calling the inherited :py:meth:BaseLoop.`start.
+        """
         if not self.bus.is_open:
             logger.error(f'sync {self.name}: attempt to start with a bus '
                          f'not open')
@@ -173,6 +174,8 @@ class BaseSync(BaseLoop):
                                    f'"{reg.device.name}" is already marked '
                                    'for "sync" - it should not happen')
                 else:
+                    # refresh the register before setting it for sync
+                    reg.read()
                     reg.sync = True
                     logger.debug(f'Setting register "{reg.name}" of device '
                                  f'"{reg.device.name}" sync=True')
