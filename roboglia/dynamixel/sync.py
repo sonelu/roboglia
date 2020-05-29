@@ -60,20 +60,20 @@ class DynamixelSyncWriteLoop(BaseSync):
             result = self.gsw.addParam(device.dev_id, data)
             if not result:      # pragma: no cover
                 logger.error(f'failed to setup SyncWrite for loop '
-                                f'{self.name} for device {device.name}')
+                             f'{self.name} for device {device.name}')
         # execute write
         if self.bus.can_use():
             result = self.gsw.txPacket()
             self.bus.stop_using()       # !! as soon as possible
             error = self.gsw.ph.getTxRxResult(result)
             logger.debug(f'[sync write {self.name}] for register '
-                            f'{reg_name}, result: {error}')
+                         f'{reg_name}, result: {error}')
             if result != 0:
                 logger.error(f'failed to execute SyncWrite {self.name}: '
-                                f'cerr={error}')
+                             f'cerr={error}')
         else:
             logger.error(f'sync {self.name} '
-                            f'failed to acquire bus {self.bus.name}')
+                         f'failed to acquire bus {self.bus.name}')
         # cleanup
         self.gsw.clearParam()
 
