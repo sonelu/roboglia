@@ -110,13 +110,19 @@ registers:
     default: 140
 
   max_torque:
-    class: RegisterWithConversion
     address: 14
     size: 2
     access: RW
     maxim: 1023
-    factor: 10.23
     default: 1023
+
+  max_torque_perc:
+    class: RegisterWithConversion
+    address: 14
+    clone: True
+    size: 2
+    access: RW
+    factor: 10.23
 
   status_return_level:
     address: 16
@@ -325,6 +331,7 @@ registers:
     maxim: 1023
 
   moving_speed_rpm:
+    # rotations per minute
     class: RegisterWithConversion
     address: 32
     clone: True
@@ -332,12 +339,36 @@ registers:
     access: RW
     factor: 8.973684210526316
 
-  torque_limit:
+  moving_speed_dps:
+    # degrees per second
     class: RegisterWithConversion
+    address: 32
+    clone: True
+    size: 2
+    access: RW
+    factor: 1.495614035
+
+  moving_speed_rps:
+    # radians per second
+    class: RegisterWithConversion
+    address: 32
+    clone: True
+    size: 2
+    access: RW
+    factor: 85.69237199105733
+
+  torque_limit:
     address: 34
     size: 2
     access: RW
     maxim: 1023
+
+  torque_limit_perc:
+    class: RegisterWithConversion
+    address: 34
+    clone: True
+    size: 2
+    access: RW
     factor: 10.23
 
   present_position:
@@ -379,12 +410,36 @@ registers:
     factor: 8.973684210526316
     threshold: 1024
 
+  present_speed_dps:
+    # degrees per second
+    class: RegisterWithConversion
+    address: 38
+    clone: True
+    size: 2
+    access: RW
+    factor: 1.495614035
+
+  present_speed_rps:
+    # radians per second
+    class: RegisterWithConversion
+    address: 38
+    clone: True
+    size: 2
+    access: RW
+    factor: 85.69237199105733
+
   present_load:
-    class: RegisterWithThreshold
     address: 40
     size: 2
     access: R
     maxim: 2047
+
+  present_load_perc:
+    class: RegisterWithThreshold
+    address: 40
+    clone: True
+    size: 2
+    access: R
     factor: 10.23
     threshold: 1024
 
