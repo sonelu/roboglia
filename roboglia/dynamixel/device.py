@@ -26,14 +26,14 @@ logger = logging.getLogger(__name__)
 class DynamixelDevice(BaseDevice):
     """Implements specific functionality for Dynamixel devices.
 
-    The initialization parameters are the same as for the class
-    :py:class:`BaseDevice`.
-
     Differences are:
 
     - different version of :py:meth:`get_model_path` that
       will point to the local ``device`` directory in the ``dynamixel``
       module
+
+    - the initialization parameters are the same as for the class
+      :py:class:`BaseDevice`
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

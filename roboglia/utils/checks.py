@@ -152,9 +152,9 @@ def check_not_empty(value, descriptor, context, context_id, logger,
     """
     if not value:
         if message is None:
-            message = f'parameter {descriptor} should not be empty ' + \
-                      f'for {context}: {context_id}'
+            message = f'Parameter "{descriptor}" should not be empty ' + \
+                      f'for {context}: "{context_id}"'
         else:
-            message = f'{message} for {context}: {context_id}'
+            message = f'{message} for {context}: "{context_id}"'
         logger.critical(message)
         raise ValueError(message)

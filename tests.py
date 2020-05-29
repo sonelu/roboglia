@@ -331,7 +331,7 @@ class TestMockRobot:
         # write
         caplog.clear()
         bus.write(dev.current_pos, 10)
-        assert len(caplog.records) == 1
+        assert len(caplog.records) >= 1
         assert 'failed to acquire bus busA' in caplog.text        
         # release bus
         bus.stop_using()

@@ -310,7 +310,7 @@ class BaseLoop(BaseThread):
                             f'warning threshold at {actual_freq:.2f}[Hz] '
                             f'({rate*100:.0f}%)')
                     else:
-                        logger.info(
+                        logger.debug(
                             f'Loop "{self.name}" running at '
                             f'{actual_freq:.2f}[Hz] '
                             f'({rate*100:.0f}%)')
