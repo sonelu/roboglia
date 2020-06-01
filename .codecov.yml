@@ -1,0 +1,11 @@
+coverage:
+  precision: 2
+  round: nearest
+  range: "90...100"
+  status:
+    project:
+      threshold: 0.5%
+    patch:
+      threshold: 1%
+    changes:
+      threshold: 1%
