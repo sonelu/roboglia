@@ -12,7 +12,7 @@ Welcome to roboglia's documentation!
    :caption: Contents:
 
    install
-   usage
+   quick_start
    reference/index
    
 
