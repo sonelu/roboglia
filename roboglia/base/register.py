@@ -389,29 +389,29 @@ class BoolRegister(BaseRegister):
 
     Parameters
     ----------
-    mask: int or ``None``
-        An optional mask to use in the determination of the output of the
-        register. Default is None and in this case we simply compare the
+    bits: int or ``None``
+        An optional bit pattern to use in the determination of the output of
+        the register. Default is None and in this case we simply compare the
         internal value with 0.
 
     mode: str ('all' or 'any')
-        Indicates how the mask should be used: 'all' means all the bits
-        in the mask must match  while 'any'
-        means any bit that matches the mask is enough to result in a ``True``
-        external value. Only used if mask is not ``None``. Default is 'any'.
+        Indicates how the bit pattern should be used: 'all' means all the bits
+        in the pattern must match  while 'any'
+        means any bit that matches the pattern is enough to result in a ``True``
+        external value. Only used if bits is not ``None``. Default is 'any'.
     """
-    def __init__(self, mask=None, mode='any', **kwargs):
+    def __init__(self, bits=None, mode='any', **kwargs):
         super().__init__(**kwargs)
-        if mask:
-            check_type(mask, int, 'register', self.name, logger)
+        if bits:
+            check_type(bits, int, 'register', self.name, logger)
             check_options(mode, ['all', 'any'], 'register', self.name, logger)
-        self.__mask = mask
+        self.bit = bits
         self.__mode = mode
 
     @property
-    def mask(self):
-        """The mask used."""
-        return self.__mask
+    def bits(self):
+        """The bit pattern used."""
+        return self.__bits
 
     @property
     def mode(self):
@@ -421,12 +421,12 @@ class BoolRegister(BaseRegister):
     def value_to_external(self, value):
         """The external representation of bool register.
         """
-        if self.mask is None:
+        if self.bits is None:
             return bool(value)
         if self.mode == 'any':
-            return bool(value & self.mask)
+            return bool(value & self.bits)
         if self.mode == 'all':
-            return (value & self.mask) == self.mask
+            return (value & self.bits) == self.bits
         raise NotImplementedError
 
     def value_to_internal(self, value):
@@ -434,8 +434,8 @@ class BoolRegister(BaseRegister):
         """
         if not value:
             return 0
-        if self.mask:
-            return self.mask
+        if self.bits:
+            return self.bits
         return 1
 
 
