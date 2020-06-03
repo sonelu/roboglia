@@ -88,6 +88,13 @@ class TestMockRobot:
         assert device.status_2and3.value
         assert device.status_2and3.int_value == 0b00000110
 
+    def test_register_bool_with_mask(self, mock_robot):
+        device = mock_robot.devices['d03']
+        assert not device.status_masked.value
+        device.status_masked.value = True
+        assert device.status_masked.value
+        assert device.status_masked.int_value == 0b10100101
+
     def test_register_with_conversion(self, mock_robot, caplog):
         reg = mock_robot.devices['d03'].desired_pos
         assert isinstance(reg, RegisterWithConversion)

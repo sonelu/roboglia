@@ -400,14 +400,24 @@ class BoolRegister(BaseRegister):
         means any bit that matches the pattern is enough to result in a
         ``True`` external value. Only used if bits is not ``None``. Default
         is 'any'.
+
+    mask: int or ``None``
+        An optional maks that allows for partial bit handling on the
+        internal values. This mask permits handling only the specified bits
+        without affecting the other ones in the internal value. For instance
+        if the mask is 0b00001111 then the operations (setter, getter) will
+        only affect the most significant 4 bits of the register.
     """
-    def __init__(self, bits=None, mode='any', **kwargs):
+    def __init__(self, bits=None, mode='any', mask=None, **kwargs):
         super().__init__(**kwargs)
         if bits:
             check_type(bits, int, 'register', self.name, logger)
             check_options(mode, ['all', 'any'], 'register', self.name, logger)
+            if mask:
+                check_type(mask, int, 'register', self.name, logger)
         self.__bits = bits
         self.__mode = mode
+        self.__mask = mask
 
     @property
     def bits(self):
@@ -419,11 +429,19 @@ class BoolRegister(BaseRegister):
         """The bitmasking mode ('all' or 'any')."""
         return self.__mode
 
+    @property
+    def mask(self):
+        """The partial bitmask for the handling of the bits."""
+        return self.__mask
+
     def value_to_external(self, value):
         """The external representation of bool register.
         """
         if self.bits is None:
             return bool(value)
+        # this assumes that if a mask is used the bits in the ``bits``
+        # attribute are all 0 already and we don't need to AND the ``mask``
+        # with the bits
         if self.mode == 'any':
             return bool(value & self.bits)
         if self.mode == 'all':
@@ -433,11 +451,16 @@ class BoolRegister(BaseRegister):
     def value_to_internal(self, value):
         """The internal representation of the register's value.
         """
-        if not value:
-            return 0
-        if self.bits:
-            return self.bits
-        return 1
+        if not self.mask:
+            if not value:
+                return 0
+            if self.bits:
+                return self.bits
+            return 1
+        else:
+            # the int() below is to remove a linter error
+            masked_int_value = self.int_value & (~ int(self.mask))
+            return self.bits | masked_int_value
 
 
 class RegisterWithConversion(BaseRegister):
