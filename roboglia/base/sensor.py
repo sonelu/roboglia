@@ -157,7 +157,6 @@ class Sensor():
         """(read-only) The offset between sensor coords and device coords."""
         return self.__offset
 
-
     @property
     def value(self):
         """Returns the value of the sensor.

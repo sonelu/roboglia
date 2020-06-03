@@ -276,7 +276,7 @@ class TestMockRobot:
         assert s.read_register == d.current_voltage
         assert s.activate_register is None
         assert s.active
-        assert s.mask is None
+        # assert s.bits is None
         assert s.offset == 0
         assert not s.inverse
         assert s.auto_activate
@@ -865,7 +865,8 @@ class TestI2CRobot:
         assert s.read_register == d.temp
         assert s.activate_register == d.activate_temp
         assert not s.active
-        assert s.mask is None
+        # removed the masking in sensor
+        # assert s.bits is None
         assert s.offset == 0
         assert s.inverse
         assert s.auto_activate

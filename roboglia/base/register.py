@@ -397,15 +397,16 @@ class BoolRegister(BaseRegister):
     mode: str ('all' or 'any')
         Indicates how the bit pattern should be used: 'all' means all the bits
         in the pattern must match  while 'any'
-        means any bit that matches the pattern is enough to result in a ``True``
-        external value. Only used if bits is not ``None``. Default is 'any'.
+        means any bit that matches the pattern is enough to result in a
+        ``True`` external value. Only used if bits is not ``None``. Default
+        is 'any'.
     """
     def __init__(self, bits=None, mode='any', **kwargs):
         super().__init__(**kwargs)
         if bits:
             check_type(bits, int, 'register', self.name, logger)
             check_options(mode, ['all', 'any'], 'register', self.name, logger)
-        self.bit = bits
+        self.__bits = bits
         self.__mode = mode
 
     @property
