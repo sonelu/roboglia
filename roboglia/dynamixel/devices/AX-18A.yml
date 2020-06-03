@@ -140,49 +140,49 @@ registers:
     clone: True
     class: BoolRegister
     access: RW
-    mask: 0b01000000
+    bits: 0b01000000
 
   alarm_overload_error:
     address: 17
     clone: True
     class: BoolRegister
     access: RW
-    mask: 0b00100000
+    bits: 0b00100000
 
   alarm_checksum_error:
     address: 17
     clone: True
     class: BoolRegister
     access: RW
-    mask: 0b00010000
+    bits: 0b00010000
 
   alarm_range_error:
     address: 17
     clone: True
     class: BoolRegister
     access: RW
-    mask: 0b00001000
+    bits: 0b00001000
 
   alarm_overheating_error:
     address: 17
     clone: True
     class: BoolRegister
     access: RW
-    mask: 0b00000100
+    bits: 0b00000100
 
   alarm_anglelimit_error:
     address: 17
     clone: True
     class: BoolRegister
     access: RW
-    mask: 0b00000010
+    bits: 0b00000010
 
   alarm_inputvoltage_error:
     address: 17
     clone: True
     class: BoolRegister
     access: RW
-    mask: 0b00000001
+    bits: 0b00000001
 
   shutdown:
     address: 18
@@ -194,49 +194,49 @@ registers:
     clone: True
     class: BoolRegister
     access: RW
-    mask: 0b01000000
+    bits: 0b01000000
 
   shutdown_overload_error:
     address: 17
     clone: True
     class: BoolRegister
     access: RW
-    mask: 0b00100000
+    bits: 0b00100000
 
   shutdown_checksum_error:
     address: 17
     clone: True
     class: BoolRegister
     access: RW
-    mask: 0b00010000
+    bits: 0b00010000
 
   shutdown_range_error:
     address: 17
     clone: True
     class: BoolRegister
     access: RW
-    mask: 0b00001000
+    bits: 0b00001000
 
   shutdown_overheating_error:
     address: 17
     clone: True
     class: BoolRegister
     access: RW
-    mask: 0b00000100
+    bits: 0b00000100
 
   shutdown_anglelimit_error:
     address: 17
     clone: True
     class: BoolRegister
     access: RW
-    mask: 0b00000010
+    bits: 0b00000010
 
   shutdown_inputvoltage_error:
     address: 17
     clone: True
     class: BoolRegister
     access: RW
-    mask: 0b00000001
+    bits: 0b00000001
 
   torque_enable:
     class: BoolRegister
