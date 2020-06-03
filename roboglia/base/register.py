@@ -16,7 +16,7 @@
 import logging
 import inspect
 
-from ..utils import check_type, check_options, check_not_empty
+from ..utils import check_type, check_options, check_not_empty, check_key
 from .device import BaseDevice
 from .sync import BaseSync
 
@@ -526,6 +526,11 @@ class RegisterWithConversion(BaseRegister):
         """The offset for external value."""
         return self.__offset
 
+    @property
+    def sign_bit(self):
+        """The sign bit, if any."""
+        return self.__sign_bit
+
     def value_to_external(self, value):
         """
         The external representation of the register's value.
@@ -535,9 +540,9 @@ class RegisterWithConversion(BaseRegister):
             external = (internal - offset) / factor
 
         """
-        if self.__sign_bit and value > (self.__sign_bit / 2):
+        if self.sign_bit and value > (self.sign_bit / 2):
             # negative number
-            value = value - self.__sign_bit
+            value = value - self.sign_bit
         return (float(value) - self.offset) / self.factor
 
     def value_to_internal(self, value):
@@ -552,8 +557,77 @@ class RegisterWithConversion(BaseRegister):
         to be stored in the register.
         """
         value = round(float(value) * self.factor + self.offset)
-        if value < 0 and self.__sign_bit:
-            value = value + self.__sign_bit
+        if value < 0 and self.sign_bit:
+            value = value + self.sign_bit
+        return value
+
+
+class RegisterWithDynamicConversion(RegisterWithConversion):
+    """A register that, in addition to the conversions provided by
+    :py:class:`RegisterWithConversion` can use the value provided
+    by another register in the device as a factor adjustment.
+
+    Parameters
+    ----------
+    factor_reg: str
+        The name of the register that provides the addittional factor
+        adjustment.
+
+    Raises:
+        KeyError: if any of the mandatory fields are not provided
+        ValueError: if value provided are wrong or the wrong type
+    """
+    def __init__(self, factor_reg=None, **kwargs):
+        super().__init__(**kwargs)
+        check_type(factor_reg, str, 'register', self.name, logger)
+        # the registers may not be in order and the referenced register
+        # might have not been setup yet; so we need to delay the access to
+        # it for when all registers in the device are setup
+        self.__factor_reg_name = factor_reg
+        self.__factor_reg = None
+
+    @property
+    def factor_reg(self):
+        """The register providing the additional conversion."""
+        if self.__factor_reg is None:
+            self.__factor_reg = getattr(self.device, self.__factor_reg_name)
+        return self.__factor_reg
+
+    def value_to_external(self, value):
+        """
+        The external representation of the register's value.
+
+        Performs the translation of the value according to::
+
+            external = (internal - offset) / factor * dynamic_factor
+
+        """
+        # we read directly from the int_value to avoid triggering a
+        # read of the register every time we make the conversion
+        extra_int_val = self.factor_reg.int_value
+        extra_factor = self.factor_reg.value_to_external(extra_int_val)
+        if self.sign_bit and value > (self.sign_bit / 2):
+            # negative number
+            value = value - self.sign_bit
+        return (float(value) - self.offset) / self.factor * extra_factor
+
+    def value_to_internal(self, value):
+        """
+        The internal representation of the register's value.
+
+        Performs the translation of the value according to::
+
+            internal = external * factor / dynamic_factor + offset
+
+        The resulting value is rounded to produce an integer suitable
+        to be stored in the register.
+        """
+        extra_int_val = self.factor_reg.int_value
+        extra_factor = self.factor_reg.value_to_external(extra_int_val)
+
+        value = round(float(value) * self.factor / extra_factor + self.offset)
+        if value < 0 and self.sign_bit:
+            value = value + self.sign_bit
         return value
 
 
@@ -656,7 +730,7 @@ class RegisterWithMapping(BaseRegister):
         converting external values to internal ones.
     """
     def __init__(self, mask=None, mapping={}, **kwargs):
-        super.__init__(**kwargs)
+        super().__init__(**kwargs)
         check_not_empty(mapping, 'mapping', 'register', self.name, logger)
         check_type(mapping, dict, 'register', self.name, logger)
         self.__mapping = mapping
@@ -680,15 +754,13 @@ class RegisterWithMapping(BaseRegister):
         """The bit mask is any."""
         return self.__mask
 
-    def value_to_external(self):
+    def value_to_external(self, value):
         """Converts the internal value of the register to external format.
         Applies mask on the internal value if one specified before checking
         the mapping. If no entry is found returns 0.
         """
         if self.mask:
-            value = self.int_value & self.mask
-        else:
-            value = self.int_value
+            value = value & self.mask
         return self.mapping.get(value, 0)
 
     def value_to_internal(self, value):

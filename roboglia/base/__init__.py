@@ -8,6 +8,7 @@ from .bus import SharedFileBus
 from .register import BaseRegister
 from .register import BoolRegister
 from .register import RegisterWithConversion
+from .register import RegisterWithDynamicConversion
 from .register import RegisterWithThreshold
 from .register import RegisterWithMapping
 
@@ -37,6 +38,7 @@ register_class(SharedFileBus)
 
 register_class(BaseRegister)
 register_class(RegisterWithConversion)
+register_class(RegisterWithDynamicConversion)
 register_class(RegisterWithThreshold)
 register_class(BoolRegister)
 register_class(RegisterWithMapping)
