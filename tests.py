@@ -9,6 +9,7 @@ from roboglia.utils import check_key, check_options, check_type, check_not_empty
 
 from roboglia.base import BaseRobot, BaseDevice, BaseBus, BaseRegister
 from roboglia.base import RegisterWithConversion, RegisterWithThreshold
+from roboglia.base import RegisterWithMapping
 from roboglia.base import BaseThread
 from roboglia.base import PVL, PVLList
 
@@ -39,6 +40,12 @@ class TestMockRobot:
         robot.start()
         yield robot
         robot.stop()
+    
+    @pytest.fixture
+    def dummy_device(self):
+        bus = BaseBus(robot='robot', port='dev')
+        return BaseDevice(name='device', bus=bus, dev_id=42, model='DUMMY',
+                          robot='robot')
 
     def test_incomplete_robot(self, caplog):
         with pytest.raises(ValueError) as excinfo:
@@ -138,6 +145,25 @@ class TestMockRobot:
         reg.value = 100
         assert len(caplog.records) == 1
         assert 'attempted to write in RO register current_pos' in caplog.text
+
+    def test_register_with_mapping(self, dummy_device, caplog):
+        reg = RegisterWithMapping(
+            name='test',
+            device=dummy_device,
+            address=42,
+            mask=0b00000011,
+            sync=True,        # avoids calling read / write
+            access='RW',      # so we can change it!
+            mapping={1:100, 2:2000, 3:30000}
+        )
+        reg.value = 100
+        assert reg.value == 100
+        assert reg.int_value == 1
+        # wrong value > log error
+        caplog.clear()
+        reg.value = 99
+        assert len(caplog.records) == 1
+        assert 'when converting to internal for register' in caplog.text
 
     def test_sync_pause_resume(self, mock_robot):
         write_sync = mock_robot.syncs['write']
