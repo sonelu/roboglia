@@ -16,7 +16,7 @@
 import logging
 import inspect
 
-from ..utils import check_type, check_options, check_not_empty, check_key
+from ..utils import check_type, check_options, check_not_empty
 from .device import BaseDevice
 from .sync import BaseSync
 
