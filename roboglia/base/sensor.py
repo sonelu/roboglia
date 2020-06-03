@@ -27,7 +27,7 @@ class Sensor():
     to a register in that device that represents the value the sensor is
     representing. In addition a sensor can have an optional register used
     to activate or deactivate the device and can publish a ``value`` that
-    can be either boolean if the ``mask`` parameter is used or float, in
+    can be either boolean if the ``bits`` parameter is used or float, in
     which case the sensor can also apply an ``inverse`` and and ``offset``
     to the values read from the device registry.
 
@@ -53,19 +53,12 @@ class Sensor():
         Indicates if the value read from the register should be inverted
         before being presented to the user in the :py:meth:`value`. The
         inverse operation is performed before the ``offset`` (see below).
-        Default is ``False``. It is ignored if ``mask`` property is used.
+        Default is ``False``. It is ignored if ``bits`` property is used.
 
     offset: float
         Indicates an offest to be adder to the value read from the register
         (after ``inverse`` if ``True``). Default is 0.0. It is ignored if
-        ``mask`` property is used.
-
-    mask: int
-        A bit mask used to AND the value read from device. After the AND is
-        performed the :py:meth:`value` will return ``True`` or ``False`` if
-        the result is different than 0 or not. If ``mask`` is used, the
-        paramters ``inverse`` and ``offset`` are ignored. If no mask is
-        needed, use ``None``. This is also the default.
+        ``bits`` property is used.
 
     auto: bool
         Indicates if the sensor should be automatically activated when the
@@ -73,7 +66,7 @@ class Sensor():
         Default is ``True``.
     """
     def __init__(self, name='SENSOR', device=None, value_read=None,
-                 activate=None, inverse=False, offset=0.0, mask=None,
+                 activate=None, inverse=False, offset=0.0,
                  auto=True, **kwargs):
         self.__name = name
         check_not_empty(device, 'device', 'sensor', self.name, logger)
@@ -95,7 +88,6 @@ class Sensor():
         self.__inverse = inverse
         check_type(offset, float, 'sensor', self.name, logger)
         self.__offset = offset
-        self.__mask = mask
         check_options(auto, [True, False], 'joint', self.name, logger)
         self.__auto_activate = auto
 
@@ -165,10 +157,6 @@ class Sensor():
         """(read-only) The offset between sensor coords and device coords."""
         return self.__offset
 
-    @property
-    def mask(self):
-        """The (optional) bit mask to interpret the sensor data."""
-        return self.__mask
 
     @property
     def value(self):
@@ -177,17 +165,14 @@ class Sensor():
         Returns
         -------
         bool or float:
-            If ``mask`` is used the sensor is assumed to produce a ``float``
-            response resulted from the AND between the value of the register
-            in the device and the mask. If not mask is used the sensor is
-            assumed to produce a float value that is adjusted with the
+            The value of the register is adjusted with the
             ``offset`` and the ``inverse`` attributes.
         """
         reg_value = self.read_register.value
-        if self.mask:
-            # boolean value
-            return (reg_value & self.mask) != 0
-        # float value
+        if isinstance(reg_value, bool):
+            # bool return
+            return ~ reg_value if self.inverse else reg_value
+        # float return
         if self.inverse:
             reg_value = - reg_value
         return reg_value + self.offset
