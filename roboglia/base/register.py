@@ -389,54 +389,78 @@ class BoolRegister(BaseRegister):
 
     Parameters
     ----------
-    mask: int or ``None``
-        An optional mask to use in the determination of the output of the
-        register. Default is None and in this case we simply compare the
+    bits: int or ``None``
+        An optional bit pattern to use in the determination of the output of
+        the register. Default is None and in this case we simply compare the
         internal value with 0.
 
     mode: str ('all' or 'any')
-        Indicates how the mask should be used: 'all' means all the bits
-        in the mask must match  while 'any'
-        means any bit that matches the mask is enough to result in a ``True``
-        external value. Only used if mask is not ``None``. Default is 'any'.
+        Indicates how the bit pattern should be used: 'all' means all the bits
+        in the pattern must match  while 'any'
+        means any bit that matches the pattern is enough to result in a
+        ``True`` external value. Only used if bits is not ``None``. Default
+        is 'any'.
+
+    mask: int or ``None``
+        An optional maks that allows for partial bit handling on the
+        internal values. This mask permits handling only the specified bits
+        without affecting the other ones in the internal value. For instance
+        if the mask is 0b00001111 then the operations (setter, getter) will
+        only affect the most significant 4 bits of the register.
     """
-    def __init__(self, mask=None, mode='any', **kwargs):
+    def __init__(self, bits=None, mode='any', mask=None, **kwargs):
         super().__init__(**kwargs)
-        if mask:
-            check_type(mask, int, 'register', self.name, logger)
+        if bits:
+            check_type(bits, int, 'register', self.name, logger)
             check_options(mode, ['all', 'any'], 'register', self.name, logger)
-        self.__mask = mask
+            if mask:
+                check_type(mask, int, 'register', self.name, logger)
+        self.__bits = bits
         self.__mode = mode
+        self.__mask = mask
 
     @property
-    def mask(self):
-        """The mask used."""
-        return self.__mask
+    def bits(self):
+        """The bit pattern used."""
+        return self.__bits
 
     @property
     def mode(self):
         """The bitmasking mode ('all' or 'any')."""
         return self.__mode
 
+    @property
+    def mask(self):
+        """The partial bitmask for the handling of the bits."""
+        return self.__mask
+
     def value_to_external(self, value):
         """The external representation of bool register.
         """
-        if self.mask is None:
+        if self.bits is None:
             return bool(value)
+        # this assumes that if a mask is used the bits in the ``bits``
+        # attribute are all 0 already and we don't need to AND the ``mask``
+        # with the bits
         if self.mode == 'any':
-            return bool(value & self.mask)
+            return bool(value & self.bits)
         if self.mode == 'all':
-            return (value & self.mask) == self.mask
+            return (value & self.bits) == self.bits
         raise NotImplementedError
 
     def value_to_internal(self, value):
         """The internal representation of the register's value.
         """
-        if not value:
-            return 0
-        if self.mask:
-            return self.mask
-        return 1
+        if not self.mask:
+            if not value:
+                return 0
+            if self.bits:
+                return self.bits
+            return 1
+        # else:   not really needed
+            # the int() below is to remove a linter error
+        masked_int_value = self.int_value & (~ int(self.mask))
+        return self.bits | masked_int_value
 
 
 class RegisterWithConversion(BaseRegister):

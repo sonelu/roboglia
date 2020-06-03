@@ -88,6 +88,13 @@ class TestMockRobot:
         assert device.status_2and3.value
         assert device.status_2and3.int_value == 0b00000110
 
+    def test_register_bool_with_mask(self, mock_robot):
+        device = mock_robot.devices['d03']
+        assert not device.status_masked.value
+        device.status_masked.value = True
+        assert device.status_masked.value
+        assert device.status_masked.int_value == 0b10100101
+
     def test_register_with_conversion(self, mock_robot, caplog):
         reg = mock_robot.devices['d03'].desired_pos
         assert isinstance(reg, RegisterWithConversion)
@@ -276,7 +283,7 @@ class TestMockRobot:
         assert s.read_register == d.current_voltage
         assert s.activate_register is None
         assert s.active
-        assert s.mask is None
+        # assert s.bits is None
         assert s.offset == 0
         assert not s.inverse
         assert s.auto_activate
@@ -865,7 +872,8 @@ class TestI2CRobot:
         assert s.read_register == d.temp
         assert s.activate_register == d.activate_temp
         assert not s.active
-        assert s.mask is None
+        # removed the masking in sensor
+        # assert s.bits is None
         assert s.offset == 0
         assert s.inverse
         assert s.auto_activate

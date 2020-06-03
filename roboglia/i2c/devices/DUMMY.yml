@@ -94,3 +94,17 @@ registers:
     address: 23
     access: RW
     default: 0b01010101
+
+  status01:
+    address: 23
+    class: BoolRegister
+    access: RW
+    clone: True
+    bits: 0b00000001
+
+  status10:
+    address: 23
+    class: BoolRegister
+    access: RW
+    clone: True
+    bits: 0b00000010

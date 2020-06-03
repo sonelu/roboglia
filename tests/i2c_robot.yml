@@ -57,14 +57,12 @@ i2crobot:
     status0:
       class: Sensor
       device: imu
-      value_read: status
-      mask: 0b00000001
+      value_read: status01
 
     status1:
       class:  Sensor
       device: imu
-      value_read: status
-      mask: 0b00000010
+      value_read: status10
 
   groups:
     imu:
