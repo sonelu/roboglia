@@ -821,6 +821,7 @@ class TestI2CRobot:
     def test_i2c_robot_bus_error(self, mock_robot_init, caplog):
         mock_robot_init['i2crobot']['buses']['i2c2']['mock'] = False
         mock_robot_init['i2crobot']['buses']['i2c2']['auto'] = False
+        mock_robot_init['i2crobot']['buses']['i2c2']['port'] = 42
         robot = BaseRobot(**mock_robot_init['i2crobot'])
         caplog.clear()
         robot.buses['i2c2'].open()

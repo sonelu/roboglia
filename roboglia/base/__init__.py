@@ -1,22 +1,23 @@
 from ..utils.factory import register_class
 
 from .bus import BaseBus                        # noqa: 401
-from .bus import FileBus                        # noqa: 401
+from .bus import FileBus
 from .bus import SharedBus                      # noqa: 401
-from .bus import SharedFileBus                  # noqa: 401
+from .bus import SharedFileBus
 
-from .register import BaseRegister              # noqa: 401
-from .register import BoolRegister              # noqa: 401
-from .register import RegisterWithConversion    # noqa: 401
-from .register import RegisterWithThreshold     # noqa: 401
+from .register import BaseRegister
+from .register import BoolRegister
+from .register import RegisterWithConversion
+from .register import RegisterWithThreshold
+from .register import RegisterWithMapping
 
-from .device import BaseDevice                  # noqa: 401
+from .device import BaseDevice
 
 from .joint import PVL                          # noqa: 401
 from .joint import PVLList                      # noqa: 401
-from .joint import Joint                        # noqa: 401
-from .joint import JointPV                      # noqa: 401
-from .joint import JointPVL                     # noqa: 401
+from .joint import Joint
+from .joint import JointPV
+from .joint import JointPVL
 
 from .sensor import Sensor
 from .sensor import SensorXYZ
@@ -38,6 +39,7 @@ register_class(BaseRegister)
 register_class(RegisterWithConversion)
 register_class(RegisterWithThreshold)
 register_class(BoolRegister)
+register_class(RegisterWithMapping)
 
 register_class(BaseDevice)
 

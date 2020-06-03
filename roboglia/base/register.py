@@ -452,15 +452,24 @@ class BoolRegister(BaseRegister):
         """The internal representation of the register's value.
         """
         if not self.mask:
-            if not value:
-                return 0
-            if self.bits:
-                return self.bits
-            return 1
-        # else:   not really needed
+            # no mask used
+            if not value:           # False
+                ret = 0
+            elif self.bits:         # True and bits
+                ret = self.bits
+            else:                   # True and no bits
+                ret = 1
+        else:
+            # mask used
             # the int() below is to remove a linter error
-        masked_int_value = self.int_value & (~ int(self.mask))
-        return self.bits | masked_int_value
+            masked_int_value = self.int_value & (~ int(self.mask))
+            if not value:           # False; reset
+                # equvalent to reseting the bits
+                ret = masked_int_value
+            else:                   # True; set
+                # setting the bits
+                ret = self.bits | masked_int_value
+        return ret
 
 
 class RegisterWithConversion(BaseRegister):
@@ -627,3 +636,75 @@ class RegisterWithThreshold(BaseRegister):
         if value >= 0:
             return value * self.factor
         return (-value) * self.factor + self.threshold
+
+
+class RegisterWithMapping(BaseRegister):
+    """A register that can specify a 1:1 mapping of internal values to
+    external values.
+
+    Parameters
+    ----------
+    mask: int or ``None``
+        Optional, can indicate that only certain bits from the value of the
+        register are used in the mapping. Ex. using 0b11110000 as a mask
+        indicates that only the most significant 4 bits of the internal
+        value are significant for the convesion to external values.
+
+    mapping: dict
+        A dictionary that provides {internal : external} mapping. Internally
+        the register will construct a reverse mapping that is used in
+        converting external values to internal ones.
+    """
+    def __init__(self, mask=None, mapping={}, **kwargs):
+        super.__init__(**kwargs)
+        check_not_empty(mapping, 'mapping', 'register', self.name, logger)
+        check_type(mapping, dict, 'register', self.name, logger)
+        self.__mapping = mapping
+        self.__inv_mapping = {v: k for k, v in self.__mapping.items()}
+        if mask:
+            check_type(mask, int, 'register', self.name, logger)
+        self.__mask = mask
+
+    @property
+    def mapping(self):
+        """The mapping {internal: external}."""
+        return self.__mapping
+
+    @property
+    def inv_mapping(self):
+        """The mapping {external: internal}."""
+        return self.__inv_mapping
+
+    @property
+    def mask(self):
+        """The bit mask is any."""
+        return self.__mask
+
+    def value_to_external(self):
+        """Converts the internal value of the register to external format.
+        Applies mask on the internal value if one specified before checking
+        the mapping. If no entry is found returns 0.
+        """
+        if self.mask:
+            value = self.int_value & self.mask
+        else:
+            value = self.int_value
+        return self.mapping.get(value, 0)
+
+    def value_to_internal(self, value):
+        """Converts the external value into an internal value using the
+        inverse mapping dictionary. If no entry is found logs a warning and
+        returns the already existing value in the ``int_value``.
+        If mask was specified it only affects the bits specified in the mask.
+        """
+        int_val = self.inv_mapping.get(value, None)
+        if int_val is None:
+            logger.warning(f'Incorect value {value} when converting to '
+                           f'internal for register "{self.name}" of '
+                           f'device "{self.device.name}"')
+            return self.int_value
+        # else
+        if self.mask:
+            masked_int_value = self.int_value & (~int(self.mask))
+            int_val = int_val | masked_int_value
+        return int_val
