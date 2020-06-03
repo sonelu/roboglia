@@ -66,8 +66,7 @@ class DynamixelSyncWriteLoop(BaseSync):
             result = self.gsw.txPacket()
             self.bus.stop_using()       # !! as soon as possible
             error = self.gsw.ph.getTxRxResult(result)
-            logger.debug(f'[sync write {self.name}] for register '
-                         f'{reg_name}, result: {error}')
+            logger.debug(f'[sync write {self.name}], result: {error}')
             if result != 0:
                 logger.error(f'failed to execute SyncWrite {self.name}: '
                              f'cerr={error}')
