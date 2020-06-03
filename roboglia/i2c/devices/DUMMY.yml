@@ -108,4 +108,3 @@ registers:
     access: RW
     clone: True
     bits: 0b00000010
-    

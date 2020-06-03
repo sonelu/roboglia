@@ -457,10 +457,10 @@ class BoolRegister(BaseRegister):
             if self.bits:
                 return self.bits
             return 1
-        else:
+        # else:   not really needed
             # the int() below is to remove a linter error
-            masked_int_value = self.int_value & (~ int(self.mask))
-            return self.bits | masked_int_value
+        masked_int_value = self.int_value & (~ int(self.mask))
+        return self.bits | masked_int_value
 
 
 class RegisterWithConversion(BaseRegister):

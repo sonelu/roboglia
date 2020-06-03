@@ -137,4 +137,4 @@ registers:
     class: BoolRegister
     bits: 0b10100000
     mask: 0b11110000
-    mode: all  
+    mode: all
