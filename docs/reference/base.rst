@@ -38,7 +38,9 @@ various structural elements of a robot.
    BaseRegister
    BoolRegister
    RegisterWithConversion
+   RegisterWithDynamicConversion
    RegisterWithThreshold
+   RegisterWithMapping
 
 *Devices*
 
