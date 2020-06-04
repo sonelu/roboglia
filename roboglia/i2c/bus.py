@@ -171,11 +171,76 @@ class I2CBus(BaseBus):
             try:
                 function(dev.dev_id, reg.address + pos, item)
             except Exception as e:
-                logger.error(f'failed to execute write command on I2C bus '
+                logger.error(f'Failed to execute write command on I2C bus '
                              f'{self.name} for device {dev.name} and '
                              f'register {reg.name}')
                 logger.error(str(e))
                 return None
+
+    def read_block(self, device, start_address, length):
+        """Reads a block of registers of given length.
+
+        Parameters
+        ----------
+        device: I2CDevice or subclass
+            The device on the I2C bus
+
+        start_addr: int
+            The start address to read from
+
+        length: int
+            Number of bytes to read from the device
+
+        Returns
+        -------
+        list of int:
+            A list of bytes of length ``length`` with the values from the
+            device. It intercepts any exceptions and logs them, in that case
+            the return will be ``None``.
+        """
+        if not self.is_open:
+            logger.error(f'attempted to read from a closed bus: {self.name}')
+            return None
+
+        try:
+            data = self.__i2cbus.read_i2c_block_data(
+                device.dev_id, start_address, length)
+        except Exception as e:
+            logger.error(f'Failed to execute read block command on I2C bus '
+                         f'{self.name} for device {device.name}')
+            logger.error(str(e))
+            return None
+        return data
+
+    def write_block(self, device, start_address, data):
+        """Writes a block of registers of given length.
+
+        Parameters
+        ----------
+        device: I2CDevice or subclass
+            The device on the I2C bus
+
+        start_addr: int
+            The start address to read from
+
+        data: list of int
+            The bytes to write to the device
+
+        Returns
+        -------
+        ``None``:
+            It intercepts any exceptions and logs them.
+        """
+        if not self.is_open:
+            logger.error(f'attempted to write to a closed bus: {self.name}')
+
+        try:
+            self.__i2cbus.write_i2c_block_data(
+                device.dev_id, start_address, data)
+        except Exception as e:
+            logger.error(f'Failed to execute write block command on I2C bus '
+                         f'{self.name} for device {device.name}')
+            logger.error(str(e))
 
 
 class SharedI2CBus(SharedBus):
@@ -187,89 +252,6 @@ class SharedI2CBus(SharedBus):
     """
     def __init__(self, **kwargs):
         super().__init__(I2CBus, **kwargs)
-
-    def read_block_data(self, dev, address, length):
-        """Invokes the block read from SMBus.
-
-        Does not raise any exceptions, but logs any errors.
-
-        Parameters
-        ----------
-
-        dev: BaseDevice or subclass
-            The device for which the block read is performed
-
-        address: int
-            The start address
-
-        length: int
-            The length of data to read
-
-        Returns
-        -------
-        list of int:
-            a list of length ``length``
-        """
-        if not self.is_open:
-            logger.error(f'attempted to read from a closed bus: {self.name}')
-            return None
-
-        if not self.can_use():
-            logger.error(f'{self.name} failed to acquire bus')
-            return None
-
-        try:
-            data = self.port_handler.read_i2c_block_data(dev.dev_id,
-                                                         address,
-                                                         length)
-        except Exception as e:
-            logger.error(f'{self.name} failed to read block data '
-                         f'for device {dev.name}')
-            logger.error(str(e))
-            self.stop_using()
-            return None
-
-        self.stop_using()
-        return data
-
-    def write_block_data(self, dev, address, length, data):
-        """Invokes the block read from SMBus.
-
-        Does not raise any exceptions, but logs any errors.
-
-        Parameters
-        ----------
-        dev: BaseDevice or subclass
-            The device for which the block read is performed
-
-        address: int
-            The start address
-
-        length: int
-            The length of data to read
-
-        data: list of int
-            The data to be written
-        """
-        if not self.is_open:
-            logger.error(f'attempted to write to a closed bus: {self.name}')
-            return None
-
-        if not self.can_use():
-            logger.error(f'{self.name} failed to acquire bus')
-            return None
-
-        try:
-            data = self.port_handler.write_i2c_block_data(dev.dev_id,
-                                                          address,
-                                                          length,
-                                                          data)
-        except Exception as e:
-            logger.error(f'{self.name} failed to write block data '
-                         f'for device {dev.name}')
-            logger.error(str(e))
-
-        self.stop_using()
 
 
 class MockSMBus(SMBus):
@@ -356,7 +338,7 @@ class MockSMBus(SMBus):
         # we'll just return a random list of numbers
         return random.sample(range(0, 255), length)
 
-    def write_i2c_block_data(self, dev_id, address, length, data):
+    def write_i2c_block_data(self, dev_id, address, data):
         """Simulates the write of one block of data."""
         if random.random() < self.__err:
             logger.error('*** random generated write-block error ***')

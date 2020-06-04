@@ -1050,11 +1050,11 @@ class TestI2CRobot:
         assert 'attempted to write to a closed bus' in caplog.text
         bus = robot.buses['i2c2']
         caplog.clear()
-        _ = bus.read_block_data(1, 1, 6)
+        _ = bus.read_block(device, 1, 6)
         assert len(caplog.records) >= 1
         assert 'attempted to read from a closed bus' in caplog.text
         caplog.clear()
-        bus.write_block_data(1, 1, 6, [1,2,3,4,5,6])
+        bus.write_block(device, 1, [1,2,3,4,5,6])
         assert len(caplog.records) >= 1
         assert 'attempted to write to a closed bus' in caplog.text
 
