@@ -61,10 +61,36 @@ registers:
     access: RW
     desc: Accelerometer and gyroscope control registers
 
+  xl_range:
+    address: 16
+    clone: True
+    access: R
+    class: RegisterWithMapping
+    mask: 0b00001100
+    mapping:
+      # maps to g factor
+      0b00000000: 2
+      0b00000100: 1
+      0b00001000: 4
+      0b00001100: 8
+
   ctrl2_g:
     address: 17
     access: RW
     desc: Accelerometer and gyroscope control registers
+
+  g_range:
+    address: 17
+    clone: True
+    access: R
+    class: RegisterWithMapping
+    mask: 0b00001100
+    mapping:
+      # maps to dps
+      0b00000000: 250
+      0b00000100: 500
+      0b00001000: 1000
+      0b00001100: 2000
 
   ctrl3_c:
     address: 18
@@ -135,53 +161,85 @@ registers:
     size: 2
     desc: Temperature output data register
 
-  outx_l_g:
+  # Gyroscope output register
+  outx_g:
     address: 34
-    desc: Gyroscope output register
+    size: 2
 
-  outx_h_g:
-    address: 35
-    desc: Gyroscope output register
+  outx_g_dps:
+    address: 34
+    size: 2
+    clone: True
+    class: RegisterWithDynamicConversion
+    sign_bit: 16
+    factor: 32768.0
+    factor_reg: g_range
 
-  outy_l_g:
+  outy_g:
     address: 36
-    desc: Gyroscope output register
+    size: 2
 
-  outy_h_g:
-    address: 37
-    desc: Gyroscope output register
+  outy_g_dps:
+    address: 36
+    size: 2
+    clone: True
+    class: RegisterWithDynamicConversion
+    sign_bit: 16
+    factor: 32768.0
+    factor_reg: g_range
 
-  outz_l_g:
+  outz_g:
     address: 38
-    desc: Gyroscope output register
+    size: 2
 
-  outz_h_g:
-    address: 39
-    desc: Gyroscope output register
+  outz_g_dps:
+    address: 38
+    size: 2
+    clone: True
+    class: RegisterWithDynamicConversion
+    sign_bit: 16
+    factor: 32768.0
+    factor_reg: g_range
 
-  outx_l_xl:
+  # Accelerometer output registers
+  outx_xl:
     address: 40
-    desc: Accelerometer output register
+    size: 2
 
-  outx_h_xl:
-    address: 41
-    desc: Accelerometer output register
+  outx_xl_gs:
+    address: 40
+    clone: True
+    size: 2
+    class: RegisterWithDynamicConversion
+    sign_bit: 16
+    factor: 32768.0
+    factor_reg: xl_range
 
-  outy_l_xl:
+  outy_xl:
     address: 42
-    desc: Accelerometer output register
+    size: 2
 
-  outy_h_xl:
-    address: 43
-    desc: Accelerometer output register
+  outy_xl_gs:
+    address: 42
+    clone: True
+    size: 2
+    class: RegisterWithDynamicConversion
+    sign_bit: 16
+    factor: 32768.0
+    factor_reg: xl_range
 
-  outz_l_xl:
+  outz_xl:
     address: 44
-    desc: Accelerometer output register
+    size: 2
 
-  outz_h_xl:
-    address: 45
-    desc: Accelerometer output register
+  outz_xl_gs:
+    address: 44
+    clone: True
+    size: 2
+    class: RegisterWithDynamicConversion
+    sign_bit: 16
+    factor: 32768.0
+    factor_reg: xl_range
 
   sensorhub1_reg:
     address: 46

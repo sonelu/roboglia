@@ -54,10 +54,9 @@ class I2CWriteLoop(BaseSync):
 
             # write
             # I2CSharedBus does to handling of exceptions
-            self.bus.write_block_data(device,
-                                      self.start_address,
-                                      self.length,
-                                      data)
+            self.bus.write_block(device,
+                                 self.start_address,
+                                 data)
             logger.debug(f'{self.name} written block data {data}')
 
 
@@ -82,9 +81,9 @@ class I2CReadLoop(BaseSync):
         for device in self.devices:
             # read one device
             # I2CSharedBus does to handling of exceptions
-            data = self.bus.read_block_data(device,
-                                            self.start_address,
-                                            self.length)
+            data = self.bus.read_block(device,
+                                       self.start_address,
+                                       self.length)
             logger.debug(f'{self.name} read block data {data}')
             if data is not None:
                 for reg_name in self.register_names:
