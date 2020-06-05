@@ -190,7 +190,7 @@ class constructor (we'll come to this in a second). We will look at them in
 the next sections.
 
 Buses
------
+^^^^^
 
 The first is the ``busses`` section. This describes the communication
 channels that the robot uses to interact with the devices. In our framework
@@ -227,7 +227,7 @@ For details of attributes for each type of bus please see the *robot YAML
 specification* documentation.
 
 Devices
--------
+^^^^^^^
 
 The second important elements are the physical **actuators** and **sensors**
 that the robot employs. In ``roboglia`` they are represented by **devices**, the
@@ -268,7 +268,7 @@ in radians, or the case of a bitwise status register that can have several
 clones with masked results representing the specific bit).
 
 Joints
-------
+^^^^^^
 
 The actuator devices present in a robot can be of various types and with
 various capabilities. **Joints** aim to produce an uniform view of them
@@ -304,7 +304,7 @@ level constructs (like ``Script`` and ``Move`` to drive the devices and produce
 complex patterns.
 
 Sensors
--------
+^^^^^^^
 
 Sensors are similar to Joints in the sense that they abstract the information
 stored in the device;s registers and provide a uniform interface for accessing
@@ -326,7 +326,7 @@ and that the representation is inverse, reflecting the actual position of the
 sensor on the board in the robot.
 
 Groups
-------
+^^^^^^
 
 Groups are ways of putting together several devices, or joints with the
 purpose of having a simpler qualifier for other objects that interact with
@@ -342,7 +342,7 @@ to them can be split according to need, while still retaining the overall
 grouping of all devices if necessary.
 
 Syncs
------
+^^^^^
 
 The device classes that are instantiated by the BaseRobot according to the
 specifications in the robot definition file are only surrogate representations
@@ -374,7 +374,7 @@ operations, instead simply relying on the data already available in the
 register's ``int_value`` member.
 
 Joint Manager
--------------
+^^^^^^^^^^^^^
 
 While having the level of abstraction that is provided by Joint and it's
 subclasses is nice, there is another problem that usually robots have to deal
@@ -407,4 +407,189 @@ example for velocity and load, meaning that if multiple orders for the same
 joint are received the position is averaged, but velocity and load attributes
 are determined by using the maximum between the request.
 
+Moving the Robot
+----------------
 
+Now that the robot is loaded and ready for action how do you control it?
+``roboglia`` offers two low level interaction methods that can be exploited
+into more complex behavior:
+
+- scripted behavior: this is represented by predefined actions that are
+  described in a "Script" and can be executed on command
+
+- programmatic behavior: this is more complex interaction that is determined
+  programmatically, for instance as a result of running a ML algorithm that
+  dynamically produce the joint commands
+
+Scripts
+^^^^^^^
+
+**Scripts** are sequences of joint commands that can be described in an YAML
+file. ``roboglia`` offers the support for loading of a script from a file,
+preparing all the necessary constructs and executing it on command. The
+actual execution of the script is performed in a dedicated thread and
+therefore inherits the other facilities provided by the
+:py:class:`~roboglia.base.Thread` like early stopping, pause and resume.
+
+Here is an example of a script:
+
+.. code-block:: YAML
+  :linenos:
+
+  script_1:
+
+    joints: [j01, j02, j03]
+    defaults:
+      duration: 0.2
+
+    frames:
+
+      start:
+        positions: [0, 0, 0]
+        velocities: [10, 10, 10]
+        loads: [100, 100, 100]
+
+      frame_01: [100, 100, 100]
+      frame_02: [200, 200, 200]
+      frame_03: [400, 400, 400]
+      frame_04: [nan, nan, 300]
+      frame_05: [nan, nan, 100]
+
+    sequences:
+
+      move_1:
+        frames: [start, frame_01, frame_02, frame_03]
+        durations: [0.2, 0.1, 0.2, 0.1]
+        times: 1
+
+      move_2:
+        frames: [frame_04, frame_05]
+        durations: [0.2, 0.15]
+        times: 3
+
+      empty:
+        times: 1
+
+      unequal:
+        frames: [frame_01, frame_02]
+        durations: [0.1, 0.2, 0.3]
+        times: 1
+
+    scenes:
+
+      greet:
+        sequences: [move_1, move_2, move_1.reverse]
+        times: 2
+
+    script: [greet]
+
+A script is produced by layering a number of elements, pretty much like a
+film script. To start with, the Script defines a number of contextual
+elements that simplify the writing of the subsequent components:
+
+- joints: here the joints that the script plans to use a listed in order.
+  The names of the joints have to respect those defined in the robot definition
+  file and you must ensure that the joints have been advertised by the
+  Joint Manager. Only joints defined in the Joint Manager can be controlled
+  through a script. Defining the joints here in an ordered list simplifies
+  later the writing of the **Frames**.
+
+- defaults: helps with defining values that will automatically be used in
+  case no more specific values are provided later in the other components.
+  This helps with eliminating the need to write repetitive information in
+  the script.   
+
+The most basic structure is the **Frame**: this represents a particular
+instruction for the joints. A frame has a **name** (ex. "start" in the code
+above) and a dictionary of **positions**, **velocities** and **load** commands
+all provided as lists representing the joints in the exact order defined
+at the beginning of the file. You can use ``nan`` (not a number) to indicate
+that for a particular joint that value is not provided and should remain the
+one the joint already has. You can also provide the lists shorter than the
+number of joints and the processing will assume all the missing one are ``nan``
+and pad the list accordingly to the right. Providing any of the control
+elements (position, velocity, load) is optional, so you  can skip any of them
+if you don't need to control that item. To make things even simpler, as
+most of the times you only want to provide positional instructions, you
+can do that by just supplying a list of positions instead of the dictionary 
+and the code will assume those are "position" instructions. You can see that
+used for "frame_01", "frame_02", etc.
+
+You can group the frames in a **Sequence**. This is an ordered list of Frames
+that have associated transition **durations** and additionally can be repeated
+a number of **times** to produce the desired effect. If durations are not
+provided for a sequence, the ones defined in the **default** section are used.
+
+Sequences are grouped in **Scenes** were you can specify an order for the
+execution Sequences and, additionally, you can use the qualifier **reverse**
+to indicate that a particular Sequence should be executed in the reverse order
+of definition. Like Sequences, Scenes can be executed a number of **times**
+by using the qualifier with the same name.
+
+Finally a list of Scenes are combined in a **Script** that also can specify a
+repetition parameters **times** like the previous components.
+
+Once a Script is prepared in a YAML file, working with it is very simple.
+You load the definition with :py:meth:`~roboglia.move.Script.from_yaml`
+and then simply call the :py:meth:`~roboglia.move.Script.start` method
+to initiate the moves. The Script will run through all the Frames as and
+will gracefully complete when the sequence of instructions is completed.
+During this time you can ``pause`` the Script and ``resume`` it or you can
+prematurely ``stop`` it if needed. Please be aware that the Script sends all
+the commands to the `Joint Manager`_ and as a result you can combine multiple
+Script executions in the same time, even if they may have overlapping joints.
+
+Here is an example of running the Script defined above under a ``curses``
+loop:
+
+.. code-block:: Python
+  :linenos:
+
+  import curses
+  from roboglia.move import Script
+
+  def main(win, robot):
+    win.nodelay(True)
+    key = ""
+    win.clear()
+    script = Script.from_yaml(robot=robot, file_name='my_script.yml'
+    while(True):
+      try:
+        key = win.get_key()
+        if str(key) == 's':
+          # start the Script; if already running it will restart!
+          script.start()
+        elif str(key) == 'x':
+          # stop the script
+          script.stop()
+        elif str(key) == 'p':
+          script.pause()
+        elif str(key) == 'r':
+          script.resume()
+        elif str(key) == 'q':
+          # stops the main loop
+          script.stop()
+          break
+      except Exception as e:
+        # no input
+        pass
+
+  # initialize robot
+  ...
+
+  curses.wrapper(main)
+
+Of course this is just a quick example, you are free to incorporate the
+functionality as needed in you main processing logic of your robot, but keep
+in mind how easy it is to control the execution of a script with these 4
+methods.
+
+Moves
+^^^^^
+
+**Moves** allows you to control the robot joints using arbitrary commands
+that are produced programmatically. You will normally subclass the
+:py:class:`~roboglia.move.Move` class and implement the methods that you
+need in order to perform the actions.
+
+<More to comme soon.>
