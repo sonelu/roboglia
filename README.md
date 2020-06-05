@@ -1,6 +1,6 @@
 # Roboglia
 
-[![Master Version](https://img.shields.io/badge/master-0.0.12-blue)](https://img.shields.io/badge/master-0.0.12-blue)
+[![Master Version](https://img.shields.io/badge/master-0.1.0-blue)](https://img.shields.io/badge/master-0.1.0-blue)
 [![PyPI version](https://badge.fury.io/py/roboglia.svg)](https://badge.fury.io/py/roboglia)
 ![GitHub issues](https://img.shields.io/github/issues/sonelu/roboglia)
 
@@ -62,7 +62,7 @@ If you wish to install all the hardware access packages then use:
 
     pip install roboglia[all]
 
-The ``all`` option for` **extras** will be updated if additional hardware
+The ``all`` option for **extras** will be updated if additional hardware
 channels are added to the library.
 
 Please read carefully the installation instructions from the
