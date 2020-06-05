@@ -1,11 +1,12 @@
-# Dynamixel AX-18A servo
-# http://emanual.robotis.com/docs/en/dxl/ax/ax-18a/#control-table
+# Dynamixel MX-64T/R/AT/AR servo
+# https://emanual.robotis.com/docs/en/dxl/mx/mx-64/#control-table
+# multi-turn operation not yet supported
 #
 registers:
   model_number:
     address: 0
     size: 2
-    default: 18
+    default: 310
 
   firmware:
     address: 2
@@ -19,10 +20,24 @@ registers:
 # use Dynamixel tools like DynamixelWizard
 
   baud_rate:
-    class: DynamixelAXBaudRateRegister
+    class: RegisterWithMapping
     address: 4
     access: RW
-    default: 1
+    default: 34
+    mapping:
+      0: 2000000
+      1: 1000000
+      3: 500000
+      4: 400000
+      7: 250000
+      9: 200000
+      16: 115200
+      34: 57600
+      103: 19200
+      207: 9600
+      250: 2250000
+      251: 2500000
+      252: 3000000
 
   return_delay_time:
     class: RegisterWithConversion
@@ -35,7 +50,7 @@ registers:
   cw_angle_limit:
     address: 6
     size: 2
-    maxim: 1023
+    maxim: 4095
     access: RW
 
   cw_angle_limit_deg:
@@ -43,53 +58,49 @@ registers:
     address: 6
     clone: True
     size: 2
-    maxim: 1023
     access: RW
-    factor: 3.41
-    offset: 512
+    factor: 11.375
+    offset: 2048
 
   cw_angle_limit_rad:
     class: RegisterWithConversion
     address: 6
     clone: True
     size: 2
-    maxim: 1023
     access: RW
-    factor: 195.3786081396107
-    offset: 512
+    factor: 651.7394919613114
+    offset: 2048
 
   ccw_angle_limit:
     address: 8
     size: 2
-    maxim: 1023
+    maxim: 4095
     access: RW
-    default: 1023
+    default: 4095
 
   ccw_angle_limit_deg:
     class: RegisterWithConversion
     address: 8
     clone: True
     size: 2
-    maxim: 1023
     access: RW
-    factor: 3.41
-    offset: 512
+    factor: 11.375
+    offset: 2048
 
   ccw_angle_limit_rad:
     class: RegisterWithConversion
     address: 8
     clone: True
     size: 2
-    maxim: 1023
     access: RW
-    factor: 195.3786081396107
-    offset: 512
+    factor: 651.7394919613114
+    offset: 2048
 
   temperature_limit:
     address: 11
     access|: RW
-    default: 70
-    maxim: 99
+    default: 80
+    maxim: 150
 
   min_voltage_limit:
     class: RegisterWithConversion
@@ -107,7 +118,7 @@ registers:
     min: 50
     maxim: 160
     factor: 10.0
-    default: 140
+    default: 160
 
   max_torque:
     address: 14
@@ -248,62 +259,45 @@ registers:
     address: 25
     access: RW
 
-  cw_compliance_margin:
+  d_gain:
     address: 26
     access: RW
-    default: 1
 
-  cw_compliance_margin_deg:
-    class: RegisterWithConversion
+  kd_gain:
     address: 26
     clone: True
     access: RW
-    factor: 3.41
-
-  cw_compliance_margin_rad:
     class: RegisterWithConversion
-    address: 26
-    clone: True
-    access: RW
-    factor: 195.3786081396107
+    factor: 250.0
 
-  ccw_compliance_margin:
+  i_gain:
     address: 27
     access: RW
-    factor: 3.41
-    default: 1
 
-  ccw_compliance_margin_deg:
-    class: RegisterWithConversion
+  ki_gain:
     address: 27
     clone: True
     access: RW
-    factor: 3.41
-
-  ccw_compliance_margin_rad:
     class: RegisterWithConversion
-    address: 27
-    clone: True
-    access: RW
-    factor: 195.3786081396107
+    factor: 2.048
 
-  cw_compliance_slope:
-    class: DynamixelAXComplianceSlopeRegister
+  p_gain:
     address: 28
     access: RW
     default: 32
 
-  ccw_compliance_slope:
-    class: DynamixelAXComplianceSlopeRegister
-    address: 29
+  kp_gain:
+    address: 28
+    clone: True
     access: RW
-    default: 32
+    class: RegisterWithConversion
+    factor: 8.0
 
   goal_position:
     address: 30
     size: 2
     access: RW
-    maxim: 1023
+    maxim: 4095
 
   goal_position_deg:
     class: RegisterWithConversion
@@ -311,8 +305,8 @@ registers:
     clone: True
     size: 2
     access: RW
-    factor: 3.41
-    offset: 512
+    factor: 11.375
+    offset: 2048
 
   goal_position_rad:
     class: RegisterWithConversion
@@ -320,9 +314,8 @@ registers:
     clone: True
     size: 2
     access: RW
-    maxim: 1023
-    factor: 195.3786081396107
-    offset: 512
+    factor: 651.7394919613114
+    offset: 2048
 
   moving_speed:
     address: 32
@@ -337,7 +330,7 @@ registers:
     clone: True
     size: 2
     access: RW
-    factor: 8.973684210526316
+    factor: 8.772080260675699
 
   moving_speed_dps:
     # degrees per second
@@ -346,7 +339,7 @@ registers:
     clone: True
     size: 2
     access: RW
-    factor: 1.495614035
+    factor: 1.462013376779283
 
   moving_speed_rps:
     # radians per second
@@ -355,7 +348,7 @@ registers:
     clone: True
     size: 2
     access: RW
-    factor: 85.69237199105733
+    factor: 83.767196081122275
 
   torque_limit:
     address: 34
@@ -375,7 +368,7 @@ registers:
     address: 36
     size: 2
     access: R
-    maxim: 1023
+    maxim: 4095
 
   present_position_deg:
     class: RegisterWithConversion
@@ -383,8 +376,8 @@ registers:
     clone: True
     size: 2
     access: R
-    factor: 3.41
-    offset: 512
+    factor: 11.375
+    offset: 2048
 
   present_position_rad:
     class: RegisterWithConversion
@@ -392,8 +385,8 @@ registers:
     clone: True
     size: 2
     access: R
-    factor: 195.3786081396107
-    offset: 512
+    factor: 651.7394919613114
+    offset: 2048
 
   present_speed:
     address: 38
@@ -407,7 +400,7 @@ registers:
     clone: True
     size: 2
     access: R
-    factor: 8.973684210526316
+    factor: 8.772080260675699
     threshold: 1024
 
   present_speed_dps:
@@ -416,18 +409,18 @@ registers:
     address: 38
     clone: True
     size: 2
-    access: R
-    factor: 1.495614035
+    access: RW
+    factor: 1.462013376779283
     threshold: 1024
 
   present_speed_rps:
     # radians per second
-    class: RegisterWithThreshold
+    class: RegisterWithConversion
     address: 38
     clone: True
     size: 2
-    access: R
-    factor: 85.69237199105733
+    access: RW
+    factor: 83.767196081122275
     threshold: 1024
 
   present_load:
@@ -477,3 +470,20 @@ registers:
     min: 32
     maxim: 1023
     default: 32
+
+  realtime_tick:
+    address: 50
+    size: 2
+    access: R
+
+  goal_acceleration:
+    address: 73
+    access: RW
+    maxim: 254
+
+  goal_acceleration_dps2:
+    address: 73
+    clone: True
+    access: RW
+    class: RegisterWithConversion
+    factor: 0.11651376146789
