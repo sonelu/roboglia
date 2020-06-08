@@ -143,22 +143,34 @@ class BaseSync(BaseLoop):
         whole length. Registers do not need to be order, but be careful
         that not all communication protocols can support gaps in the
         bulk read of registers.
+
+        Returns
+        -------
+        int
+            The start address of the range
+
+        int
+            The length covering all the registers (including gaps)
+
+        bool
+            True is the range of registers is contiguous
         """
         start_address = 65536
-        last_address = 0
+        end_address = 0
         last_length = 0
-        length = 0
+        reg_length = 0
         # pick the first device; we expect all to have the same registers
         device = self.devices[0]
         for reg_name in self.register_names:
             register = getattr(device, reg_name)
             if register.address < start_address:
                 start_address = register.address
-            if register.address > last_address:
-                last_address = register.address
+            if register.address > end_address:
+                end_address = register.address
                 last_length = register.size
-        length = last_address + last_length - start_address
-        return start_address, length
+            reg_length += register.size
+        length = end_address + last_length - start_address
+        return start_address, length, reg_length == length
 
     def start(self):
         """Checks that the bus is open, then refreshes the register, sets the

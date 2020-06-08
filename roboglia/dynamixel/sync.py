@@ -27,9 +27,6 @@ class DynamixelSyncWriteLoop(BaseSync):
 
     The devices are provided in the `group` parameter and the registers
     in the `registers` as a list of register names.
-    We will trigger as many SyncWrite packets as registers as Dynamixel
-    does not support multiple registers in one go and you cannot include
-    the same device twice in a SyncWrite.
     It will update from `int_value` of each register for every device.
     Will raise exceptions if the SyncWrite cannot be setup or fails to
     execute.
@@ -41,7 +38,11 @@ class DynamixelSyncWriteLoop(BaseSync):
         """
         # determines the addresses and lengths for each SyncWrite
         # allocates the GroupSyncWrite objects for each one
-        self.__start_address, self.__length = self.get_register_range()
+        self.__start_address, self.__length, cont = self.get_register_range()
+        if not cont:
+            mess = f'SyncWrite {self.name} requires registers to be contiguous'
+            logger.error(mess)
+            raise RuntimeError(mess)
         self.gsw = GroupSyncWrite(self.bus.port_handler,
                                   self.bus.packet_handler,
                                   self.__start_address, self.__length)
@@ -82,9 +83,6 @@ class DynamixelSyncReadLoop(BaseSync):
 
     The devices are provided in the `group` parameter and the registers
     in the `registers` as a list of register names.
-    We will trigger as many SyncRead packets as registers as Dynamixel
-    does not support multiple registers in one go and you cannot include
-    the same device twice in a SyncRead.
     It will update the `int_value` of each register in every device with
     the result of the call.
     Will raise exceptions if the SyncRead cannot be setup or fails to
@@ -100,46 +98,42 @@ class DynamixelSyncReadLoop(BaseSync):
 
     def setup(self):
         """Prepares to start the loop."""
-        self.gsrs = []
-        for reg_name in self.register_names:
-            register = getattr(self.devices[0], reg_name)
-            gsr = GroupSyncRead(self.bus.port_handler,
-                                self.bus.packet_handler,
-                                register.address,
-                                register.size)
-            for device in self.devices:
-                result = gsr.addParam(device.dev_id)
-                if result is not True:          # pragma: no cover
-                    logger.error(f'failed to setup SyncRead for loop '
-                                 f'{self.name} for device {device.name}')
-            self.gsrs.append(gsr)
+        self.__start_address, self.__length, _ = self.get_register_range()
+        self.gsr = GroupSyncRead(self.bus.port_handler,
+                                 self.bus.packet_handler,
+                                 self.__start_address,
+                                 self.__length)
+        for device in self.devices:
+            result = self.gsr.addParam(device.dev_id)
+            if result is not True:          # pragma: no cover
+                logger.error(f'Failed to setup SyncRead for loop '
+                             f'{self.name} for device {device.name}')
 
     def atomic(self):
         """Executes a SyncRead."""
-        for index, reg_name in enumerate(self.register_names):
-            gsr = self.gsrs[index]
-            # acquire the bus
-            if not self.bus.can_use():
-                logger.error(f'sync {self.name} '
-                             f'failed to acquire bus {self.bus.name}')
-                continue
-            # execute read
-            result = gsr.txRxPacket()
-            self.bus.stop_using()       # !! as soon as possible
-            if result != 0:
-                error = self.bus.packet_handler.getTxRxResult(result)
-                logger.error(f'SyncRead {self.name}, cerr={error}')
-                continue
-            # retrieve data
-            for device in self.devices:
+        # acquire the bus
+        if not self.bus.can_use():
+            logger.error(f'Sync {self.name} '
+                         f'failed to acquire bus {self.bus.name}')
+            return
+        # execute read
+        result = self.gsr.txRxPacket()
+        self.bus.stop_using()       # !! as soon as possible
+        if result != 0:
+            error = self.bus.packet_handler.getTxRxResult(result)
+            logger.error(f'SyncRead {self.name}, cerr={error}')
+            return
+        # retrieve data
+        for device in self.devices:
+            for reg_name in self.register_names:
                 register = getattr(device, reg_name)
-                if not gsr.isAvailable(device.dev_id, register.address,
-                                       register.size):
-                    logger.error(f'failed to retrieve data in SyncRead '
+                if not self.gsr.isAvailable(device.dev_id, register.address,
+                                            register.size):
+                    logger.error(f'Failed to retrieve data in SyncRead '
                                  f'{self.name} for device {device.name} '
                                  f'and register {register.name}')
                 else:
-                    register.int_value = gsr.getData(
+                    register.int_value = self.gsr.getData(
                         device.dev_id, register.address, register.size)
 
 
@@ -149,9 +143,6 @@ class DynamixelBulkWriteLoop(BaseSync):
     The devices are provided in the `group` parameter and the registers
     in the `registers` as a list of register names. The registers do not need
     to be sequential.
-    We will trigger as many  BulkWrite packets as registers as Dynamixel
-    does not support multiple registers in one go and you cannot include
-    the same device twice in a SyncRead.
     It will update from `int_value` of each register for every device.
     Will raise exceptions if the BulkWrite cannot be setup or fails to
     execute.
@@ -169,40 +160,44 @@ class DynamixelBulkWriteLoop(BaseSync):
         not in the constructor as this is part of the wrapped execution
         that is produced by :py:class:`BaseThread` class.
         """
-        self.gbws = []
-        for _ in self.register_names:
-            self.gbws.append(GroupBulkWrite(self.bus.port_handler,
-                                            self.bus.packet_handler))
+
+        self.__start_address, self.__length, cont = self.get_register_range()
+        if not cont:
+            mess = f'BulkWrite {self.name} requires registers to be contiguous'
+            logger.error(mess)
+            raise RuntimeError(mess)
+        self.gbw = GroupBulkWrite(self.bus.port_handler,
+                                  self.bus.packet_handler)
 
     def atomic(self):
-        """Executes a SyncWrite."""
-        for index, reg_name in enumerate(self.register_names):
-            gbw = self.gbws[index]
-            # prepares the call
-            for device in self.devices:
-                # prepare the buffer data
+        """Executes a BulkWrite."""
+        for device in self.devices:
+            data = [0] * self.__length
+            for reg_name in self.register_names:
                 register = getattr(device, reg_name)
-                data = device.register_low_endian(register.int_value,
-                                                  register.size)
-                result = gbw.addParam(device.dev_id, register.address,
-                                      register.size,
-                                      data)
-                if not result:          # pragma: no cover
-                    logger.error(f'failed to setup BulkWrite for loop '
-                                 f'{self.name} for device {device.name}')
-            # execute write
-            if self.bus.can_use():
-                result = gbw.txPacket()
-                self.bus.stop_using()       # !! as soon as possible
-                error = gbw.ph.getTxRxResult(result)
-                if result != 0:
-                    logger.error(f'failed to execute BulkWrite {self.name}: '
-                                 f'cerr={error}')
-            else:
-                logger.error(f'sync {self.name} '
-                             f'failed to acquire bus {self.bus.name}')
-            # cleanup
-            gbw.clearParam()
+                pos = register.address - self.__start_address
+                data[pos: pos + register.size] = device.register_low_endian(
+                    register.int_value, register.size)
+            # addParam
+            result = self.gbw.addParam(device.dev_id, self.__start_address,
+                                       self.__length, data)
+            if not result:      # pragma: no cover
+                logger.error(f'Failed to setup BulkWrite for loop '
+                             f'{self.name} for device {device.name}')
+        # execute write
+        if self.bus.can_use():
+            result = self.gbw.txPacket()
+            self.bus.stop_using()       # !! as soon as possible
+            error = self.gbw.ph.getTxRxResult(result)
+            logger.debug(f'[bulk write {self.name}], result: {error}')
+            if result != 0:
+                logger.error(f'Failed to execute BulkWrite {self.name}: '
+                             f'cerr={error}')
+        else:
+            logger.error(f'Sync {self.name} '
+                         f'failed to acquire bus {self.bus.name}')
+        # cleanup
+        self.gbw.clearParam()
 
 
 class DynamixelBulkReadLoop(BaseSync):
@@ -285,7 +280,7 @@ class DynamixelRangeReadLoop(BaseSync):
 
     def setup(self):
         """Prepares to start the loop."""
-        self.start_address, self.length = self.get_register_range()
+        self.start_address, self.length, _ = self.get_register_range()
 
     def atomic(self):
         """Executes a RangeRead for all devices."""

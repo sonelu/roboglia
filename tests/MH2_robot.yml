@@ -155,6 +155,6 @@ MH2:
     volt_temp:
       class: DynamixelSyncReadLoop
       group: left_leg
-      frequency: 10.0
+      frequency: 100.0
       registers: [present_voltage, present_temperature]
       auto: False

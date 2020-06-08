@@ -79,6 +79,6 @@ i2crobot:
     write_xl:
       class: I2CWriteLoop
       group: imu
-      registers: [word_xl_x, word_xl_y, word_xl_z, control_1]
+      registers: [word_xl_x, word_xl_y, word_xl_z]
       frequency: 50.0
       auto: False
