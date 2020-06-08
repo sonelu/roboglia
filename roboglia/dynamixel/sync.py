@@ -215,48 +215,43 @@ class DynamixelBulkReadLoop(BaseSync):
 
     def setup(self):
         """Prepares to start the loop."""
-        self.gbrs = []
-        for reg_name in self.register_names:
-            gbr = GroupBulkRead(self.bus.port_handler,
-                                self.bus.packet_handler)
-            for device in self.devices:
-                register = getattr(device, reg_name)
-                result = gbr.addParam(device.dev_id, register.address,
-                                      register.size)
-                if result is not True:          # pragma: no cover
-                    logger.error(f'failed to setup BulkRead for loop '
-                                 f'{self.name} for device {device.name}')
-            self.gbrs.append(gbr)
+        self.__start_address, self.__length, _ = self.get_register_range()
+        self.gbr = GroupBulkRead(self.bus.port_handler,
+                                 self.bus.packet_handler)
+        for device in self.devices:
+            result = self.gbr.addParam(device.dev_id, self.__start_address,
+                                       self.__length)
+            if result is not True:          # pragma: no cover
+                logger.error(f'Failed to setup BulkRead for loop '
+                             f'{self.name} for device {device.name}')
 
     def atomic(self):
         """Executes a BulkRead."""
         # execute read
-        for index, reg_name in enumerate(self.register_names):
-            gbr = self.gbrs[index]
-            if not self.bus.can_use():
-                logger.error(f'sync {self.name} '
-                             f'failed to acquire bus {self.bus.name}')
+        if not self.bus.can_use():
+            logger.error(f'Sync {self.name} '
+                         f'failed to acquire bus {self.bus.name}')
+        else:
+            result = self.gbr.txRxPacket()
+            self.bus.stop_using()       # !! as soon as possible
+            if result != 0:
+                error = self.gbr.ph.getTxRxResult(result)
+                logger.error(f'BulkRead {self.name}, cerr={error}')
             else:
-                result = gbr.txRxPacket()
-                self.bus.stop_using()       # !! as soon as possible
-                if result != 0:
-                    error = gbr.ph.getTxRxResult(result)
-                    logger.error(f'BulkRead {self.name}, cerr={error}')
-                else:
-                    # retrieve data
-                    for device in self.devices:
+                # retrieve data
+                for device in self.devices:
+                    for reg_name in self.register_names:
                         register = getattr(device, reg_name)
-                        if not gbr.isAvailable(device.dev_id,
-                                               register.address,
-                                               register.size):
-                            logger.error(f'failed to retrieve data in '
+                        if not self.gbr.isAvailable(device.dev_id,
+                                                    register.address,
+                                                    register.size):
+                            logger.error(f'Failed to retrieve data in '
                                          f'BulkRead {self.name} for '
                                          f'device {device.name} and '
                                          f'register {register.name}')
-                    else:
-                        register.int_value = gbr.getData(device.dev_id,
-                                                         register.address,
-                                                         register.size)
+                        else:
+                            register.int_value = self.gbr.getData(
+                                device.dev_id, register.address, register.size)
 
 
 class DynamixelRangeReadLoop(BaseSync):
