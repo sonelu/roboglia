@@ -34,7 +34,11 @@ class I2CWriteLoop(BaseSync):
         Previously the constructor checked that all registers are
         available in all devices.
         """
-        self.start_address, self.length = self.get_register_range()
+        self.start_address, self.length, cont = self.get_register_range()
+        if not cont:
+            mess = f'WriteLoop {self.name} requires registers to be contiguous'
+            logger.error(mess)
+            raise RuntimeError(mess)
 
     def atomic(self):
         """Executes a SyncWrite."""
@@ -74,7 +78,7 @@ class I2CReadLoop(BaseSync):
         Previously the constructor checked that all registers are
         available in all devices.
         """
-        self.start_address, self.length = self.get_register_range()
+        self.start_address, self.length, _ = self.get_register_range()
 
     def atomic(self):
         """Executes a SyncRead."""
