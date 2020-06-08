@@ -1,0 +1,641 @@
+# Dynamixel XL-430(-W250) servo
+# https://emanual.robotis.com/docs/en/dxl/x/xl430-w250/#control-table
+#
+registers:
+  model_number:
+    address: 0
+    size: 2
+    default: 1060
+
+  model_information:
+    address: 2
+    size: 4
+
+  firmware:
+    address: 6
+    maxim: 254
+
+  id:
+    address: 7
+    maxim: 252
+    default: 1
+# ID is technically RW but we don't support changing it from roboglia
+# use Dynamixel tools like DynamixelWizard
+
+  baud_rate:
+    class: RegisterWithMapping
+    address: 8
+    access: RW
+    default: 1
+    mapping:
+      0: 9600
+      1: 57600
+      2: 115200
+      3: 1000000
+      4: 2000000
+      5: 3000000
+      6: 4000000
+      7: 4500000
+
+  return_delay_time:
+    class: RegisterWithConversion
+    address: 9
+    access: RW
+    default: 250
+    maxim: 254
+    factor: 0.5
+
+  drive_mode:
+    address: 10
+    access: RW
+
+  operating_mode:
+    address: 11
+    access: RW
+    min: 1
+    maxim: 16
+    default: 3
+
+  secondary_shadow_id:
+    address: 12
+    access: RW
+    default: 255
+
+  protocol_type:
+    address: 13
+    access: RW
+    minim: 1
+    maxim: 2
+    default: 2
+
+  homing_offset:
+    address: 20
+    size: 4
+    access: RW
+
+  moving_threshold:
+    address: 24
+    size: 4
+    access: RW
+    default: 10
+
+  temperature_limit:
+    address: 31
+    access: RW
+    default: 72
+    maxim: 100
+
+  max_voltage_limit:
+    class: RegisterWithConversion
+    address: 32
+    size: 2
+    access: RW
+    min: 60
+    maxim: 140
+    factor: 10.0
+    default: 140
+
+  min_voltage_limit:
+    class: RegisterWithConversion
+    address: 34
+    size: 2
+    access: RW
+    min: 60
+    maxim: 140
+    factor: 10.0
+    default: 60
+
+  pwm_limit:
+    address: 36
+    size: 2
+    access: RW
+    maxim: 885
+    default: 885
+
+  velocity_limit:
+    address: 44
+    size: 4
+    access: RW
+    maxim: 1023
+    default: 265
+
+  max_position_limit:
+    address: 48
+    size: 4
+    access: RW
+    maxim: 4095
+    default: 4095
+
+  min_position_limit:
+    address: 52
+    size: 4
+    access: RW
+    maxim: 4095
+
+  shutdown:
+    address: 63
+    access: RW
+    maxim: 0b111111
+    default: 52
+
+  torque_enable:
+    class: BoolRegister
+    address: 64
+    access: RW
+
+  led:
+    class: BoolRegister
+    address: 65
+    access: RW
+
+  status_return_level:
+    address: 68
+    access: RW
+    maxim: 2
+    default: 2
+
+  registered_instruction:
+    class: BoolRegister
+    address: 69
+    access: R
+
+  hardware_error:
+    address: 70
+    access: R
+
+  velocity_i_gain:
+    address: 76
+    size: 2
+    access: RW
+    maxim: 16383
+    default: 1000
+
+  velocity_p_gain:
+    address: 78
+    size: 2
+    access: RW
+    maxim: 16383
+    default: 100
+
+  position_d_gain:
+    address: 80
+    size: 2
+    access: RW
+    maxim: 16383
+    default: 4000
+
+  position_i_gain:
+    address: 82
+    size: 2
+    access: RW
+    maxim: 16383
+
+  position_p_gain:
+    address: 84
+    size: 2
+    access: RW
+    maxim: 16383
+    default: 640
+
+  feedforward_2nd_gain:
+    address: 88
+    size: 2
+    access: RW
+    maxim: 16383
+
+  feedforward_1st_gain:
+    address: 90
+    size: 2
+    access: RW
+    maxim: 16383
+
+  bus_watchdog:
+    address: 98
+    access: RW
+
+  goal_pwm:
+    address: 100
+    access: RW
+    size: 2
+
+  goal_velocity:
+    address: 104
+    size: 4
+    access: RW
+
+  profile_acceleration:
+    address: 108
+    size: 4
+    access: RW
+
+  profile_velocity:
+    address: 112
+    size: 4
+    access: RW
+
+  goal_position:
+    address: 116
+    size: 4
+    access: RW
+    maxim: 4096
+
+  goal_position_deg:
+    class: RegisterWithConversion
+    address: 116
+    clone: True
+    access: RW
+    factor: 11.375
+    offset: 2048
+
+  goal_position_rad:
+    class: RegisterWithConversion
+    address: 116
+    clone: True
+    access: RW
+    factor: 651.7394919613114
+    offset: 2048
+
+  realtime_tick:
+    address: 120
+    size: 2
+    maxim: 32767
+
+  moving:
+    class: BoolRegister
+    address: 122
+    access: R
+
+  moving_status:
+    address: 123
+    access: R
+
+  present_pwm:
+    address: 124
+    size: 2
+
+  present_load:
+    address: 126
+    size: 2
+
+  present_velocity:
+    address: 128
+    size: 4
+
+  present_position:
+    address: 132
+    size: 4
+
+  velocity_trajectory:
+    address: 136
+    size: 4
+
+  position_trajectory:
+    address: 140
+    size: 4
+
+  present_input_voltage:
+    class: RegisterWithConversion
+    address: 144
+    size: 2
+    access: R
+    factor: 10.0
+
+  present_temperature:
+    address: 146
+    access: R
+
+  indirect_address_1:
+    address: 168
+    size: 2
+    access: RW
+    default: 224
+    minim: 64
+    maxim: 661
+
+  indirect_address_2:
+    address: 170
+    size: 2
+    access: RW
+    default: 225
+    minim: 64
+    maxim: 661
+
+  indirect_address_3:
+    address: 172
+    size: 2
+    access: RW
+    default: 226
+    minim: 64
+    maxim: 661
+
+  indirect_address_4:
+    address: 174
+    size: 2
+    access: RW
+    default: 227
+    minim: 64
+    maxim: 661
+
+  indirect_address_5:
+    address: 176
+    size: 2
+    access: RW
+    default: 228
+    minim: 64
+    maxim: 661
+
+  indirect_address_6:
+    address: 178
+    size: 2
+    access: RW
+    default: 229
+    minim: 64
+    maxim: 661
+
+  indirect_address_7:
+    address: 180
+    size: 2
+    access: RW
+    default: 230
+    minim: 64
+    maxim: 661
+
+  indirect_address_8:
+    address: 182
+    size: 2
+    access: RW
+    default: 231
+    minim: 64
+    maxim: 661
+
+  indirect_address_9:
+    address: 184
+    size: 2
+    access: RW
+    default: 232
+    minim: 64
+    maxim: 661
+
+  indirect_address_10:
+    address: 186
+    size: 2
+    access: RW
+    default: 233
+    minim: 64
+    maxim: 661
+
+  indirect_address_11:
+    address: 188
+    size: 2
+    access: RW
+    default: 234
+    minim: 64
+    maxim: 661
+
+  indirect_address_12:
+    address: 190
+    size: 2
+    access: RW
+    default: 235
+    minim: 64
+    maxim: 661
+
+  indirect_address_13:
+    address: 192
+    size: 2
+    access: RW
+    default: 236
+    minim: 64
+    maxim: 661
+
+  indirect_address_14:
+    address: 194
+    size: 2
+    access: RW
+    default: 237
+    minim: 64
+    maxim: 661
+
+  indirect_address_15:
+    address: 196
+    size: 2
+    access: RW
+    default: 238
+    minim: 64
+    maxim: 661
+
+  indirect_address_16:
+    address: 198
+    size: 2
+    access: RW
+    default: 239
+    minim: 64
+    maxim: 661
+
+  indirect_address_17:
+    address: 200
+    size: 2
+    access: RW
+    default: 240
+    minim: 64
+    maxim: 661
+
+  indirect_address_18:
+    address: 202
+    size: 2
+    access: RW
+    default: 241
+    minim: 64
+    maxim: 661
+
+  indirect_address_19:
+    address: 204
+    size: 2
+    access: RW
+    default: 242
+    minim: 64
+    maxim: 661
+
+  indirect_address_20:
+    address: 206
+    size: 2
+    access: RW
+    default: 243
+    minim: 64
+    maxim: 661
+
+  indirect_address_21:
+    address: 208
+    size: 2
+    access: RW
+    default: 244
+    minim: 64
+    maxim: 661
+
+  indirect_address_22:
+    address: 210
+    size: 2
+    access: RW
+    default: 245
+    minim: 64
+    maxim: 661
+
+  indirect_address_23:
+    address: 212
+    size: 2
+    access: RW
+    default: 246
+    minim: 64
+    maxim: 661
+
+  indirect_address_24:
+    address: 214
+    size: 2
+    access: RW
+    default: 247
+    minim: 64
+    maxim: 661
+
+  indirect_address_25:
+    address: 216
+    size: 2
+    access: RW
+    default: 248
+    minim: 64
+    maxim: 661
+
+  indirect_address_26:
+    address: 218
+    size: 2
+    access: RW
+    default: 249
+    minim: 64
+    maxim: 661
+
+  indirect_address_27:
+    address: 220
+    size: 2
+    access: RW
+    default: 250
+    minim: 64
+    maxim: 661
+
+  indirect_address_28:
+    address: 222
+    size: 2
+    access: RW
+    default: 251
+    minim: 64
+    maxim: 661
+
+  indirect_data_1:
+    address: 224
+    access: RW
+
+  indirect_data_2:
+    address: 225
+    access: RW
+
+  indirect_data_3:
+    address: 226
+    access: RW
+
+  indirect_data_4:
+    address: 227
+    access: RW
+
+  indirect_data_5:
+    address: 228
+    access: RW
+
+  indirect_data_6:
+    address: 229
+    access: RW
+
+  indirect_data_7:
+    address: 230
+    access: RW
+
+  indirect_data_8:
+    address: 231
+    access: RW
+
+  indirect_data_9:
+    address: 232
+    access: RW
+
+  indirect_data_10:
+    address: 233
+    access: RW
+
+  indirect_data_11:
+    address: 234
+    access: RW
+
+  indirect_data_12:
+    address: 235
+    access: RW
+
+  indirect_data_13:
+    address: 236
+    access: RW
+
+  indirect_data_14:
+    address: 237
+    access: RW
+
+  indirect_data_15:
+    address: 238
+    access: RW
+
+  indirect_data_16:
+    address: 239
+    access: RW
+
+  indirect_data_17:
+    address: 240
+    access: RW
+
+  indirect_data_18:
+    address: 241
+    access: RW
+
+  indirect_data_19:
+    address: 242
+    access: RW
+
+  indirect_data_20:
+    address: 243
+    access: RW
+
+  indirect_data_21:
+    address: 244
+    access: RW
+
+  indirect_data_22:
+    address: 245
+    access: RW
+
+  indirect_data_23:
+    address: 246
+    access: RW
+
+  indirect_data_24:
+    address: 247
+    access: RW
+
+  indirect_data_25:
+    address: 248
+    access: RW
+
+  indirect_data_26:
+    address: 249
+    access: RW
+
+  indirect_data_27:
+    address: 250
+    access: RW
+
+  indirect_data_28:
+    address: 251
+    access: RW

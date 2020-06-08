@@ -404,7 +404,7 @@ registers:
   present_speed_rpm:
     class: RegisterWithThreshold
     address: 38
-    cllone: True
+    clone: True
     size: 2
     access: R
     factor: 8.973684210526316
@@ -412,21 +412,23 @@ registers:
 
   present_speed_dps:
     # degrees per second
-    class: RegisterWithConversion
+    class: RegisterWithThreshold
     address: 38
     clone: True
     size: 2
-    access: RW
+    access: R
     factor: 1.495614035
+    threshold: 1024
 
   present_speed_rps:
     # radians per second
-    class: RegisterWithConversion
+    class: RegisterWithThreshold
     address: 38
     clone: True
     size: 2
-    access: RW
+    access: R
     factor: 85.69237199105733
+    threshold: 1024
 
   present_load:
     address: 40
