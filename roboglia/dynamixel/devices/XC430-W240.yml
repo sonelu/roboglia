@@ -78,7 +78,7 @@ registers:
     size: 4
     access: RW
     default: 10
-    
+
   temperature_limit:
     address: 31
     access: RW
@@ -531,7 +531,7 @@ registers:
   indirect_data_1:
     address: 224
     access: RW
-  
+
   indirect_data_2:
     address: 225
     access: RW
@@ -539,7 +539,7 @@ registers:
   indirect_data_3:
     address: 226
     access: RW
-  
+
   indirect_data_4:
     address: 227
     access: RW
@@ -547,7 +547,7 @@ registers:
   indirect_data_5:
     address: 228
     access: RW
-  
+
   indirect_data_6:
     address: 229
     access: RW
@@ -555,7 +555,7 @@ registers:
   indirect_data_7:
     address: 230
     access: RW
-  
+
   indirect_data_8:
     address: 231
     access: RW
@@ -563,7 +563,7 @@ registers:
   indirect_data_9:
     address: 232
     access: RW
-  
+
   indirect_data_10:
     address: 233
     access: RW
@@ -571,7 +571,7 @@ registers:
   indirect_data_11:
     address: 234
     access: RW
-  
+
   indirect_data_12:
     address: 235
     access: RW
@@ -579,7 +579,7 @@ registers:
   indirect_data_13:
     address: 236
     access: RW
-  
+
   indirect_data_14:
     address: 237
     access: RW
@@ -587,7 +587,7 @@ registers:
   indirect_data_15:
     address: 238
     access: RW
-  
+
   indirect_data_16:
     address: 239
     access: RW
@@ -595,7 +595,7 @@ registers:
   indirect_data_17:
     address: 240
     access: RW
-  
+
   indirect_data_18:
     address: 241
     access: RW
@@ -603,7 +603,7 @@ registers:
   indirect_data_19:
     address: 242
     access: RW
-  
+
   indirect_data_20:
     address: 243
     access: RW
@@ -611,7 +611,7 @@ registers:
   indirect_data_21:
     address: 244
     access: RW
-  
+
   indirect_data_22:
     address: 245
     access: RW
@@ -619,7 +619,7 @@ registers:
   indirect_data_23:
     address: 246
     access: RW
-  
+
   indirect_data_24:
     address: 247
     access: RW
@@ -627,7 +627,7 @@ registers:
   indirect_data_25:
     address: 248
     access: RW
-  
+
   indirect_data_26:
     address: 249
     access: RW
@@ -635,7 +635,7 @@ registers:
   indirect_data_27:
     address: 250
     access: RW
-  
+
   indirect_data_28:
     address: 251
     access: RW
