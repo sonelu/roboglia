@@ -81,6 +81,11 @@ want to access the documentation in PDF format you can get it from
 There is also an epub version that can be accessed
 [here](https://roboglia.readthedocs.io/_/downloads/en/latest/epub/).
 
+## Devices
+
+An up to date list of devices across the communication buses is maintained
+[here](DEVICES.md).
+
 ## Contribution
 
 We are very receptive for contributions. There are many ways you can
