@@ -14,13 +14,8 @@ from roboglia.base import BaseThread
 from roboglia.base import PVL, PVLList
 
 from roboglia.dynamixel import DynamixelBus
-from roboglia.dynamixel import DynamixelAXBaudRateRegister
-from roboglia.dynamixel import DynamixelAXComplianceSlopeRegister
-from roboglia.dynamixel import DynamixelXLBaudRateRegister
 
 from roboglia.i2c import SharedI2CBus
-
-
 
 from roboglia.move import Script
 
@@ -29,8 +24,6 @@ from roboglia.move import Script
 #                     # file = 'test.log', 
 #                     level=60)    # silent
 logger = logging.getLogger(__name__)
-
-
 
 class TestMockRobot:
 
@@ -318,25 +311,6 @@ class TestMockRobot:
         s = mock_robot.sensors['bus_voltage']
         d = mock_robot.devices['d01']
         assert s.value == d.current_voltage.value
-
-        """This doesn't work fine as closing a bus will crash a
-        sync run that is using it."""
-    # def test_bus_operate_on_close(self, mock_robot, caplog):
-    #     bus = mock_robot.buses['busA']
-    #     if bus.is_open:
-    #         bus.close()
-    #     assert not bus.is_open
-    #     dev = mock_robot.devices['d01']
-    #     caplog.clear()
-    #     bus.read(dev, dev.current_pos)
-    #     assert len(caplog.records) == 1
-    #     assert 'attempt to read from a closed bus' in caplog.text
-    #     bus.write(dev, dev.desired_pos, 10)
-    #     assert len(caplog.records) == 2
-    #     assert ('attempt to write to closed bus' in caplog.text)
-    #     # reset bus
-    #     bus.open()
-    #     assert bus.is_open
  
     def test_bus_repr(self, mock_robot):
         dev = mock_robot.devices['d01']
@@ -564,58 +538,59 @@ class TestDynamixelRobot:
         register.value = 100
         assert register.value == 100
 
-    def test_dynamixel__AXBaudRateRegister(self, dummy_device, caplog):
-        reg = DynamixelAXBaudRateRegister(
-            name='test',
-            device=dummy_device,
-            address=42,
-            minim=33,        # for testing branches
-            maxim=66,        # for testing branches
-            sync=True,       # avoids calling read / write
-            access='RW'      # so we can change it!
-        )
-        reg.value = 1000000
-        assert reg.value == 1000000
-        assert reg.int_value == 1
-        # wrong value > log error
-        caplog.clear()
-        reg.value = 99
-        assert len(caplog.records) == 1
-        assert 'attempt to write a non supported for AX baud' in caplog.text
+    # removed in ver 0.1.0 after introduction of RegisterWithMapping
+    # def test_dynamixel__AXBaudRateRegister(self, dummy_device, caplog):
+    #     reg = DynamixelAXBaudRateRegister(
+    #         name='test',
+    #         device=dummy_device,
+    #         address=42,
+    #         minim=33,        # for testing branches
+    #         maxim=66,        # for testing branches
+    #         sync=True,       # avoids calling read / write
+    #         access='RW'      # so we can change it!
+    #     )
+    #     reg.value = 1000000
+    #     assert reg.value == 1000000
+    #     assert reg.int_value == 1
+    #     # wrong value > log error
+    #     caplog.clear()
+    #     reg.value = 99
+    #     assert len(caplog.records) == 1
+    #     assert 'attempt to write a non supported for AX baud' in caplog.text
 
+    # removed in ver 0.1.0 after introduction of RegisterWithMapping
+    # def test_dynamixel__AXComplianceSlopeRegister(self, dummy_device):
+    #     reg = DynamixelAXComplianceSlopeRegister(
+    #         name='test',
+    #         device=dummy_device,
+    #         address=42,
+    #         maxim=66,        # for testing branches
+    #         sync=True,       # avoids calling read / write
+    #         access='RW'      # so we can change it!
+    #     )
+    #     reg.value = 7
+    #     assert reg.value == 7
+    #     assert reg.int_value == 128
 
-    def test_dynamixel__AXComplianceSlopeRegister(self, dummy_device):
-        reg = DynamixelAXComplianceSlopeRegister(
-            name='test',
-            device=dummy_device,
-            address=42,
-            maxim=66,        # for testing branches
-            sync=True,       # avoids calling read / write
-            access='RW'      # so we can change it!
-        )
-        reg.value = 7
-        assert reg.value == 7
-        assert reg.int_value == 128
-
-
-    def test_dynamixel__XLBaudRateRegister(self, dummy_device, caplog):
-        reg = DynamixelXLBaudRateRegister(
-            name='test',
-            device=dummy_device,
-            address=42,
-            minim=33,        # for testing branches
-            maxim=66,        # for testing branches
-            sync=True,       # avoids calling read / write
-            access='RW'      # so we can change it!
-        )
-        reg.value = 1000000
-        assert reg.value == 1000000
-        assert reg.int_value == 3
-        # wrong value > log error
-        caplog.clear()
-        reg.value = 99
-        assert len(caplog.records) == 1
-        assert 'attempt to write a non supported for XL baud' in caplog.text
+    # removed in ver 0.1.0 after introduction of RegisterWithMapping
+    # def test_dynamixel__XLBaudRateRegister(self, dummy_device, caplog):
+    #     reg = DynamixelXLBaudRateRegister(
+    #         name='test',
+    #         device=dummy_device,
+    #         address=42,
+    #         minim=33,        # for testing branches
+    #         maxim=66,        # for testing branches
+    #         sync=True,       # avoids calling read / write
+    #         access='RW'      # so we can change it!
+    #     )
+    #     reg.value = 1000000
+    #     assert reg.value == 1000000
+    #     assert reg.int_value == 3
+    #     # wrong value > log error
+    #     caplog.clear()
+    #     reg.value = 99
+    #     assert len(caplog.records) == 1
+    #     assert 'attempt to write a non supported for XL baud' in caplog.text
 
     def test_open_device_with_sync_items(self, mock_robot_init):
         robot = BaseRobot(**mock_robot_init['dynamixel'])
@@ -889,6 +864,19 @@ class TestI2CRobot:
         d.word_xl_y.value = -100
         assert d.word_xl_y.value == -100
         assert d.word_xl_y.int_value == (65536 - 1000)
+
+    def test_register_with_dynamic_conversion(self, mock_robot_init):
+        mock_robot_init['i2crobot']['buses']['i2c2']['err'] = 0
+        robot = BaseRobot(**mock_robot_init['i2crobot'])
+        robot.start()
+        d = robot.devices['imu']
+        # set the control register
+        d.range_control.value = 0b110000
+        assert d.range_control_conv.value == 3
+        assert d.dynamic_register.value == 1024.0 / 10.0 * 3.0
+        d.range_control_conv.value = 6
+        assert d.range_control.value == 0b1100000
+        assert d.dynamic_register.value == 1024.0 / 10.0 * 6.0
 
     def test_i2c_sensor(self, mock_robot_init, caplog):
         robot = BaseRobot(**mock_robot_init['i2crobot'])

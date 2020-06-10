@@ -19,11 +19,15 @@ registers:
 # use Dynamixel tools like DynamixelWizard
 
   baud_rate:
-    class: DynamixelXLBaudRateRegister
+    class: RegisterWithMapping
     address: 4
     access: RW
     default: 3
-    maxim: 207
+    mapping:
+      0: 9600
+      1: 57600
+      2: 115200
+      3: 1000000
 
   return_delay_time:
     class: RegisterWithConversion

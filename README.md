@@ -74,6 +74,11 @@ you particular robot.
 
 ## Documentation
 
+For a quick start in ``roboglia`` have a look at a practical introduction
+[here](https://roboglia.readthedocs.io/en/latest/quick_start.html). We present
+the core concepts like **device**, **register**, **sync** and **joint** as well
+as some primer in setting up the robot definition file.
+
 You can access the detailed documentation on the
 [readthedocs.io](https://roboglia.readthedocs.io/en/latest/) website. If you
 want to access the documentation in PDF format you can get it from

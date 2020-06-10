@@ -63,16 +63,19 @@ registers:
   word_g_x:
     address: 13
     size: 2
+    access: RW
     desc: Gyro X Word Register
 
   word_g_y:
     address: 15
     size: 2
+    access: RW
     desc: Gyro Y Word Register
 
   word_g_z:
     address: 17
     size: 2
+    access: RW
     desc: Gyro Z Word Register
 
   activate_g:
@@ -108,3 +111,26 @@ registers:
     access: RW
     clone: True
     bits: 0b00000010
+
+  range_control:
+    address: 30
+    access: RW
+    default: 0b110000
+
+  range_control_conv:
+    address: 30
+    clone: True
+    class: RegisterWithConversion
+    access: RW
+    # divide by 16 / move 4 bits to the right
+    factor: 16.0
+
+  dynamic_register:
+    address: 32
+    size: 2
+    access: RW
+    default: 1024
+    class: RegisterWithDynamicConversion
+    factor: 10.0
+    factor_reg: range_control_conv
+
