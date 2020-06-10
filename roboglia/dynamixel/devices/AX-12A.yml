@@ -19,10 +19,20 @@ registers:
 # use Dynamixel tools like DynamixelWizard
 
   baud_rate:
-    class: DynamixelAXBaudRateRegister
+    class: RegisterWithMapping
     address: 4
     access: RW
     default: 1
+    mapping:
+      1: 1000000
+      3: 500000
+      4: 400000
+      7: 250000
+      9: 200000
+      16: 115200
+      34: 57600
+      103: 19200
+      207: 9600
 
   return_delay_time:
     class: RegisterWithConversion
@@ -288,16 +298,32 @@ registers:
     factor: 195.3786081396107
 
   cw_compliance_slope:
-    class: DynamixelAXComplianceSlopeRegister
+    class: RegisterWithMapping
     address: 28
     access: RW
     default: 32
+    mapping:
+      2: 1
+      4: 2
+      8: 3
+      16: 4
+      32: 5
+      64: 6
+      128: 7
 
   ccw_compliance_slope:
-    class: DynamixelAXComplianceSlopeRegister
+    class: RegisterWithMapping
     address: 29
     access: RW
     default: 32
+    mapping:
+      2: 1
+      4: 2
+      8: 3
+      16: 4
+      32: 5
+      64: 6
+      128: 7
 
   goal_position:
     address: 30

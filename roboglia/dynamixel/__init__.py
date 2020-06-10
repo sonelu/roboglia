@@ -1,9 +1,5 @@
 from ..utils import register_class
 
-from .register import DynamixelAXBaudRateRegister
-from .register import DynamixelAXComplianceSlopeRegister
-from .register import DynamixelXLBaudRateRegister
-
 from .device import DynamixelDevice
 
 from .bus import DynamixelBus
@@ -15,10 +11,6 @@ from .sync import DynamixelSyncWriteLoop
 from .sync import DynamixelBulkReadLoop
 from .sync import DynamixelBulkWriteLoop
 from .sync import DynamixelRangeReadLoop
-
-register_class(DynamixelAXBaudRateRegister)
-register_class(DynamixelAXComplianceSlopeRegister)
-register_class(DynamixelXLBaudRateRegister)
 
 register_class(DynamixelDevice)
 

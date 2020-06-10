@@ -402,7 +402,7 @@ class BoolRegister(BaseRegister):
         is 'any'.
 
     mask: int or ``None``
-        An optional maks that allows for partial bit handling on the
+        An optional mask that allows for partial bit handling on the
         internal values. This mask permits handling only the specified bits
         without affecting the other ones in the internal value. For instance
         if the mask is 0b00001111 then the operations (setter, getter) will
@@ -464,7 +464,7 @@ class BoolRegister(BaseRegister):
             # the int() below is to remove a linter error
             masked_int_value = self.int_value & (~ int(self.mask))
             if not value:           # False; reset
-                # equvalent to reseting the bits
+                # equivalent to reseting the bits
                 ret = masked_int_value
             else:                   # True; set
                 # setting the bits
@@ -570,7 +570,7 @@ class RegisterWithDynamicConversion(RegisterWithConversion):
     Parameters
     ----------
     factor_reg: str
-        The name of the register that provides the addittional factor
+        The name of the register that provides the additional factor
         adjustment.
 
     Raises:
@@ -722,7 +722,7 @@ class RegisterWithMapping(BaseRegister):
         Optional, can indicate that only certain bits from the value of the
         register are used in the mapping. Ex. using 0b11110000 as a mask
         indicates that only the most significant 4 bits of the internal
-        value are significant for the convesion to external values.
+        value are significant for the conversion to external values.
 
     mapping: dict
         A dictionary that provides {internal : external} mapping. Internally
@@ -771,7 +771,7 @@ class RegisterWithMapping(BaseRegister):
         """
         int_val = self.inv_mapping.get(value, None)
         if int_val is None:
-            logger.warning(f'Incorect value {value} when converting to '
+            logger.warning(f'Incorrect value {value} when converting to '
                            f'internal for register "{self.name}" of '
                            f'device "{self.device.name}"')
             return self.int_value
