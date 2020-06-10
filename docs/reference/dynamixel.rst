@@ -25,16 +25,6 @@ devices.
 
    DynamixelDevice
 
-*Registers*
-
-.. autosummary::
-   :nosignatures:
-   :toctree: dynamixel
-
-   DynamixelAXBaudRateRegister
-   DynamixelAXComplianceSlopeRegister
-   DynamixelXLBaudRateRegister
-
 *Syncs*
 
 .. autosummary::
