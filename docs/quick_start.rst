@@ -589,7 +589,61 @@ Moves
 
 **Moves** allows you to control the robot joints using arbitrary commands
 that are produced programmatically. You will normally subclass the
-:py:class:`~roboglia.move.Move` class and implement the methods that you
+:py:class:`~roboglia.move.Motion` class and implement the methods that you
 need in order to perform the actions.
 
-<More to comme soon.>
+For instance the following code would move the head of a robot using
+a sinusoid trajectory:
+
+.. code-block:: Python
+  :linenos:
+
+  from roboglia.move import Motion
+  from math import sin, cos
+
+  class HeadMove(Motion):
+
+      def __init__(manager,       # robot manager object needed for super()
+                  head_yaw,       # head yaw joint
+                  head_pitch,     # head pitch joint
+                  yaw_ampli= 60,  # yaw move amplitude (degrees)
+                  pitch_ampli=30, # pitch move amplitude (degrees)
+                  cycle = 5):     # duration of a cycle
+          super().__init__(name='HeadSinus', frequency=25.0,
+                          manager=manager, joints=[head_yaw, head_pitch])
+          self.head_yaw = head_yaw
+          self.head_pitch = head_pitch
+          self.yaw_ampli = yaw_ampli
+          self.pitch_ampli = pitch_ampli
+          self.cycle = cycle
+
+      def atomic(self):
+          # calculates the sin and cos for the yaw and pitch
+          sin_pos = sin(self.ticks / self.cycle) * self.yaw_ampli
+          cos_pos = cos(self.ticks / self.cycle) * self.pitch_ampli
+          commands = {}
+          commands[self.head_yaw.name] = PVL(sin_pos)
+          commands[self.head_pitch.name] = PVL(cos_pos)
+          self.manager.submit(self, commands)
+
+
+And in the main code of your robot you can use it as follows:
+
+.. code-block:: Python
+  :linenos:
+
+  from roboglia.base import BaseRobot
+
+  robot = BaseRobot.from_yaml('/path/to/robot.yml')
+  robot.start()
+
+  ...
+
+  head_motion = HeadMotion(robot.manager,
+                           robot.joints['head_y'], robot.joints['head_p'])
+  head_motion.start()
+
+  ...
+
+  robot.stop()
+

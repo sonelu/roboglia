@@ -25,3 +25,11 @@ allowing to store and execute predetermined routine movements.
    Scene
    Sequence
    Frame
+
+*Motion*
+
+.. autosummary::
+   :nosignatures:
+   :toctree: move
+
+   Motion
