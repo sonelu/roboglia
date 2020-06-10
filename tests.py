@@ -865,6 +865,19 @@ class TestI2CRobot:
         assert d.word_xl_y.value == -100
         assert d.word_xl_y.int_value == (65536 - 1000)
 
+    def test_register_with_dynamic_conversion(self, mock_robot_init):
+        mock_robot_init['i2crobot']['buses']['i2c2']['err'] = 0
+        robot = BaseRobot(**mock_robot_init['i2crobot'])
+        robot.start()
+        d = robot.devices['imu']
+        # set the control register
+        d.range_control.value = 0b110000
+        assert d.range_control_conv.value == 3
+        assert d.dynamic_register.value == 1024.0 / 10.0 * 3.0
+        d.range_control_conv.value = 6
+        assert d.range_control.value == 0b1100000
+        assert d.dynamic_register.value == 1024.0 / 10.0 * 6.0
+
     def test_i2c_sensor(self, mock_robot_init, caplog):
         robot = BaseRobot(**mock_robot_init['i2crobot'])
         robot.start()

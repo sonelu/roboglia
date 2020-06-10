@@ -73,11 +73,11 @@ class I2CBus(BaseBus):
         the bus will use the :py:class:`MockSMBus` class for performing
         read and write operations.
     """
-    def __init__(self, mock=False, **kwargs):
+    def __init__(self, mock=False, err=0.1, **kwargs):
         super().__init__(**kwargs)
         check_options(mock, [True, False], 'bus', self.name, logger)
         if mock:
-            self.__i2cbus = MockSMBus(self.robot, err=0.1)
+            self.__i2cbus = MockSMBus(self.robot, err=err)
         else:
             self.__i2cbus = SMBus()             # not opened
 
@@ -283,7 +283,7 @@ class MockSMBus(SMBus):
         self.fd = None
         # we do this so that the testing covers
         # the error part of the branch
-        raise OSError('error closing the bus')
+        raise OSError('** auto generated: error closing the bus **')
 
     def __common_read(self, dev_id, address):
         if random.random() < self.__err:
@@ -292,13 +292,17 @@ class MockSMBus(SMBus):
         # non-error case
         device = self.__robot.device_by_id(dev_id)
         reg = device.register_by_address(address)
+        if reg is None:
+            # it's the higher digits of the register; we'll return
+            # 0 and the lower digits will return the full register value
+            return 0
         if reg.access == 'R':
             # we randomize the read
             plus = random.randint(-10, 10)
             value = max(reg.minim, min(reg.maxim, reg.int_value + plus))
-            return value
-        # default case
-        return reg.int_value
+        else:
+            value = reg.int_value
+        return value
 
     def read_byte_data(self, dev_id, address):
         """Simulates the read of 1 Byte."""
@@ -315,7 +319,7 @@ class MockSMBus(SMBus):
     def __common_write(self, dev_id, address, value):
         if random.random() < self.__err:
             logger.error('*** random generated write error ***')
-            raise OSError
+            raise OSError('*** random generated write error ***')
         return None
 
     def write_byte_data(self, dev_id, address, value):
