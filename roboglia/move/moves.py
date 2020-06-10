@@ -9,11 +9,66 @@ logger = logging.getLogger(__name__)
 
 
 class Script(StepLoop):
+    """A Script is the top level structure used for defining prescribed
+    motion for a robot.
 
-    def __init__(self, name='SCRIPT', robot=None, times=1, joints=[],
-                 frames={}, sequences={}, scenes={}, script=[], **kwargs):
-        super().__init__(name=name, times=times, **kwargs)
+    Parameters
+    ----------
+    name: str
+        The name of the script
+
+    patience: float
+        A duration in seconds that the main thread will wait for the
+        background thread to finish setup activities and indicate that it
+        is in ``started`` mode.
+
+    times: int
+        How many times the loop should be played. If a negative number is
+        given (ex. -1) the loop will play to infinite
+
+    robot: BaseRobot or subclass
+        The robot that will be performing the script
+
+    defaults: dict
+        A dictionary with default behavior. Supported elements for the
+        moment:
+
+        - "duration" (specifies the duration of a sequence transition,
+          if no explicit one is provided)
+        - others to come...
+
+    times: int
+        The number of times the script steps will be executed when
+        :py:meth:`play` will be invoked. Default is 1.
+
+    joints: list of Joint or subclasses
+        An ordered list of joints that are used by the script. The ``frame``
+        definitions later uses this order when describing the states.
+
+    frames: dict of :py:class:`Frame`
+        The Frame definitions used by the script. See the information for
+        this class for more details.
+
+    sequences: dict of :py:class:`Sequence`
+        The Sequence defintions that are used by the script. See the
+        information for this class for more details.
+
+    scenes: dict of :py:class:`Scene`
+        The Scene defintions used by the Script. See the information for this
+        class for more details.
+
+    script: list of :py:class:`Scene`
+        An ordered list of Scenes that represent the complete Script. When
+        the script is played the scenes are run in the order provided and,
+        if the ``times`` parameter is different than 1, it will repeat the
+        execution in a loop.
+    """
+    def __init__(self, name='SCRIPT', patience=1.0, times=1,
+                 robot=None, defaults={},
+                 joints=[], frames={}, sequences={}, scenes={}, script=[]):
+        super().__init__(name=name, patience=patience, times=times)
         self.__robot = robot
+        self.__defaults = defaults
         self.__init_joints(joints)
         self.__init_frames(frames)
         self.__init_sequences(sequences)
@@ -22,6 +77,7 @@ class Script(StepLoop):
 
     @classmethod
     def from_yaml(cls, robot, file_name):
+        """Reads the script defintion from a YAML file."""
         with open(file_name, 'r') as f:
             init_dict = yaml.load(f, Loader=yaml.FullLoader)
         if len(init_dict) > 1:              # pragma: no branch
@@ -36,9 +92,10 @@ class Script(StepLoop):
         issued.
         """
         for index, joint_name in enumerate(joints):
-            if joint_name not in self.robot.joints:
-                logger.warning(f'joint {joint_name} used in script {self.name}'
-                               f' does not exist in robot {self.robot.name} '
+            if joint_name not in self.robot.manager.joints:
+                logger.warning(f'Joint {joint_name} used in script {self.name}'
+                               ' is not managed by the robot manager '
+                               f'{self.robot.manager.name} '
                                'and will be skipped')
                 joints[index] = None
             else:
@@ -132,22 +189,32 @@ class Script(StepLoop):
 
     @property
     def robot(self):
+        """The robot associated with the Script."""
         return self.__robot
 
     @property
+    def defaults(self):
+        """Default values for Script."""
+        return self.__defaults
+
+    @property
     def joints(self):
+        """The joints used by the Script."""
         return self.__joints
 
     @property
     def frames(self):
+        """The dictionary of Frames used by the Script."""
         return self.__frames
 
     @property
     def sequences(self):
+        """The dictionary of Sequences used by the Script."""
         return self.__sequences
 
     @property
     def scenes(self):
+        """The dictionary of Scenes used by the Script."""
         return self.__scenes
 
     @property
@@ -189,7 +256,21 @@ class Script(StepLoop):
 
 
 class Scene():
+    """A Scene is a collection of :py:class:`Sequence` presented in an ordered
+    list.
 
+    Parameters
+    ----------
+    name: str
+        The name of the Scene
+
+    sequences: list of :py:class:`Sequence`
+        The Sequences that make the Scene.
+
+    times: int
+        A repeat counter for playing the list of Sequences when the
+        :py:meth:`play` is invoked.
+    """
     def __init__(self, name='SCENE', sequences=[], times=1):
         self.__name = name
         self.__sequences = sequences
@@ -197,17 +278,22 @@ class Scene():
 
     @property
     def name(self):
+        """The name of the Scene."""
         return self.__name
 
     @property
     def sequences(self):
+        """The list of Sequences in the Scene."""
         return self.__sequences
 
     @property
     def times(self):
+        """The repetition counter for the Scene."""
         return self.__times
 
     def play(self):
+        """Performs a Scene. Inherited from :py:class:`StepLoop`. Iterates
+        over the Sequences and produces the commands."""
         for step in range(self.times):
             logger.debug(f'Scene "{self.name}" playing iteration {step+1}')
             for seq_ext in self.sequences:

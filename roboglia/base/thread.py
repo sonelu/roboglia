@@ -47,11 +47,11 @@ class BaseThread():
         background thread to finish setup activities and indicate that it
         is in ``started`` mode.
     """
-    def __init__(self, name='THREAD', patience=1.0, **kwargs):
+    def __init__(self, name='THREAD', patience=1.0):
         # name should have been checked by the robot
         self.__name = name
         check_not_empty(patience, 'patience', 'thread', self.name, logger)
-        check_type(patience, float, 'thread', self.name, logger)
+        check_type(patience, (float, int), 'thread', self.name, logger)
         self.__patience = patience
         self.__started = threading.Event()
         self.__paused = threading.Event()
@@ -195,6 +195,11 @@ class BaseLoop(BaseThread):
     name: str
         The name of the loop
 
+    patience: float
+        A duration in seconds that the main thread will wait for the
+        background thread to finish setup activities and indicate that it
+        is in ``started`` mode.
+
     frequency: float
         The loop frequency in [Hz]
 
@@ -210,7 +215,6 @@ class BaseLoop(BaseThread):
         execution statistics to adjust the wait time in order to produce
         the desired processing frequency.
 
-
     review: float
         The time in [s] to calculate the statistics for the frequency.
 
@@ -219,9 +223,9 @@ class BaseLoop(BaseThread):
         KeyError and ValueError if provided data in the initialization
         dictionary are incorrect or missing.
     """
-    def __init__(self, frequency=None, warning=0.90,
-                 throttle=0.1, review=1.0, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, name='BASELOOP', patience=1.0, frequency=None,
+                 warning=0.90, throttle=0.1, review=1.0):
+        super().__init__(name=name, patience=patience)
         check_not_empty(frequency, 'frequency', 'loop', self.name, logger)
         check_type(frequency, float, 'loop', self.name, logger)
         self.__frequency = frequency

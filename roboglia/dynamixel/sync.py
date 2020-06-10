@@ -261,7 +261,7 @@ class DynamixelRangeReadLoop(BaseSync):
     This method is provided as an alternative for AX devices that do not
     support BulkRead or SyncRead and for which reading registers with
     BaseReadSync would be extremely inefficient. With this method we still
-    have to send / recieive a communication packet for each device, but we
+    have to send / receive a communication packet for each device, but we
     would get all the registers in one go.
 
     The devices are provided in the `group` parameter and the registers
@@ -314,7 +314,7 @@ class DynamixelRangeReadLoop(BaseSync):
                 logger.warning(f'Device "{device.name}" responded with a '
                                f'return error: {err_desc}')
 
-            # processs results
+            # process results
             for reg_name in self.register_names:
                 reg = getattr(device, reg_name)
                 pos = reg.address - self.start_address

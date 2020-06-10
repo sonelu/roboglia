@@ -39,6 +39,32 @@ class BaseSync(BaseLoop):
 
     Parameters
     ----------
+    name: str
+        The name of the sync
+
+    patience: float
+        A duration in seconds that the main thread will wait for the
+        background thread to finish setup activities and indicate that it
+        is in ``started`` mode.
+
+    frequency: float
+        The sync frequency in [Hz]
+
+    warning: float
+        Indicates a threshold in range [0..1] indicating when
+        warnings should be logged to the logger in case the execution
+        frequency is bellow the target. A 0.8 value indicates the real
+        execution is less than 0.8 * target_frequency. The statistic is
+        calculated over a period of time specified by the parameter `review`.
+
+    throttle: float
+        Is a float (< 1.0) that is used by the monitoring of
+        execution statistics to adjust the wait time in order to produce
+        the desired processing frequency.
+
+    review: float
+        The time in [s] to calculate the statistics for the frequency.
+
     group: set
         The set with the devices used by sync; normally the robot
         constructor replaces the name of the group from YAML file with the
@@ -56,8 +82,15 @@ class BaseSync(BaseLoop):
         KeyError: if mandatory parameters are not found
     """
 
-    def __init__(self, group=None, registers=[], auto=True, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, name='BASESYNC', patience=1.0, frequency=None,
+                 warning=0.90, throttle=0.1, review=1.0,
+                 group=None, registers=[], auto=True):
+        super().__init__(name=name,
+                         patience=patience,
+                         frequency=frequency,
+                         warning=warning,
+                         throttle=throttle,
+                         review=review)
         check_not_empty(group, 'group', 'sync', self.name, logger)
         check_type(group, set, 'sync', self.name, logger)
         self.__devices = list(group)
@@ -194,7 +227,7 @@ class BaseSync(BaseLoop):
             super().start()
 
     def stop(self):
-        """Before calling the inherited method it unflags the registers
+        """Before calling the inherited method it un-flags the registers
         for syncing."""
         for reg in self.all_registers:
             reg.sync = False
