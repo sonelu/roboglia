@@ -25,6 +25,6 @@ XL430       | [control table](https://emanual.robotis.com/docs/en/dxl/x/xl430-w2
 
 Device | Description | Reference | Notes
 -------|-------------|-----------|-------|
-LSM6DS3 | iNEMO inertial module: always-on 3D accelerometer and 3D gyroscope | [datasheet](https://www.st.com/resource/en/datasheet/lsm6ds3.pdf)
+LSM6DS3 | iNEMO inertial module: always-on 3D accelerometer and 3D gyroscope | [data-sheet](https://www.st.com/resource/en/datasheet/lsm6ds3.pdf)
 TCA9538 | Low Voltage 8-Bit I2C and SMBus Low-Power I/O Expander | [reference](https://www.ti.com/product/TCA9538)
-TLA202X | 12-Bit Delta-Sigma ADC w/ Voltage Reference | [referrence](https://www.ti.com/product/TLA2024) | TLA2021, TLA2022 and TLA2024 similar with different number of inputs
+TLA202X | 12-Bit Delta-Sigma ADC w/ Voltage Reference | [reference](https://www.ti.com/product/TLA2024) | TLA2021, TLA2022 and TLA2024 similar with different number of inputs
