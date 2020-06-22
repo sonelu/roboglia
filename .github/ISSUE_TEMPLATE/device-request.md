@@ -10,7 +10,7 @@ assignees: ''
 **Device identification**: 
 * enter the code of the device; this will be used for the YAML file too *
 
-** Device description**:
+**Device description**:
 * enter the functionality performed by the device and any other information that is relevant to its operation.*
 
 **Manufacturer**:
