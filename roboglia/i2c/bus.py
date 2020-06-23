@@ -67,14 +67,36 @@ class I2CBus(BaseBus):
 
     Parameters
     ----------
+    name: str
+        The name of the bus
+
+    robot: BaseRobot
+        A reference to the robot using the bus
+
+    port: any
+        An identification for the physical bus access. Some busses have
+        string description like ``/dev/ttySC0`` while others could be just
+        integers (like in the case of I2C or SPI buses)
+
+    auto: Bool
+        If ``True`` the bus will be opened when the robot is started by
+        calling :py:meth:`BaseRobot.start`. If ``False`` the bus will be
+        left closed during robot initialization and needs to be opened
+        by the programmer.
+
     mock: bool
         Indicates if the I2C bus will use mock communication. It is
         provided for testing of functionality in CI environment. If ``True``
         the bus will use the :py:class:`MockSMBus` class for performing
         read and write operations.
+
+    err: float
+        For mock buses this parameter controls the probability of generating
+        a random mock communication error.
     """
-    def __init__(self, mock=False, err=0.1, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, name='I2CBUS', robot=None, port='', auto=True,
+                 mock=False, err=0.1):
+        super().__init__(name=name, robot=robot, port=port, auto=auto)
         check_options(mock, [True, False], 'bus', self.name, logger)
         if mock:
             self.__i2cbus = MockSMBus(self.robot, err=err)
