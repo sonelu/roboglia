@@ -350,7 +350,7 @@ class TestMockRobot:
         caplog.clear()
         bus.close()
         assert len(caplog.records) == 1
-        assert 'attempted to close bus' in caplog.text
+        assert 'Attempted to close bus' in caplog.text
         # open bus already open
         caplog.clear()
         bus.open()
