@@ -53,9 +53,9 @@ class BaseBus():
     Raises:
         KeyError: if ``port`` not supplied
     """
-    def __init__(self, name='BUS', robot=None, port='', auto=True, **kwargs):
+    def __init__(self, name='BUS', robot=None, port='', auto=True):
         # already checked by robot
-        check_not_empty(robot, 'robot', 'bus', name, logger)
+        # check_not_empty(robot, 'robot', 'bus', name, logger)
         check_not_empty(port, 'port', 'bus', name, logger)
         self.__name = name
         self.__robot = robot
@@ -105,19 +105,20 @@ class BaseBus():
                 else:
                     logger.<level>('message')
         """
-        for sync in self.robot.syncs.values():
-            # we need to compare by names and not by object ids because
-            # sync.bus == self will not work:
-            # sync.bus could be a SharedBus and
-            # self will be the base bus (ex. FileBus or Dynamixel Bus)
-            if sync.bus.name == self.name and sync.started:
-                logger.error(f'attempted to close bus {self.name} that is '
-                             f'used by running syncs')
-                return False
+        if self.robot:
+            for sync in self.robot.syncs.values():
+                # we need to compare by names and not by object ids because
+                # sync.bus == self will not work:
+                # sync.bus could be a SharedBus and
+                # self will be the base bus (ex. FileBus or Dynamixel Bus)
+                if sync.bus.name == self.name and sync.started:
+                    logger.error(f'Attempted to close bus {self.name} that is '
+                                 'used by running syncs')
+                    return False
         return True
 
     def __repr__(self):
-        """Returrns a representation of a BaseBus that includes the name of
+        """Returns a representation of a BaseBus that includes the name of
         the class, the port and the status (open or closed)."""
         return f'<{self.__class__.__name__} port={self.port} ' + \
                f'open={self.is_open}>'
@@ -176,13 +177,11 @@ class FileBus(BaseBus):
 
     Same parameters as :py:class:`BaseBus`.
     """
-    def __init__(self, name='FILEBUS', robot=None, port='', auto=True,
-                 **kwargs):
+    def __init__(self, name='FILEBUS', robot=None, port='', auto=True):
         super().__init__(name=name,
                          robot=robot,
                          port=port,
-                         auto=auto,
-                         **kwargs)
+                         auto=auto)
         self.__fp = None
         self.__last = {}
         logger.debug(f'FileBus "{self.name}" initialized')

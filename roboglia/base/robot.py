@@ -158,6 +158,7 @@ class BaseRobot():
             bus_info['robot'] = self
             check_key('class', bus_info, 'bus', bus_name, logger)
             bus_class = get_registered_class(bus_info['class'])
+            del bus_info['class']
             new_bus = bus_class(**bus_info)
             self.__buses[bus_name] = new_bus
             logger.info(f'Bus "{bus_name}" added')
