@@ -12,6 +12,7 @@ from roboglia.base import RegisterWithConversion, RegisterWithThreshold
 from roboglia.base import RegisterWithMapping
 from roboglia.base import BaseThread
 from roboglia.base import PVL, PVLList
+from roboglia.base import SharedFileBus
 
 from roboglia.dynamixel import DynamixelBus
 
@@ -24,6 +25,37 @@ from roboglia.move import Script
 #                     # file = 'test.log', 
 #                     level=60)    # silent
 logger = logging.getLogger(__name__)
+
+class TestManualRobot:
+
+    def test_manual_robot(self):
+        _ = BaseRobot()
+
+    def test_manual_bus(self, caplog):
+        rob = BaseRobot()
+        bus = SharedFileBus(name='busA', port='/tmp/busA.log')
+        rob.add_bus(bus)
+        assert len(rob.buses) == 1
+        bus.open()
+        # re-add
+        caplog.clear()
+        rob.add_bus(bus)
+        assert len(caplog.records) == 1
+        assert len(rob.buses) == 1
+
+    def test_manual_device(self, caplog):
+        rob = BaseRobot()
+        bus = SharedFileBus(name='busA', port='/tmp/busA.log')
+        rob.add_bus(bus)
+        dev = BaseDevice(name='dev1', bus=bus, dev_id=42, model='DUMMY')
+        rob.add_device(dev)
+        assert len(rob.devices) == 1
+        bus.open()
+        # re-add
+        caplog.clear()
+        rob.add_device(dev)
+        assert len(caplog.records) == 1
+        assert len(rob.devices) == 1      
 
 class TestMockRobot:
 
@@ -41,13 +73,13 @@ class TestMockRobot:
                           robot='robot')
 
     def test_incomplete_robot(self, caplog):
-        with pytest.raises(ValueError) as excinfo:
-            _ = BaseRobot.from_yaml('tests/no_buses.yml')
-        assert 'you need at least one bus for the robot' in str(excinfo.value)
+        # we now allow creating robots with no buses
+        caplog.clear()
+        _ = BaseRobot.from_yaml('tests/no_buses.yml')
 
-        with pytest.raises(ValueError) as excinfo:
-            _ = BaseRobot.from_yaml('tests/no_devices.yml')
-        assert 'you need at least one device for the robot' in str(excinfo.value)
+        # we now allow creating robots with no devices
+        caplog.clear()
+        _ = BaseRobot.from_yaml('tests/no_devices.yml')
 
         caplog.clear()
         _ = BaseRobot.from_yaml('tests/dummy_robot.yml')
