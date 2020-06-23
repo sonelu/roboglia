@@ -101,17 +101,17 @@ class BaseRobot():
                  joints={}, sensors={}, groups={}, syncs={}, manager={}):
         logger.info('***** Initializing robot *************')
         self.__name = name
-        if not buses:
-            message = 'you need at least one bus for the robot'
-            logger.critical(message)
-            raise ValueError(message)
+        # if not buses:
+        #     message = 'you need at least one bus for the robot'
+        #     logger.critical(message)
+        #     raise ValueError(message)
         self.__init_buses(buses)
         check_type(inits, dict, 'robot', name, logger)
         self.__inits = inits
-        if not devices:
-            message = 'you need at least one device for the robot'
-            logger.critical(message)
-            raise ValueError(message)
+        # if not devices:
+        #     message = 'you need at least one device for the robot'
+        #     logger.critical(message)
+        #     raise ValueError(message)
         self.__init_devices(devices)
         self.__init_joints(joints)
         self.__init_sensors(sensors)
@@ -150,6 +150,8 @@ class BaseRobot():
     def __init_buses(self, buses):
         """Called by ``__init__`` to parse and instantiate buses."""
         self.__buses = {}
+        if buses is None:
+            return
         logger.info('Settting up buses...')
         for bus_name, bus_info in buses.items():
             # add the name in the dict
@@ -163,10 +165,28 @@ class BaseRobot():
             self.__buses[bus_name] = new_bus
             logger.info(f'Bus "{bus_name}" added')
 
+    def add_bus(self, bus_obj):
+        """Adds an already instantiated Bus object to the robot. Raises
+        an error in the log if a bus with the same name is already
+        registered and does not register it.
+
+        Parameters
+        ----------
+        bus_obj: BaseBus or subclass
+            The bus to be added
+        """
+        if bus_obj.name not in self.__buses:
+            self.__buses[bus_obj.name] = bus_obj
+        else:
+            logger.error(f'Bus {bus_obj.name} already registered '
+                         'with the robot')
+
     def __init_devices(self, devices):
         """Called by ``__init__`` to parse and instantiate devices."""
         self.__devices = {}
         self.__dev_by_id = {}
+        if devices is None:
+            return
         logger.info('Setting up devices...')
         for dev_name, dev_info in devices.items():
             # add the name in the dev_info
@@ -191,6 +211,23 @@ class BaseRobot():
             self.__devices[dev_name] = new_dev
             self.__dev_by_id[dev_info['dev_id']] = new_dev
             logger.info(f'Device "{dev_name}" added')
+
+    def add_device(self, dev_obj):
+        """Adds an already instantiated Device object to the robot. Raises
+        an error in the log if a device with the same name is already
+        registered and does not register it.
+
+        Parameters
+        ----------
+        dev_obj: BaseDevice or subclass
+            The device to be added
+        """
+        if dev_obj.name not in self.__devices:
+            self.__devices[dev_obj.name] = dev_obj
+            self.__dev_by_id[dev_obj.dev_id] = dev_obj
+        else:
+            logger.error(f'Device {dev_obj.name} already registered '
+                         'with the robot')
 
     def __init_joints(self, joints):
         """Called by ``__init__`` to parse and instantiate joints."""
