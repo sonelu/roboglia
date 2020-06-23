@@ -40,6 +40,23 @@ class DynamixelBus(BaseBus):
 
     Parameters
     ----------
+    name: str
+        The name of the bus
+
+    robot: BaseRobot
+        A reference to the robot using the bus
+
+    port: any
+        An identification for the physical bus access. Some busses have
+        string description like ``/dev/ttySC0`` while others could be just
+        integers (like in the case of I2C or SPI buses)
+
+    auto: Bool
+        If ``True`` the bus will be opened when the robot is started by
+        calling :py:meth:`BaseRobot.start`. If ``False`` the bus will be
+        left closed during robot initialization and needs to be opened
+        by the programmer.
+
     baudrate: int
         Communication speed for the bus
 
@@ -63,9 +80,10 @@ class DynamixelBus(BaseBus):
         KeyError: if any of the required keys are missing
         ValueError: if any of the required data is incorrect
     """
-    def __init__(self, baudrate=1000000, protocol=2.0, rs485=False,
-                 mock=False, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, name='DYNAMIXEL', robot=None, port='', auto=True,
+                 baudrate=1000000, protocol=2.0, rs485=False,
+                 mock=False):
+        super().__init__(name=name, robot=robot, port=port, auto=auto)
         check_type(baudrate, int, 'bus', self.name, logger)
         check_not_empty(baudrate, 'baudrate', 'bus', self.name, logger)
         self.__baudrate = baudrate
@@ -109,6 +127,7 @@ class DynamixelBus(BaseBus):
         uses MockPacketHandler.
         """
         if self.__mock:
+            check_not_empty(self.robot, 'robot', 'bus', self.name, logger)
             self.__port_handler = 'MockBus'
             self.__packet_handler = MockPacketHandler(self.protocol,
                                                       self.robot)

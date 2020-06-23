@@ -177,13 +177,11 @@ class FileBus(BaseBus):
 
     Same parameters as :py:class:`BaseBus`.
     """
-    def __init__(self, name='FILEBUS', robot=None, port='', auto=True,
-                 **kwargs):
+    def __init__(self, name='FILEBUS', robot=None, port='', auto=True):
         super().__init__(name=name,
                          robot=robot,
                          port=port,
-                         auto=auto,
-                         **kwargs)
+                         auto=auto)
         self.__fp = None
         self.__last = {}
         logger.debug(f'FileBus "{self.name}" initialized')
