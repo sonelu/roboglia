@@ -58,7 +58,7 @@ devices connected on the bus:
   >>>bus.scan()
   [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-Great! I told us that there are 10 servos on that bus (if you're wandering they
+Great! I told us that there are 10 servos on that bus (if you're wondering they
 are actually the 2 servos for the head pan / tilt and 4 servos for each hand of
 the robot).
 
@@ -180,7 +180,7 @@ static, finite mapping between the internal representation of the register's
 content and the external one. In this case the human readable value is
 1000000 (1Mbs) while the internal value is 1. The logic for this is taken
 from the `producer's specification <https://emanual.robotis.com/docs/en/dxl/ax/ax-12a/#baud-rate-4>`_
-and is included in the `YAMl file that describes the device <https://github.com/sonelu/roboglia/blob/master/roboglia/dynamixel/devices/AX-12A.yml>`_.
+and is included in the `YAML file that describes the device <https://github.com/sonelu/roboglia/blob/master/roboglia/dynamixel/devices/AX-12A.yml>`_.
 
 An even more interesting case is the one involving the positional registers
 like ``present_position``. For this particular servo, the register contains
@@ -206,7 +206,7 @@ the ``goal_position``:
 
 This will do a lot of things in the background:
 
-- it will call the setter for value with 450
+- it will call the setter for ``value`` with 450
 - the setter will check if the provided value falls between the ``minimum`` and
   ``maximum`` attributes of the register and will clip if necessary
 - it will then store the value in ``int_value``
