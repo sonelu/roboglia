@@ -7,3 +7,5 @@ from .factory import register_class         # noqa F401
 from .factory import unregister_class       # noqa F401
 from .factory import get_registered_class   # noqa F401
 from .factory import registered_classes     # noqa F401
+
+from .yaml import load_yaml_with_include    # noqa F401

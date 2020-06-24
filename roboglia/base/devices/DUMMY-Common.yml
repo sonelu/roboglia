@@ -1,0 +1,140 @@
+# A dummy device for testing Base classes
+# should only use registers from base package
+#
+registers:
+  model:
+    address: 0
+    size: 2
+    default: 42
+
+  revision:
+    address: 10
+    maxim: 254
+    default: 16
+
+  delay:
+    class: RegisterWithConversion
+    address: 20
+    access: RW
+    default: 250
+    maxim: 254
+    factor: 0.5
+
+  desired_pos:
+    class: RegisterWithConversion
+    address: 30
+    size: 2
+    access: RW
+    maxim: 1023
+    factor: 3.41
+    offset: 512
+
+  desired_speed:
+    class: RegisterWithConversion
+    address: 40
+    size: 2
+    access: RW
+    maxim: 1023
+    factor: 8.973684210526316
+
+  desired_load:
+    class: RegisterWithConversion
+    address: 50
+    size: 2
+    access: RW
+    maxim: 1023
+    factor: 10.24
+
+  enable_device:
+    class: BoolRegister
+    address: 60
+    access: RW
+
+  current_pos:
+    class: RegisterWithConversion
+    address: 70
+    size: 2
+    access: R
+    maxim: 1023
+    factor: 3.41
+    offset: 512
+    default: 512
+
+  current_speed:
+    class: RegisterWithThreshold
+    address: 80
+    size: 2
+    access: R
+    maxim: 2047
+    factor: 8.973684210526316
+    threshold: 1024
+    default: 512
+
+  current_load:
+    class: RegisterWithThreshold
+    address: 90
+    size: 2
+    access: R
+    maxim: 2047
+    factor: 10.24
+    threshold: 1024
+    default: 1536
+
+    # not really often in practice as RW
+    # here for testing
+  writeable_current_load:
+    class: RegisterWithThreshold
+    address: 95
+    size: 2
+    access: RW
+    maxim: 2047
+    factor: 10.24
+    threshold: 1024
+    default: 1536
+
+  current_voltage:
+    class: RegisterWithConversion
+    address: 96
+    maxim: 160
+    factor: 10.0
+    default: 120
+
+  status:
+    address: 99
+    default: 0b01010101
+
+  status_unmasked:
+    address: 99
+    clone: True
+    access: RW
+    class: BoolRegister
+
+  status_one:
+    address: 99
+    clone: True
+    class: BoolRegister
+    bits: 0b00000001
+
+  status_2and3:
+    address: 99
+    clone: True
+    access: RW
+    class: BoolRegister
+    bits: 0b00000110
+    mode: all
+
+  status_2or3:
+    address: 99
+    clone: True
+    class: BoolRegister
+    bits: 0b00000110
+    mode: any
+
+  status_masked:
+    address: 99
+    clone: True
+    access: RW
+    class: BoolRegister
+    bits: 0b10100000
+    mask: 0b11110000
+    mode: all
