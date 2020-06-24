@@ -4,6 +4,16 @@ import collections
 
 
 def load_yaml_with_include(file_name):
+    """Loads a YAML file safely and returns a dictionary with the configuration
+    data.
+    Suppports ``include`` directive. If there is an ``include`` key at the top
+    level in the source file, the files specified will be opened *in the given
+    order* and data will be merged. Updates from a new file can create new
+    keys in the merged dictionary or update the existing ones. At the end
+    the content of the original file is merged in the same manner in the
+    final dictionary. The ``include`` statements are removed from the final
+    dictionary.
+    """
     base_path = os.path.dirname(file_name)
     with open(file_name, 'r') as f:
         main_dict = yaml.safe_load(f)
