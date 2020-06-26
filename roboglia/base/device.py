@@ -14,11 +14,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-import yaml
 import logging
 
 from ..utils import get_registered_class, check_not_empty, \
                     check_type, check_key
+
+from ..utils import load_yaml_with_include
 
 from .bus import BaseBus, SharedBus
 
@@ -118,8 +119,7 @@ class BaseDevice():
             path = self.get_model_path()
         model_file = os.path.join(path, model + '.yml')
         if model_file not in BaseDevice.cache:
-            with open(model_file, 'r') as f:
-                model_ini = yaml.load(f, Loader=yaml.FullLoader)
+            model_ini = load_yaml_with_include(model_file)
             BaseDevice.cache[model_file] = model_ini
         else:
             model_ini = BaseDevice.cache[model_file]

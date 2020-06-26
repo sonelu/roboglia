@@ -24,3 +24,11 @@
    check_key
    check_type
    check_options
+
+*YAML Utilities*
+
+.. autosummary::
+   :toctree: utils
+
+   load_yaml_with_include
+   deep_update
