@@ -263,6 +263,25 @@ There are many other classes of registers that allow you to manipulate the
 most common type of data present in devices and I encourage you have a look
 on the :ref:`API_Reference`
 
+Adding A Joint
+^^^^^^^^^^^^^^
+
+While using the device registers seems nice, you might be in situation where
+you use different types of devices in your robot, each with a different set
+or registers. Trying to keep up with all the differences might be a bit daunting.
+For this reason ``roboglia`` provides a level of abstraction that harmonizes
+the access to the devices: the **Joint**.
+
+A **Joint** is an abstract representation of the capabilities provided by
+a servo motor. The simplest form is provided by the class :py:class:`roboglia.base.Joint`.
+To link a ``Joint`` to a device you need to specify at least 2 registers
+in the device: one that is used to retrieve the current position of the device
+and one that is used to set the current position of the device. They do not
+have to be two different registers, like in the case of a device that controls
+PWM servo-motors where you only have one registers for requesting a particular
+position.
+
+
 Robot Definition File
 ---------------------
 
