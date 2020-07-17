@@ -270,8 +270,8 @@ class BaseRegister():
             self.clone.int_value = value
         else:
             self.__int_value = value
-        if not self.sync:
-            self.write()
+            if not self.sync:
+                self.write()
         # else:
         #     logger.error('only BaseSync subclasses can change the '
         #                  'internal value')
