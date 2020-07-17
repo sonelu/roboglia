@@ -213,14 +213,19 @@ class BaseRegister():
     @property
     def sync(self):
         """Register is subject to a sync loop update."""
-        return self.__sync
+        if self.clone:
+            return self.clone.sync
+        else:
+            return self.__sync
 
     @sync.setter
     def sync(self, value):
         """Sets the register as being synced by a loop. Only subclasses
         of :py:class:`BaseSync` are allowed to do this change."""
         caller = inspect.stack()[1].frame.f_locals['self']
-        if isinstance(caller, BaseSync):
+        if isinstance(caller, (BaseSync, BaseRegister)):
+            if self.clone:
+                self.clone.sync = (value is True)
             self.__sync = (value is True)
         else:
             logger.error('only BaseSync subclasses can chance the sync '
@@ -251,6 +256,8 @@ class BaseRegister():
         main register."""
         if self.clone:
             return self.clone.int_value
+        if not self.sync:
+            self.read()
         return self.__int_value
 
     @int_value.setter
@@ -259,10 +266,12 @@ class BaseRegister():
         # caller = inspect.stack()[1].frame.f_locals['self']
         # if isinstance(caller, (BaseSync, BaseRegister)):
         # fixes bug #64
-        if not self.clone:
-            self.__int_value = value
-        else:
+        if self.clone:
             self.clone.int_value = value
+        else:
+            self.__int_value = value
+        if not self.sync:
+            self.write()
         # else:
         #     logger.error('only BaseSync subclasses can change the '
         #                  'internal value')
@@ -324,8 +333,6 @@ class BaseRegister():
             subclasses to provide different representations of the register's
             value (hence the ``any`` return type).
         """
-        if not self.sync and not self.clone:
-            self.read()
         return self.value_to_external(self.int_value)
 
     @value.setter
@@ -348,9 +355,9 @@ class BaseRegister():
         if self.access != 'R':
             int_value = self.value_to_internal(value)
             self.int_value = max(self.minim, min(self.maxim, int_value))
-            if not self.sync:       # pragma: no branch
-                # direct sync
-                self.write()
+            # if not self.sync:       # pragma: no branch
+            #     # direct sync
+            #     self.write()
         else:
             logging.warning(f'attempted to write in RO register {self.name} '
                             f'of device {self.device.name}')
@@ -360,7 +367,7 @@ class BaseRegister():
         to the device. Calls the device's method to write the value of
         register.
         """
-        self.device.write_register(self, self.int_value)
+        self.device.write_register(self, self.__int_value)
 
     def read(self):
         """Performs the actual reading of the internal value of the register
