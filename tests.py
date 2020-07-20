@@ -169,7 +169,7 @@ class TestMockRobot:
         caplog.clear()
         reg.value = 100
         assert len(caplog.records) == 1
-        assert 'attempted to write in RO register current_pos' in caplog.text
+        assert 'Attempted to write in RO register current_pos' in caplog.text
 
     def test_register_with_mapping(self, dummy_device, caplog):
         reg = RegisterWithMapping(
