@@ -453,6 +453,7 @@ registers:
     clone: True
     size: 2
     factor: 10.0
+    sign_bit: 16
 
   present_velocity:
     address: 128
