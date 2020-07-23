@@ -67,10 +67,12 @@ class DynamixelSyncWriteLoop(BaseSync):
             result = self.gsw.txPacket()
             self.bus.stop_using()       # !! as soon as possible
             error = self.gsw.ph.getTxRxResult(result)
+            self.inc_processed()
             logger.debug(f'[sync write {self.name}], result: {error}')
             if result != 0:
                 logger.error(f'failed to execute SyncWrite {self.name}: '
                              f'cerr={error}')
+                self.inc_errors()
         else:
             logger.error(f'sync {self.name} '
                          f'failed to acquire bus {self.bus.name}')
@@ -122,16 +124,19 @@ class DynamixelSyncReadLoop(BaseSync):
         if result != 0:
             error = self.bus.packet_handler.getTxRxResult(result)
             logger.error(f'SyncRead {self.name}, cerr={error}')
-            return
+            # return
         # retrieve data
         for device in self.devices:
             for reg_name in self.register_names:
+                self.inc_processed()
                 register = getattr(device, reg_name)
                 if not self.gsr.isAvailable(device.dev_id, register.address,
                                             register.size):
                     logger.error(f'Failed to retrieve data in SyncRead '
                                  f'{self.name} for device {device.name} '
                                  f'and register {register.name}')
+                    self.inc_errors()
+
                 else:
                     register.int_value = self.gsr.getData(
                         device.dev_id, register.address, register.size)

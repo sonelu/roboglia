@@ -213,6 +213,8 @@ class BaseRegister():
     @property
     def sync(self):
         """Register is subject to a sync loop update."""
+        if self.clone:
+            return self.clone.sync
         return self.__sync
 
     @sync.setter
@@ -221,7 +223,10 @@ class BaseRegister():
         of :py:class:`BaseSync` are allowed to do this change."""
         caller = inspect.stack()[1].frame.f_locals['self']
         if isinstance(caller, (BaseSync, BaseRegister)):
-            self.__sync = (value is True)
+            if self.clone:
+                self.clone.sync = (value is True)
+            else:
+                self.__sync = (value is True)
         else:
             logger.error('only BaseSync subclasses can chance the sync '
                          'flag of a register')
