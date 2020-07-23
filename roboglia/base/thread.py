@@ -330,7 +330,7 @@ class BaseLoop(BaseThread):
                 start_time = time.time()
                 self.atomic()
                 end_time = time.time()
-                wait_time = self.__period - (end_time - start_time) # + adjust
+                wait_time = self.__period - (end_time - start_time)
                 if wait_time > 0:
                     time.sleep(wait_time)
                 # else:
