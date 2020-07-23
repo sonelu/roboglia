@@ -250,8 +250,7 @@ class BaseRegister():
         """The register's default value in internal format."""
         if self.clone:
             return self.clone.default
-        else:
-            return self.__default
+        return self.__default
 
     @property
     def int_value(self):
