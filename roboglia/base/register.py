@@ -213,6 +213,8 @@ class BaseRegister():
     @property
     def sync(self):
         """Register is subject to a sync loop update."""
+        if self.clone:
+            return self.clone.sync
         return self.__sync
 
     @sync.setter
@@ -220,8 +222,11 @@ class BaseRegister():
         """Sets the register as being synced by a loop. Only subclasses
         of :py:class:`BaseSync` are allowed to do this change."""
         caller = inspect.stack()[1].frame.f_locals['self']
-        if isinstance(caller, BaseSync):
-            self.__sync = (value is True)
+        if isinstance(caller, (BaseSync, BaseRegister)):
+            if self.clone:
+                self.clone.sync = (value is True)
+            else:
+                self.__sync = (value is True)
         else:
             logger.error('only BaseSync subclasses can chance the sync '
                          'flag of a register')
@@ -243,6 +248,8 @@ class BaseRegister():
     @property
     def default(self):
         """The register's default value in internal format."""
+        if self.clone:
+            return self.clone.default
         return self.__default
 
     @property
@@ -256,16 +263,10 @@ class BaseRegister():
     @int_value.setter
     def int_value(self, value):
         """If clone, store the value in the main register."""
-        # caller = inspect.stack()[1].frame.f_locals['self']
-        # if isinstance(caller, (BaseSync, BaseRegister)):
-        # fixes bug #64
-        if not self.clone:
-            self.__int_value = value
-        else:
+        if self.clone:
             self.clone.int_value = value
-        # else:
-        #     logger.error('only BaseSync subclasses can change the '
-        #                  'internal value')
+        else:
+            self.__int_value = value
 
     def value_to_external(self, value):
         """Converts the presented value to external format according to
@@ -324,7 +325,7 @@ class BaseRegister():
             subclasses to provide different representations of the register's
             value (hence the ``any`` return type).
         """
-        if not self.sync and not self.clone:
+        if not self.sync:
             self.read()
         return self.value_to_external(self.int_value)
 
@@ -349,10 +350,9 @@ class BaseRegister():
             int_value = self.value_to_internal(value)
             self.int_value = max(self.minim, min(self.maxim, int_value))
             if not self.sync:       # pragma: no branch
-                # direct sync
                 self.write()
         else:
-            logging.warning(f'attempted to write in RO register {self.name} '
+            logging.warning(f'Attempted to write in RO register {self.name} '
                             f'of device {self.device.name}')
 
     def write(self):
@@ -373,7 +373,7 @@ class BaseRegister():
         # a value of None indicates that there was an issue with readind
         # the data from the device
         if value is not None:       # pragma: no branch
-            self.__int_value = value
+            self.int_value = value
 
     def __str__(self):
         """Representation of the register [name]: value."""

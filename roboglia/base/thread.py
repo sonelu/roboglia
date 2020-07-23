@@ -229,6 +229,7 @@ class BaseLoop(BaseThread):
         check_not_empty(frequency, 'frequency', 'loop', self.name, logger)
         check_type(frequency, float, 'loop', self.name, logger)
         self.__frequency = frequency
+        self.__actual_frequency = frequency
         self.__period = 1.0 / self.__frequency
         check_not_empty(warning, 'warning', 'loop', self.name, logger)
         check_type(warning, float, 'loop', self.name, logger)
@@ -242,11 +243,21 @@ class BaseLoop(BaseThread):
         # to keep statistics
         self.__exec_counts = 0
         self.__last_count_reset = None
+        # keeps score of processing and errors
+        self.__errors = 0
+        self.__processed = 0
+        self.__err_stat = (0, 0, 0)
 
     @property
     def frequency(self):
         """Loop frequency."""
         return self.__frequency
+
+    @property
+    def actual_frequency(self):
+        """Returns the actual running frequency that is calculated
+        by statistics."""
+        return self.__actual_frequency
 
     @property
     def period(self):
@@ -276,21 +287,50 @@ class BaseLoop(BaseThread):
         elif value <= 110:
             self.__warning = value / 100.0
 
+    @property
+    def errors(self):
+        """Returns the number of errors logged by the statistics."""
+        return self.__errors
+
+    @property
+    def processed(self):
+        """Returns the number of items processed in the current statistics.
+        The items processed depends on the loop and might be different
+        from the number of loops executed. For example the one execution
+        loop might include several communication packets."""
+        return self.__processed
+
+    def inc_errors(self):
+        """Used by subclasses to increment the number of errors."""
+        self.__errors += 1
+
+    def inc_processed(self):
+        """Used by subclasses to increment the number of processed items."""
+        self.__processed += 1
+
+    @property
+    def error_stat(self):
+        """Returns the error statistics as a tuple: (error in %, total errors,
+        total items)."""
+        return self.__err_stat
+
     def run(self):
         exec_counts = 0
         last_count_reset = time.time()
-        adjust = 0.0            # fine adjust the rate
+        # adjust = 0.0            # fine adjust the rate
         while not self.stopped:
             if self.paused:
                 # paused; reset the statistics
                 exec_counts = 0
+                self.__errors = 0
+                self.__processed = 0
                 last_count_reset = time.time()
                 time.sleep(self.period)
             else:
                 start_time = time.time()
                 self.atomic()
                 end_time = time.time()
-                wait_time = self.__period - (end_time - start_time) + adjust
+                wait_time = self.__period - (end_time - start_time)
                 if wait_time > 0:
                     time.sleep(wait_time)
                 # else:
@@ -301,25 +341,29 @@ class BaseLoop(BaseThread):
                 exec_counts += 1
                 if exec_counts >= self.__frequency * self.__review:
                     exec_time = time.time() - last_count_reset
-                    actual_freq = exec_counts / exec_time
-                    rate = actual_freq / self.__frequency
-                    diff = self.__period - exec_time / exec_counts
-                    # fine tune the frequency
-                    adjust += diff * self.__throttle
-                    if adjust < - self.__period:
-                        adjust = - self.__period
-                    if actual_freq < (self.__frequency * self.__warning):
-                        logger.warning(
-                            f'Loop "{self.name}" running under '
-                            f'warning threshold at {actual_freq:.2f}[Hz] '
-                            f'({rate*100:.0f}%)')
-                    else:
-                        logger.debug(
-                            f'Loop "{self.name}" running at '
-                            f'{actual_freq:.2f}[Hz] '
-                            f'({rate*100:.0f}%)')
+                    # actual_freq = exec_counts / exec_time
+                    self.__actual_frequency = exec_counts / exec_time
+                    # rate = actual_freq / self.__frequency
+                    # diff = self.__period - exec_time / exec_counts
+                    # # fine tune the frequency
+                    # adjust += diff * self.__throttle
+                    # if adjust < - self.__period:
+                    #     adjust = - self.__period
+                    # if actual_freq < (self.__frequency * self.__warning):
+                    #     logger.debug(
+                    #         f'Loop "{self.name}" running under '
+                    #         f'warning threshold at {actual_freq:.2f}[Hz] '
+                    #         f'({rate*100:.0f}%)')
+
                     # reset counters
                     exec_counts = 0
+                    if self.__processed > 0:
+                        rate = self.__errors / self.__processed * 100.0
+                    else:
+                        rate = 0.0
+                    self.__err_stat = (rate, self.__errors, self.__processed)
+                    self.__errors = 0
+                    self.__processed = 0
                     last_count_reset = time.time()
 
     def atomic(self):
