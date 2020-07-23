@@ -229,6 +229,7 @@ class BaseLoop(BaseThread):
         check_not_empty(frequency, 'frequency', 'loop', self.name, logger)
         check_type(frequency, float, 'loop', self.name, logger)
         self.__frequency = frequency
+        self.__actual_frequency = frequency
         self.__period = 1.0 / self.__frequency
         check_not_empty(warning, 'warning', 'loop', self.name, logger)
         check_type(warning, float, 'loop', self.name, logger)
@@ -247,6 +248,12 @@ class BaseLoop(BaseThread):
     def frequency(self):
         """Loop frequency."""
         return self.__frequency
+
+    @property
+    def actual_freqency(self):
+        """Returns the actual running frequency that is calculated
+        by statistics."""
+        return self.__actual_frequency
 
     @property
     def period(self):
@@ -302,6 +309,7 @@ class BaseLoop(BaseThread):
                 if exec_counts >= self.__frequency * self.__review:
                     exec_time = time.time() - last_count_reset
                     actual_freq = exec_counts / exec_time
+                    self.__actual_frequency = actual_freq
                     rate = actual_freq / self.__frequency
                     diff = self.__period - exec_time / exec_counts
                     # fine tune the frequency
@@ -309,15 +317,15 @@ class BaseLoop(BaseThread):
                     if adjust < - self.__period:
                         adjust = - self.__period
                     if actual_freq < (self.__frequency * self.__warning):
-                        logger.warning(
+                        logger.debug(
                             f'Loop "{self.name}" running under '
                             f'warning threshold at {actual_freq:.2f}[Hz] '
                             f'({rate*100:.0f}%)')
-                    else:
-                        logger.debug(
-                            f'Loop "{self.name}" running at '
-                            f'{actual_freq:.2f}[Hz] '
-                            f'({rate*100:.0f}%)')
+                    # else:
+                    #     logger.debug(
+                    #         f'Loop "{self.name}" running at '
+                    #         f'{actual_freq:.2f}[Hz] '
+                    #         f'({rate*100:.0f}%)')
                     # reset counters
                     exec_counts = 0
                     last_count_reset = time.time()
