@@ -92,7 +92,8 @@ class Script(StepLoop):
         issued.
         """
         for index, joint_name in enumerate(joints):
-            if joint_name not in self.robot.manager.joints:
+            rm_joints = [joint.name for joint in self.robot.manager.joints]
+            if joint_name not in rm_joints:
                 logger.warning(f'Joint {joint_name} used in script {self.name}'
                                ' is not managed by the robot manager '
                                f'{self.robot.manager.name} '
