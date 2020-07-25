@@ -217,7 +217,7 @@ registers:
     access: RW
     # 4096 / 360 degrees
     factor: 11.375
-    offset: 2048
+    offset: 2047
 
   max_position_limit_rad:
     class: RegisterWithConversion
@@ -227,7 +227,7 @@ registers:
     access: RW
     # deg * 180 / pi
     factor: 651.7394919613114
-    offset: 2048
+    offset: 2047
 
   min_position_limit:
     address: 52
@@ -243,7 +243,7 @@ registers:
     access: RW
     # 4096 / 360 degrees
     factor: 11.375
-    offset: 2048
+    offset: 2047
 
   min_position_limit_rad:
     class: RegisterWithConversion
@@ -253,7 +253,7 @@ registers:
     access: RW
     # deg * 180 / pi
     factor: 651.7394919613114
-    offset: 2048
+    offset: 2047
 
   shutdown:
     address: 63
@@ -388,11 +388,43 @@ registers:
     address: 108
     size: 4
     access: RW
+    maxim: 32767
 
   profile_velocity:
     address: 112
     size: 4
     access: RW
+    maxim: 32767
+
+  profile_velocity_rpm:
+    class: RegisterWithConversion
+    address: 112
+    clone: True
+    size: 4
+    access: RW
+    # 1 / 0.229
+    factor: 4.366812227074236
+
+  # deg per second
+  profile_velocity_dps:
+    class: RegisterWithConversion
+    address: 112
+    clone: True
+    size: 4
+    access: RW
+    # rpm / 6
+    factor: 0.727802037845706
+
+  # rad per second
+  profile_velocity_rps:
+    class: RegisterWithConversion
+    address: 112
+    clone: True
+    size: 4
+    access: RW
+    # dps * 180 / pi
+    factor: 41.699985089579600
+
 
   goal_position:
     address: 116
@@ -407,7 +439,7 @@ registers:
     clone: True
     access: RW
     factor: 11.375
-    offset: 2048
+    offset: 2047
 
   goal_position_rad:
     class: RegisterWithConversion
@@ -416,7 +448,7 @@ registers:
     clone: True
     access: RW
     factor: 651.7394919613114
-    offset: 2048
+    offset: 2047
 
   realtime_tick:
     address: 120
@@ -500,7 +532,7 @@ registers:
     clone: True
     access: RW
     factor: 11.375
-    offset: 2048
+    offset: 2047
 
   present_position_rad:
     class: RegisterWithConversion
@@ -509,7 +541,7 @@ registers:
     clone: True
     access: RW
     factor: 651.7394919613114
-    offset: 2048
+    offset: 2047
 
   velocity_trajectory:
     address: 136
