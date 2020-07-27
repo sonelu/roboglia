@@ -121,18 +121,26 @@ class PVL():
         PVL:
             The result as a PVL.
         """
+        def sub_with_nan(number1, number2):
+            if isnan(number2):
+                return number1
+            elif isnan(number1):
+                return - number2
+            else:
+                return number1 - number2
+
         if isinstance(other, PVL):
-            return PVL(p=(self.p - other.p),
-                       v=(self.v - other.v),
-                       ld=(self.ld - other.ld))
+            return PVL(p=sub_with_nan(self.p, other.p),
+                       v=sub_with_nan(self.v, other.v),
+                       ld=sub_with_nan(self.ld, other.ld))
         if isinstance(other, (float, int)):
-            return PVL(p=(self.p - other),
-                       v=(self.v - other),
-                       ld=(self.ld - other))
+            return PVL(p=sub_with_nan(self.p, other),
+                       v=self.v,
+                       ld=self.ld)
         if isinstance(other, list) and len(other) == 3:
-            return PVL(p=(self.p - other[0]),
-                       v=(self.v - other[1]),
-                       ld=(self.ld - other[2]))
+            return PVL(p=sub_with_nan(self.p, other[0]),
+                       v=sub_with_nan(self.v, other[1]),
+                       ld=sub_with_nan(self.ld, other[2]))
         raise RuntimeError(f'Incompatible __sub__ paramters for {other}')
 
     def __add__(self, other):
@@ -169,8 +177,8 @@ class PVL():
                        ld=add_with_nan(self.ld, other.ld))
         if isinstance(other, (float, int)):
             return PVL(p=add_with_nan(self.p, other),
-                       v=add_with_nan(self.v, other),
-                       ld=add_with_nan(self.ld, other))
+                       v=self.v,
+                       ld=self.ld)
         if isinstance(other, list) and len(other) == 3:
             return PVL(p=add_with_nan(self.p, other[0]),
                        v=add_with_nan(self.v, other[1]),

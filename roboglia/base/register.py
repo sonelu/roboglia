@@ -114,37 +114,45 @@ class BaseRegister():
             check_not_empty(address, 'address', 'register', self.name, logger)
         self.__address = address
         # clone
+        self.__clone = clone
         if clone:
             check_type(clone, BaseRegister, 'register', self.name, logger)
-        self.__clone = clone
-        # size
-        check_not_empty(size, 'size', 'register', self.name, logger)
-        check_type(size, int, 'register', self.name, logger)
-        self.__size = size
-        # minim
-        check_type(minim, int, 'register', self.name, logger)
-        self.__minim = minim
-        # maxim
-        if maxim:
-            check_type(maxim, int, 'register', self.name, logger)
-            self.__maxim = maxim
+            # clone registers inherit the settings from the original
+            self.__size = clone.size
+            self.__minim = clone.minim
+            self.__maxim = clone.maxim
+            self.__access = clone.access
+            self.__word = clone.word
+            self.__order = clone.order
         else:
-            self.__maxim = pow(2, self.size * 8) - 1
-        # access
-        check_options(access, ['R', 'RW'], 'register', self.name, logger)
-        self.__access = access
-        # sync
-        check_options(sync, [True, False], 'register', self.name, logger)
-        self.__sync = sync
-        # word
-        check_options(word, [True, False], 'register', self.name, logger)
-        self.__word = word
-        # bulk
-        check_options(bulk, [True, False], 'register', self.name, logger)
-        self.__bulk = bulk
-        # order
-        check_options(order, ['LH', 'HL'], 'register', self.name, logger)
-        self.__order = order
+            # size
+            check_not_empty(size, 'size', 'register', self.name, logger)
+            check_type(size, int, 'register', self.name, logger)
+            self.__size = size
+            # minim
+            check_type(minim, int, 'register', self.name, logger)
+            self.__minim = minim
+            # maxim
+            if maxim:
+                check_type(maxim, int, 'register', self.name, logger)
+                self.__maxim = maxim
+            else:
+                self.__maxim = pow(2, self.size * 8) - 1
+            # access
+            check_options(access, ['R', 'RW'], 'register', self.name, logger)
+            self.__access = access
+            # sync
+            check_options(sync, [True, False], 'register', self.name, logger)
+            self.__sync = sync
+            # word
+            check_options(word, [True, False], 'register', self.name, logger)
+            self.__word = word
+            # bulk
+            check_options(bulk, [True, False], 'register', self.name, logger)
+            self.__bulk = bulk
+            # order
+            check_options(order, ['LH', 'HL'], 'register', self.name, logger)
+            self.__order = order
         # default
         check_type(default, int, 'register', self.name, logger)
         self.__default = default
