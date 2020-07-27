@@ -1112,12 +1112,12 @@ class TestMove:
         assert avg != 10
         # adition
         pvl1 = PVL(10, nan, nan)
-        assert pvl1 + 10 == PVL(20, nan, nan)
-        assert pvl1 - 10 == PVL(0, nan, nan)
-        assert pvl1 + PVL(5, 10, nan) == PVL(15, nan, nan)
-        assert pvl1 - PVL(5, 10, nan) == PVL(5, nan, nan)
-        assert pvl1 + [10, 20, 30] == PVL(20, nan, nan)
-        assert pvl1 - [10, 20, 30] == PVL(0, nan, nan)
+        assert (pvl1 + 10) == PVL(20, nan, nan)
+        assert (pvl1 - 10) == PVL(0, nan, nan)
+        assert (pvl1 + PVL(5, 10, nan)) == PVL(15, 10, nan)
+        assert (pvl1 - PVL(5, 10, nan)) == PVL(5, -10, nan)
+        assert (pvl1 + [10, 20, 30]) == PVL(20, 20, 30)
+        assert (pvl1 - [10, 20, 30]) == PVL(0, -20, -30)
         assert -pvl1 == PVL(-10, nan, nan)
         assert  not pvl1 == PVL(nan, nan, nan)
         # raise errors
@@ -1129,8 +1129,7 @@ class TestMove:
             _ = pvl1 - [1,2]
         with pytest.raises(RuntimeError):
             _ = pvl1 - 'string'
-        
-        
+
     def test_move_load_robot(self, mock_robot):
         manager = mock_robot.manager
         assert len(manager.joints) == 3
@@ -1147,7 +1146,6 @@ class TestMove:
         assert mock_robot.joints['j01'].desired == PVL(100, nan, nan)
         assert mock_robot.joints['j02'].desired == PVL(100, 10.03, nan)
         assert mock_robot.joints['j03'].desired == PVL(100, 10.03, 50.0)
-
 
     def test_move_load_script(self, mock_robot, caplog):
         caplog.set_level(logging.DEBUG, logger='roboglia.move.moves')
