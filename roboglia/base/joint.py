@@ -124,10 +124,9 @@ class PVL():
         def sub_with_nan(number1, number2):
             if isnan(number2):
                 return number1
-            elif isnan(number1):
+            if isnan(number1):
                 return - number2
-            else:
-                return number1 - number2
+            return number1 - number2
 
         if isinstance(other, PVL):
             return PVL(p=sub_with_nan(self.p, other.p),
@@ -166,10 +165,9 @@ class PVL():
         def add_with_nan(number1, number2):
             if isnan(number2):
                 return number1
-            elif isnan(number1):
+            if isnan(number1):
                 return number2
-            else:
-                return number1 + number2
+            return number1 + number2
 
         if isinstance(other, PVL):
             return PVL(p=add_with_nan(self.p, other.p),
